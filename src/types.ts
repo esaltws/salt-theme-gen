@@ -78,6 +78,36 @@ export type FontSizeScale = {
   "3xl": number;
 };
 
+export type IconSizeScale = {
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+  "3xl": number;
+};
+
+export type SizeMapScale = {
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+  "3xl": number;
+};
+
+export type DimensionScale = {
+  xs: number;
+  sm: number;
+  md: number;
+  lg: number;
+  xl: number;
+  xxl: number;
+  "3xl": number;
+};
+
 // ─── Semantic Colors (21 keys, matching ui-kit colors) ───────────────
 
 export type SemanticColors = {
@@ -170,6 +200,9 @@ export type GeneratedThemeMode = {
   spacing: SpacingScale;
   radius: RadiusScale;
   fontSizes: FontSizeScale;
+  iconSizes: IconSizeScale;
+  sizeMap: SizeMapScale;
+  dimensions: DimensionScale;
   fontLevel: FontLevel;
   states: IntentStates;
   accessibility: AccessibilityReport;

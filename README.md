@@ -4,6 +4,11 @@ OKLCH-based design system generator. Generate complete light + dark themes from 
 
 Zero dependencies. Pure TypeScript. Platform agnostic — works with React Native, React, Next.js, Node, Bun, Deno, or any JavaScript runtime.
 
+[![npm](https://img.shields.io/npm/v/salt-theme-gen)](https://www.npmjs.com/package/salt-theme-gen)
+[![license](https://img.shields.io/npm/l/react-native-salt)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
+[![react-native-salt](https://img.shields.io/npm/v/@esaltws/react-native-salt)](https://www.npmjs.com/package/@esaltws/react-native-salt)
+
 > Formerly `react-native-salt-theme-gen`. If you're upgrading, just change your import — the API is the same.
 
 ## Install
