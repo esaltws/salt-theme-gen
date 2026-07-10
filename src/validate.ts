@@ -144,7 +144,7 @@ function validateMode(v: unknown, path: string): void {
     validateHexObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
   }
 
-  // accessibility
+  // accessibility (WCAG)
   const acc = requireObject(obj.accessibility, `${path}.accessibility`);
   requireKeys(acc, ACCESSIBILITY_KEYS, `${path}.accessibility`);
   for (const key of ACCESSIBILITY_KEYS) {
@@ -152,6 +152,17 @@ function validateMode(v: unknown, path: string): void {
     requireNumber(entry.ratio, `${path}.accessibility.${key}.ratio`);
     if (entry.level !== "AAA" && entry.level !== "AA" && entry.level !== "fail") {
       throw new Error(`${path}.accessibility.${key}.level: expected "AAA", "AA", or "fail", got ${JSON.stringify(entry.level)}`);
+    }
+  }
+
+  // apca
+  const apca = requireObject(obj.apca, `${path}.apca`);
+  requireKeys(apca, ACCESSIBILITY_KEYS, `${path}.apca`);
+  for (const key of ACCESSIBILITY_KEYS) {
+    const entry = requireObject(apca[key], `${path}.apca.${key}`);
+    requireNumber(entry.lc, `${path}.apca.${key}.lc`);
+    if (entry.level !== "Lc75" && entry.level !== "Lc60" && entry.level !== "Lc45" && entry.level !== "fail") {
+      throw new Error(`${path}.apca.${key}.level: expected "Lc75", "Lc60", "Lc45", or "fail", got ${JSON.stringify(entry.level)}`);
     }
   }
 }

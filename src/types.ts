@@ -242,6 +242,45 @@ export type AccessibilityReport = {
   textOnPopover: ContrastEntry;
 };
 
+// ─── APCA Accessibility ──────────────────────────────────────────────
+
+/** Lc ≥ 75: body text · Lc ≥ 60: large text · Lc ≥ 45: UI components */
+export type APCALevel = "Lc75" | "Lc60" | "Lc45" | "fail";
+
+export type APCAEntry = {
+  /** Absolute Lc value (0–108 range). Use Math.abs() not needed — always positive here. */
+  lc: number;
+  level: APCALevel;
+};
+
+export type APCAReport = {
+  primaryOnBackground: APCAEntry;
+  secondaryOnBackground: APCAEntry;
+  tertiaryOnBackground: APCAEntry;
+  quaternaryOnBackground: APCAEntry;
+  textOnBackground: APCAEntry;
+  textOnSurface: APCAEntry;
+  mutedOnBackground: APCAEntry;
+  dangerOnBackground: APCAEntry;
+  successOnBackground: APCAEntry;
+  warningOnBackground: APCAEntry;
+  infoOnBackground: APCAEntry;
+  onPrimaryOnPrimary: APCAEntry;
+  onSecondaryOnSecondary: APCAEntry;
+  onTertiaryOnTertiary: APCAEntry;
+  onQuaternaryOnQuaternary: APCAEntry;
+  onBackgroundOnBackground: APCAEntry;
+  onSurfaceOnSurface: APCAEntry;
+  onDangerOnDanger: APCAEntry;
+  onSuccessOnSuccess: APCAEntry;
+  onWarningOnWarning: APCAEntry;
+  onInfoOnInfo: APCAEntry;
+  textOnCard: APCAEntry;
+  textOnElevated: APCAEntry;
+  textOnModal: APCAEntry;
+  textOnPopover: APCAEntry;
+};
+
 // ─── Generated Theme Output ──────────────────────────────────────────
 
 export type GeneratedThemeMode = {
@@ -258,6 +297,7 @@ export type GeneratedThemeMode = {
   fontLevel: FontLevel;
   states: IntentStates;
   accessibility: AccessibilityReport;
+  apca: APCAReport;
 };
 
 export type GeneratedTheme = {

@@ -1,11 +1,12 @@
 import {
   relativeLuminance,
   contrastRatio,
+  apcaContrast,
   hexToOklch,
   oklchToHex,
   clampOklch,
 } from "./color-math.js";
-import type { SemanticColors, SurfaceElevation, AccessibilityReport, ContrastEntry } from "./types.js";
+import type { SemanticColors, SurfaceElevation, AccessibilityReport, ContrastEntry, APCAReport, APCAEntry, APCALevel } from "./types.js";
 
 /**
  * Derive the "on" color for a given background.
@@ -146,4 +147,50 @@ function makeEntry(foreground: string, background: string): ContrastEntry {
   const ratio = Math.round(contrastRatio(foreground, background) * 100) / 100;
   const level = ratio >= 7 ? "AAA" : ratio >= 4.5 ? "AA" : "fail";
   return { ratio, level };
+}
+
+// ─── APCA Report ─────────────────────────────────────────────────────
+
+/**
+ * Build an APCA perceptual contrast report for the same 25 color pairs
+ * as the WCAG accessibility report. Lc values are stored as absolute
+ * values (always ≥ 0); polarity (dark/light bg) is already resolved.
+ */
+export function buildAPCAReport(
+  colors: SemanticColors,
+  surfaceElevation: SurfaceElevation
+): APCAReport {
+  return {
+    primaryOnBackground:       makeAPCAEntry(colors.primary,    colors.background),
+    secondaryOnBackground:     makeAPCAEntry(colors.secondary,  colors.background),
+    tertiaryOnBackground:      makeAPCAEntry(colors.tertiary,   colors.background),
+    quaternaryOnBackground:    makeAPCAEntry(colors.quaternary, colors.background),
+    textOnBackground:          makeAPCAEntry(colors.text,       colors.background),
+    textOnSurface:             makeAPCAEntry(colors.text,       colors.surface),
+    mutedOnBackground:         makeAPCAEntry(colors.muted,      colors.background),
+    dangerOnBackground:        makeAPCAEntry(colors.danger,     colors.background),
+    successOnBackground:       makeAPCAEntry(colors.success,    colors.background),
+    warningOnBackground:       makeAPCAEntry(colors.warning,    colors.background),
+    infoOnBackground:          makeAPCAEntry(colors.info,       colors.background),
+    onPrimaryOnPrimary:        makeAPCAEntry(colors.onPrimary,    colors.primary),
+    onSecondaryOnSecondary:    makeAPCAEntry(colors.onSecondary,  colors.secondary),
+    onTertiaryOnTertiary:      makeAPCAEntry(colors.onTertiary,   colors.tertiary),
+    onQuaternaryOnQuaternary:  makeAPCAEntry(colors.onQuaternary, colors.quaternary),
+    onBackgroundOnBackground:  makeAPCAEntry(colors.onBackground, colors.background),
+    onSurfaceOnSurface:        makeAPCAEntry(colors.onSurface,    colors.surface),
+    onDangerOnDanger:          makeAPCAEntry(colors.onDanger,   colors.danger),
+    onSuccessOnSuccess:        makeAPCAEntry(colors.onSuccess,  colors.success),
+    onWarningOnWarning:        makeAPCAEntry(colors.onWarning,  colors.warning),
+    onInfoOnInfo:              makeAPCAEntry(colors.onInfo,     colors.info),
+    textOnCard:    makeAPCAEntry(colors.text, surfaceElevation.card),
+    textOnElevated: makeAPCAEntry(colors.text, surfaceElevation.elevated),
+    textOnModal:   makeAPCAEntry(colors.text, surfaceElevation.modal),
+    textOnPopover: makeAPCAEntry(colors.text, surfaceElevation.popover),
+  };
+}
+
+function makeAPCAEntry(foreground: string, background: string): APCAEntry {
+  const lc = Math.round(Math.abs(apcaContrast(foreground, background)) * 100) / 100;
+  const level: APCALevel = lc >= 75 ? "Lc75" : lc >= 60 ? "Lc60" : lc >= 45 ? "Lc45" : "fail";
+  return { lc, level };
 }

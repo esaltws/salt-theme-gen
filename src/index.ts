@@ -13,6 +13,9 @@ export type {
   ColorHarmony,
   AccessibilityReport,
   ContrastEntry,
+  APCAReport,
+  APCAEntry,
+  APCALevel,
   ThemePreset,
   SpacingPreset,
   FontSizePreset,
@@ -52,6 +55,8 @@ export {
   contrastRatio,
   meetsWcagAA,
   meetsWcagAALarge,
+  apcaContrast,
+  meetsAPCA,
   darken,
   lighten,
   desaturate,
@@ -67,7 +72,7 @@ export {
 // ─── Color Derivation (for consumers who want partial control) ───────
 export { deriveColors, deriveSurfaceElevation, resolveHarmonyAccents } from "./butterfly.js";
 export type { DeriveColorsOptions, HarmonyAccents } from "./butterfly.js";
-export { deriveOnColor, autoCorrectContrast } from "./on-colors.js";
+export { deriveOnColor, autoCorrectContrast, buildAPCAReport } from "./on-colors.js";
 export { deriveStateColors, deriveAllIntentStates } from "./state-colors.js";
 
 // ─── Theme Adjustment & Diffing ──────────────────────────────────────

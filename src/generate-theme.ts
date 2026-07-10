@@ -1,7 +1,7 @@
 import { parseColor, oklchToHex, contrastRatio } from "./color-math.js";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
-import { buildAccessibilityReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
+import { buildAccessibilityReport, buildAPCAReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
 import { SPACING_PRESETS } from "./presets/spacing-presets.js";
 import { RADIUS_PRESETS } from "./presets/radius-presets.js";
@@ -195,9 +195,10 @@ function generateModeWithOverrides(
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
   const accessibility = buildAccessibilityReport(colors, surfaceElevation);
+  const apca = buildAPCAReport(colors, surfaceElevation);
 
   return {
-    result: { mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility },
+    result: { mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility, apca },
     warnings,
   };
 }
@@ -299,6 +300,7 @@ function generateMode(
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
   const accessibility = buildAccessibilityReport(colors, surfaceElevation);
+  const apca = buildAPCAReport(colors, surfaceElevation);
 
   return {
     mode,
@@ -314,6 +316,7 @@ function generateMode(
     fontLevel,
     states,
     accessibility,
+    apca,
   };
 }
 

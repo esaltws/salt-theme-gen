@@ -292,6 +292,54 @@ export function meetsWcagAALarge(foreground: string, background: string): boolea
   return contrastRatio(foreground, background) >= 3.0;
 }
 
+// ─── APCA Contrast (APCA-W3 0.0.98G-4g — Myndex Research) ───────────
+
+// Applies APCA black soft-clamp on top of WCAG2 luminance.
+// Prevents over-estimation of contrast for very dark colors.
+function apcaLuminance(hex: string): number {
+  const Y = relativeLuminance(hex);
+  const blkThrs = 0.022, blkClmp = 1.414;
+  return Y < blkThrs ? Y + (blkThrs - Y) ** blkClmp : Y;
+}
+
+/**
+ * Compute APCA Lc (perceptual contrast) between foreground and background.
+ * Returns a signed Lc value: positive = light bg / dark text (BoW),
+ * negative = dark bg / light text (WoB). Use Math.abs() for threshold checks.
+ *
+ * Typical thresholds (absolute Lc):
+ *   ≥ 75 — body text
+ *   ≥ 60 — large / headline text
+ *   ≥ 45 — UI components, icons
+ */
+export function apcaContrast(foreground: string, background: string): number {
+  const Ytxt = apcaLuminance(foreground);
+  const Ybg  = apcaLuminance(background);
+
+  const deltaYmin = 0.0005;
+  if (Math.abs(Ybg - Ytxt) < deltaYmin) return 0.0;
+
+  // Asymmetric exponents — the core APCA innovation
+  const scale = 1.14, loClip = 0.1, offset = 0.027;
+  let Sapc: number;
+  if (Ybg >= Ytxt) {
+    Sapc = (Ybg ** 0.56 - Ytxt ** 0.57) * scale; // BoW (light bg)
+  } else {
+    Sapc = (Ybg ** 0.65 - Ytxt ** 0.62) * scale; // WoB (dark bg)
+  }
+
+  if (Math.abs(Sapc) < loClip) return 0.0;
+  return Sapc > 0 ? (Sapc - offset) * 100 : (Sapc + offset) * 100;
+}
+
+/**
+ * Returns true if the absolute APCA Lc value meets or exceeds `minLc`.
+ * @param minLc — 45 (UI), 60 (large text), 75 (body text)
+ */
+export function meetsAPCA(foreground: string, background: string, minLc: number): boolean {
+  return Math.abs(apcaContrast(foreground, background)) >= minLc;
+}
+
 // ─── Color Manipulation (OKLCH space) ────────────────────────────────
 
 export function darken(hex: string, amount: number): string {

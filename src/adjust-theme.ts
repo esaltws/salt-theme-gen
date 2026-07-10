@@ -1,4 +1,4 @@
-import { deriveOnColor, buildAccessibilityReport } from "./on-colors.js";
+import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-colors.js";
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
@@ -10,6 +10,7 @@ import type {
   StateColors,
   SurfaceElevation,
   AccessibilityReport,
+  APCAReport,
   TonalPalettes,
   SpacingScale,
   RadiusScale,
@@ -175,10 +176,13 @@ function adjustMode(
     ? generateTonalPalettes(mergedColors)
     : mode.palettes;
 
-  // 8. Accessibility
+  // 8. Accessibility (WCAG + APCA)
   const accessibility: AccessibilityReport = anyColorChanged
     ? buildAccessibilityReport(mergedColors, surfaceElevation)
     : mode.accessibility;
+  const apca: APCAReport = anyColorChanged
+    ? buildAPCAReport(mergedColors, surfaceElevation)
+    : mode.apca;
 
   return {
     mode: mode.mode,
@@ -194,6 +198,7 @@ function adjustMode(
     fontLevel,
     states,
     accessibility,
+    apca,
   };
 }
 
