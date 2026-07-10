@@ -79,5 +79,9 @@ export type { FieldChange, ThemeModeDiff, ThemeDiff } from "./diff-theme.js";
 // ─── Tonal Palettes ──────────────────────────────────────────────────
 export { generateTonalPalette, generateTonalPalettes } from "./palettes.js";
 
+// ─── CSS Custom Property Output ──────────────────────────────────────
+export { generateCssVariables } from "./css-variables.js";
+export type { CssFormat, CssVariablesOptions, CssVariablesResult } from "./css-variables.js";
+
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
