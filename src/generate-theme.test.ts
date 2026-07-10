@@ -42,11 +42,13 @@ describe("generateTheme - defaults", () => {
     expect(theme.light.fontSizes).toEqual(FONT_SIZE_PRESETS.default);
   });
 
-  it("light.colors has all 21 keys", () => {
+  it("light.colors has all 23 keys", () => {
     const keys = [
       "primary", "secondary", "tertiary", "quaternary", "background", "surface", "text",
       "muted", "border", "danger", "success", "warning", "info",
-      "onPrimary", "onSecondary", "onTertiary", "onQuaternary", "onDanger", "onSuccess", "onWarning", "onInfo",
+      "onPrimary", "onSecondary", "onTertiary", "onQuaternary",
+      "onBackground", "onSurface",
+      "onDanger", "onSuccess", "onWarning", "onInfo",
     ];
     for (const key of keys) {
       expect(theme.light.colors).toHaveProperty(key);
@@ -218,8 +220,8 @@ describe("generateTheme - output structure", () => {
     }
   });
 
-  it("accessibility object has 23 entries", () => {
-    expect(Object.keys(theme.light.accessibility)).toHaveLength(23);
+  it("accessibility object has 25 entries", () => {
+    expect(Object.keys(theme.light.accessibility)).toHaveLength(25);
   });
 
   it("all color values in output match hex format", () => {

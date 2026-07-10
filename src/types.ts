@@ -128,6 +128,8 @@ export type SemanticColors = {
   onSecondary: string;
   onTertiary: string;
   onQuaternary: string;
+  onBackground: string;
+  onSurface: string;
   onDanger: string;
   onSuccess: string;
   onWarning: string;
@@ -219,6 +221,8 @@ export type AccessibilityReport = {
   onSecondaryOnSecondary: ContrastEntry;
   onTertiaryOnTertiary: ContrastEntry;
   onQuaternaryOnQuaternary: ContrastEntry;
+  onBackgroundOnBackground: ContrastEntry;
+  onSurfaceOnSurface: ContrastEntry;
   onDangerOnDanger: ContrastEntry;
   onSuccessOnSuccess: ContrastEntry;
   onWarningOnWarning: ContrastEntry;

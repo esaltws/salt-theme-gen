@@ -38,6 +38,8 @@ const BASE_TO_ON: [BaseColorKey, keyof SemanticColors][] = [
   ["secondary",  "onSecondary"],
   ["tertiary",   "onTertiary"],
   ["quaternary", "onQuaternary"],
+  ["background", "onBackground"],
+  ["surface",    "onSurface"],
   ["danger",     "onDanger"],
   ["success",    "onSuccess"],
   ["warning",    "onWarning"],

@@ -10,18 +10,20 @@ const PRIMARY = "#1e90ff"; // dodger blue
 describe("deriveColors - light mode", () => {
   const colors = deriveColors(PRIMARY, "light");
 
-  it("returns object with all 21 SemanticColors keys", () => {
+  it("returns object with all 23 SemanticColors keys", () => {
     const expectedKeys = [
       "primary", "secondary", "tertiary", "quaternary", "background", "surface", "text",
       "muted", "border", "danger", "success", "warning", "info",
-      "onPrimary", "onSecondary", "onTertiary", "onQuaternary", "onDanger", "onSuccess", "onWarning", "onInfo",
+      "onPrimary", "onSecondary", "onTertiary", "onQuaternary",
+      "onBackground", "onSurface",
+      "onDanger", "onSuccess", "onWarning", "onInfo",
     ];
     for (const key of expectedKeys) {
       expect(colors).toHaveProperty(key);
     }
   });
 
-  it("all 21 values are valid hex strings", () => {
+  it("all 23 values are valid hex strings", () => {
     for (const value of Object.values(colors)) {
       expectValidHex(value);
     }
@@ -461,9 +463,9 @@ describe("deriveColors - harmony modes", () => {
     describe(`harmony: ${harmony}`, () => {
       const colors = deriveColors("#1e90ff", "light", { harmony });
 
-      it("returns all 21 valid hex colors", () => {
+      it("returns all 23 valid hex colors", () => {
         const values = Object.values(colors);
-        expect(values).toHaveLength(21);
+        expect(values).toHaveLength(23);
         for (const v of values) {
           expectValidHex(v);
         }

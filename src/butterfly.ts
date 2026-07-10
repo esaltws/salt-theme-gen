@@ -223,15 +223,17 @@ export function deriveColors(
   if (opts.tertiary) base.tertiary = opts.tertiary;
   if (opts.quaternary) base.quaternary = opts.quaternary;
 
-  // Derive 8 "on" colors with WCAG auto-correction
-  const onPrimary = deriveOnColor(base.primary);
-  const onSecondary = deriveOnColor(base.secondary);
-  const onTertiary = deriveOnColor(base.tertiary);
+  // Derive 10 "on" colors with WCAG auto-correction
+  const onPrimary    = deriveOnColor(base.primary);
+  const onSecondary  = deriveOnColor(base.secondary);
+  const onTertiary   = deriveOnColor(base.tertiary);
   const onQuaternary = deriveOnColor(base.quaternary);
-  const onDanger = deriveOnColor(base.danger);
-  const onSuccess = deriveOnColor(base.success);
-  const onWarning = deriveOnColor(base.warning);
-  const onInfo = deriveOnColor(base.info);
+  const onBackground = deriveOnColor(base.background);
+  const onSurface    = deriveOnColor(base.surface);
+  const onDanger     = deriveOnColor(base.danger);
+  const onSuccess    = deriveOnColor(base.success);
+  const onWarning    = deriveOnColor(base.warning);
+  const onInfo       = deriveOnColor(base.info);
 
   return {
     primary: base.primary,
@@ -251,6 +253,8 @@ export function deriveColors(
     onSecondary,
     onTertiary,
     onQuaternary,
+    onBackground,
+    onSurface,
     onDanger,
     onSuccess,
     onWarning,

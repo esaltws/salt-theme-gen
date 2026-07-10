@@ -117,12 +117,13 @@ describe("buildAccessibilityReport", () => {
     "dangerOnBackground", "successOnBackground",
     "warningOnBackground", "infoOnBackground",
     "onPrimaryOnPrimary", "onSecondaryOnSecondary", "onTertiaryOnTertiary", "onQuaternaryOnQuaternary",
+    "onBackgroundOnBackground", "onSurfaceOnSurface",
     "onDangerOnDanger", "onSuccessOnSuccess",
     "onWarningOnWarning", "onInfoOnInfo",
     "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
   ];
 
-  it("returns object with all 23 keys", () => {
+  it("returns object with all 25 keys", () => {
     for (const key of reportKeys) {
       expect(report).toHaveProperty(key);
     }

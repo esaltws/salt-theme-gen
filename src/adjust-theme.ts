@@ -37,14 +37,16 @@ export type ThemeOverrides = {
 // ─── Constants ──────────────────────────────────────────────────────
 
 const BASE_TO_ON: [keyof SemanticColors, keyof SemanticColors][] = [
-  ["primary", "onPrimary"],
-  ["secondary", "onSecondary"],
-  ["tertiary", "onTertiary"],
+  ["primary",    "onPrimary"],
+  ["secondary",  "onSecondary"],
+  ["tertiary",   "onTertiary"],
   ["quaternary", "onQuaternary"],
-  ["danger", "onDanger"],
-  ["success", "onSuccess"],
-  ["warning", "onWarning"],
-  ["info", "onInfo"],
+  ["background", "onBackground"],
+  ["surface",    "onSurface"],
+  ["danger",     "onDanger"],
+  ["success",    "onSuccess"],
+  ["warning",    "onWarning"],
+  ["info",       "onInfo"],
 ];
 
 const INTENT_KEYS: (keyof IntentStates)[] = [

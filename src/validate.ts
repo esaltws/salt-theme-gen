@@ -6,7 +6,9 @@ import type { GeneratedTheme, GeneratedThemeMode, BaseColorKey } from "./types.j
 const SEMANTIC_COLOR_KEYS = [
   "primary", "secondary", "tertiary", "quaternary", "background", "surface", "text",
   "muted", "border", "danger", "success", "warning", "info",
-  "onPrimary", "onSecondary", "onTertiary", "onQuaternary", "onDanger", "onSuccess", "onWarning", "onInfo",
+  "onPrimary", "onSecondary", "onTertiary", "onQuaternary",
+  "onBackground", "onSurface",
+  "onDanger", "onSuccess", "onWarning", "onInfo",
 ] as const;
 
 const SURFACE_ELEVATION_KEYS = ["card", "elevated", "modal", "popover"] as const;
@@ -35,6 +37,7 @@ const ACCESSIBILITY_KEYS = [
   "textOnBackground", "textOnSurface", "mutedOnBackground",
   "dangerOnBackground", "successOnBackground", "warningOnBackground", "infoOnBackground",
   "onPrimaryOnPrimary", "onSecondaryOnSecondary", "onTertiaryOnTertiary", "onQuaternaryOnQuaternary",
+  "onBackgroundOnBackground", "onSurfaceOnSurface",
   "onDangerOnDanger", "onSuccessOnSuccess", "onWarningOnWarning", "onInfoOnInfo",
   "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
 ] as const;

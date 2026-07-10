@@ -129,6 +129,8 @@ export function buildAccessibilityReport(
     onSecondaryOnSecondary: makeEntry(colors.onSecondary, colors.secondary),
     onTertiaryOnTertiary: makeEntry(colors.onTertiary, colors.tertiary),
     onQuaternaryOnQuaternary: makeEntry(colors.onQuaternary, colors.quaternary),
+    onBackgroundOnBackground: makeEntry(colors.onBackground, colors.background),
+    onSurfaceOnSurface: makeEntry(colors.onSurface, colors.surface),
     onDangerOnDanger: makeEntry(colors.onDanger, colors.danger),
     onSuccessOnSuccess: makeEntry(colors.onSuccess, colors.success),
     onWarningOnWarning: makeEntry(colors.onWarning, colors.warning),

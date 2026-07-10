@@ -59,7 +59,7 @@ describe("CSS named colors - theme generation", () => {
     expect(() => generateTheme({ primary: name })).not.toThrow();
   });
 
-  it.each(CSS_COLORS)("%s produces valid hex for all 21 semantic colors", (name) => {
+  it.each(CSS_COLORS)("%s produces valid hex for all 23 semantic colors", (name) => {
     const theme = generateTheme({ primary: name });
     for (const mode of ["light", "dark"] as const) {
       const colors = theme[mode].colors;
