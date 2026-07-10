@@ -1,7 +1,7 @@
-import { parseColor, oklchToHex } from "./color-math.js";
+import { parseColor, oklchToHex, contrastRatio } from "./color-math.js";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
-import { buildAccessibilityReport } from "./on-colors.js";
+import { buildAccessibilityReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
 import { SPACING_PRESETS } from "./presets/spacing-presets.js";
 import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
@@ -18,7 +18,185 @@ import type {
   SpacingScale,
   FontSizeScale,
   RadiusScale,
+  SemanticColors,
+  BaseColorKey,
+  BaseColorOverride,
+  ThemeWarning,
 } from "./types.js";
+
+// ─── Base color key registry ──────────────────────────────────────────
+
+const ALL_BASE_KEYS: BaseColorKey[] = [
+  "primary", "secondary", "tertiary", "quaternary",
+  "background", "surface", "text", "muted", "border",
+  "danger", "success", "warning", "info",
+];
+
+// The 8 base→on pairs (must re-derive on-colors after overrides settle)
+const BASE_TO_ON: [BaseColorKey, keyof SemanticColors][] = [
+  ["primary",    "onPrimary"],
+  ["secondary",  "onSecondary"],
+  ["tertiary",   "onTertiary"],
+  ["quaternary", "onQuaternary"],
+  ["danger",     "onDanger"],
+  ["success",    "onSuccess"],
+  ["warning",    "onWarning"],
+  ["info",       "onInfo"],
+];
+
+// WCAG pairs: colors checked as foreground against background
+const WCAG_PAIRS: Partial<Record<BaseColorKey, number>> = {
+  primary:    4.5,
+  secondary:  4.5,
+  tertiary:   4.5,
+  quaternary: 4.5,
+  danger:     4.5,
+  success:    4.5,
+  warning:    4.5,
+  info:       4.5,
+  text:       4.5,
+  muted:      3.0, // large text / UI element threshold
+  // background, surface, border → no check (these are backgrounds/non-text)
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+function isFullySpecified(overrides: BaseColorOverride): boolean {
+  return ALL_BASE_KEYS.every((k) => k in overrides && overrides[k] !== undefined);
+}
+
+/**
+ * Merge legacy flat options + colors.both + colors[mode] into one object.
+ * Precedence (highest → lowest): colors[mode] > colors.both > legacy flat options.
+ * All values are normalized via parseColor().
+ */
+function resolveEffectiveOverrides(
+  options: GenerateThemeOptions,
+  mode: "light" | "dark"
+): BaseColorOverride {
+  const legacy: BaseColorOverride = {};
+  if (options.secondary)  legacy.secondary  = parseColor(options.secondary);
+  if (options.tertiary)   legacy.tertiary   = parseColor(options.tertiary);
+  if (options.quaternary) legacy.quaternary = parseColor(options.quaternary);
+
+  const both     = options.colors?.both  ?? {};
+  const modeSpec = (mode === "light" ? options.colors?.light : options.colors?.dark) ?? {};
+
+  // Normalize all user-provided hex values
+  const merged: BaseColorOverride = { ...legacy };
+  for (const [k, v] of Object.entries(both) as [BaseColorKey, string][]) {
+    if (v !== undefined) merged[k] = parseColor(v);
+  }
+  for (const [k, v] of Object.entries(modeSpec) as [BaseColorKey, string][]) {
+    if (v !== undefined) merged[k] = parseColor(v);
+  }
+  return merged;
+}
+
+/**
+ * Apply user overrides on top of butterfly-derived colors, with WCAG checking.
+ *
+ * Processing order:
+ * 1. background first (cascade: re-correct non-user intent colors against new bg)
+ * 2. all other user-provided keys
+ * 3. re-derive all 8 on-colors from final settled values
+ */
+function applyUserOverridesWithWCAG(
+  derived: SemanticColors,
+  userOverrides: BaseColorOverride,
+  overrideFlag: boolean,
+  mode: "light" | "dark"
+): { colors: SemanticColors; warnings: ThemeWarning[] } {
+  const working = { ...derived } as Record<string, string>;
+  const warnings: ThemeWarning[] = [];
+
+  // Step 1: apply background first, then cascade re-correct derived intent colors
+  if (userOverrides.background !== undefined) {
+    working.background = userOverrides.background;
+    // Re-correct every non-user-provided key that has a WCAG pair
+    for (const [key, minRatio] of Object.entries(WCAG_PAIRS) as [BaseColorKey, number][]) {
+      if (key in userOverrides) continue; // user is providing this one — handle in step 2
+      working[key] = autoCorrectContrast(working[key], working.background, minRatio);
+    }
+  }
+
+  // Step 2: apply remaining user overrides with WCAG check
+  for (const key of ALL_BASE_KEYS) {
+    if (key === "background") continue; // already handled
+    const userValue = userOverrides[key];
+    if (userValue === undefined) continue;
+
+    const minRatio = WCAG_PAIRS[key];
+    if (minRatio === undefined) {
+      // surface, border — no WCAG check, apply directly
+      working[key] = userValue;
+      continue;
+    }
+
+    const bg = working.background;
+    const ratio = Math.round(contrastRatio(userValue, bg) * 100) / 100;
+
+    if (ratio >= minRatio) {
+      working[key] = userValue;
+    } else if (!overrideFlag) {
+      // Keep user value, warn
+      working[key] = userValue;
+      warnings.push({ mode, key, value: userValue, background: bg, ratio, required: minRatio, action: "warn", finalValue: userValue });
+    } else {
+      // Auto-correct (preserve hue, shift L), warn
+      const corrected = autoCorrectContrast(userValue, bg, minRatio);
+      working[key] = corrected;
+      warnings.push({ mode, key, value: userValue, background: bg, ratio, required: minRatio, action: "corrected", finalValue: corrected });
+    }
+  }
+
+  // Step 3: re-derive all 8 on-colors from final settled base values
+  for (const [baseKey, onKey] of BASE_TO_ON) {
+    working[onKey as string] = deriveOnColor(working[baseKey]);
+  }
+
+  return { colors: working as SemanticColors, warnings };
+}
+
+function generateModeWithOverrides(
+  mode: "light" | "dark",
+  primaryHex: string,
+  harmony: DeriveColorsOptions["harmony"],
+  userOverrides: BaseColorOverride,
+  overrideFlag: boolean,
+  spacing: SpacingScale,
+  radius: RadiusScale,
+  fontSizes: FontSizeScale,
+  fontLevel: FontLevel
+): { result: GeneratedThemeMode; warnings: ThemeWarning[] } {
+  let derived: SemanticColors;
+
+  if (isFullySpecified(userOverrides)) {
+    // Full-mode bypass: build base colors directly from user overrides
+    const base: Record<string, string> = {};
+    for (const k of ALL_BASE_KEYS) base[k] = userOverrides[k]!;
+    // Derive on-colors as placeholders so the shape is complete before WCAG pass
+    for (const [baseKey, onKey] of BASE_TO_ON) {
+      base[onKey as string] = deriveOnColor(base[baseKey]);
+    }
+    derived = base as unknown as SemanticColors;
+    // Still run WCAG checks even in full bypass (warnings only, no cascade re-correction)
+  } else {
+    // Normal butterfly derivation — no user overrides passed to butterfly
+    derived = deriveColors(primaryHex, mode, { harmony });
+  }
+
+  const { colors, warnings } = applyUserOverridesWithWCAG(derived, userOverrides, overrideFlag, mode);
+
+  const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
+  const states = deriveAllIntentStates(colors);
+  const accessibility = buildAccessibilityReport(colors);
+
+  return {
+    result: { mode, colors, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility },
+    warnings,
+  };
+}
 
 /**
  * Generate a complete light + dark theme from minimal input.
@@ -39,45 +217,69 @@ import type {
  *   radius: "rounded",
  *   fontSize: "large",
  * });
+ *
+ * @example
+ * // Custom colors with WCAG warnings
+ * const theme = generateTheme({
+ *   colors: { both: { danger: "#e00" }, dark: { background: "#0a0a1a" } },
+ *   override: false, // keep user values even if WCAG fails (default)
+ * });
  */
 export function generateTheme(options: GenerateThemeOptions = {}): GeneratedTheme {
-  // 1. Resolve primary color
+  // 1. Resolve primary seed
   const primaryHex = resolvePrimary(options);
 
-  // 2. Resolve color overrides + harmony
-  const colorOpts: DeriveColorsOptions = {
-    harmony: options.harmony,
-    secondary: options.secondary ? parseColor(options.secondary) : undefined,
-    tertiary: options.tertiary ? parseColor(options.tertiary) : undefined,
-    quaternary: options.quaternary ? parseColor(options.quaternary) : undefined,
-  };
-
-  // 3. Resolve scales
-  const spacing = resolveScale<SpacingPreset, SpacingScale>(
-    options.spacing,
-    SPACING_PRESETS,
-    "default"
-  );
-  const fontSize = resolveScale<FontSizePreset, FontSizeScale>(
-    options.fontSize,
-    FONT_SIZE_PRESETS,
-    "default"
-  );
-  const radius = resolveScale<RadiusPreset, RadiusScale>(
-    options.radius,
-    RADIUS_PRESETS,
-    "default"
-  );
-
-  // 4. Resolve fontLevel
+  // 2. Resolve scales
+  const spacing = resolveScale<SpacingPreset, SpacingScale>(options.spacing, SPACING_PRESETS, "default");
+  const fontSize = resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
+  const radius = resolveScale<RadiusPreset, RadiusScale>(options.radius, RADIUS_PRESETS, "default");
   const fontLevel = Math.max(8, Math.min(18, options.fontLevel ?? 16)) as FontLevel;
 
-  // 5. Generate both modes
-  const light = generateMode("light", primaryHex, colorOpts, spacing, radius, fontSize, fontLevel);
-  const dark = generateMode("dark", primaryHex, colorOpts, spacing, radius, fontSize, fontLevel);
+  // 3. Fast path — no user color overrides
+  const hasColorOverrides =
+    options.colors !== undefined ||
+    options.secondary !== undefined ||
+    options.tertiary  !== undefined ||
+    options.quaternary !== undefined;
 
-  return { light, dark };
+  if (!hasColorOverrides) {
+    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, fontLevel);
+    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, fontLevel);
+    return { light, dark };
+  }
+
+  // 4. New path — resolve per-mode overrides
+  const overrideFlag = options.override ?? false;
+  const lightOverrides = resolveEffectiveOverrides(options, "light");
+  const darkOverrides  = resolveEffectiveOverrides(options, "dark");
+
+  const lightFull = isFullySpecified(lightOverrides);
+  const darkFull  = isFullySpecified(darkOverrides);
+
+  // Cross-seed: fully-specified mode's primary seeds the other mode's butterfly
+  let lightPrimary = primaryHex;
+  let darkPrimary  = primaryHex;
+  if (lightFull && lightOverrides.primary) {
+    if (!darkFull) darkPrimary = lightOverrides.primary;
+    lightPrimary = lightOverrides.primary;
+  }
+  if (darkFull && darkOverrides.primary) {
+    if (!lightFull) lightPrimary = darkOverrides.primary;
+    darkPrimary = darkOverrides.primary;
+  }
+
+  const { result: light, warnings: lightWarns } = generateModeWithOverrides(
+    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, fontLevel
+  );
+  const { result: dark, warnings: darkWarns } = generateModeWithOverrides(
+    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, fontLevel
+  );
+
+  const allWarnings = [...lightWarns, ...darkWarns];
+  return { light, dark, ...(allWarnings.length > 0 && { warnings: allWarnings }) };
 }
+
+// ─── Original fast-path mode generator (unchanged) ───────────────────
 
 function generateMode(
   mode: "light" | "dark",
@@ -100,6 +302,9 @@ function generateMode(
     spacing,
     radius,
     fontSizes,
+    iconSizes: fontSizes,
+    sizeMap: fontSizes,
+    dimensions: fontSizes,
     fontLevel,
     states,
     accessibility,
@@ -118,7 +323,6 @@ function resolvePrimary(options: GenerateThemeOptions): string {
         `Unknown preset: "${options.preset}". Valid presets: ${Object.keys(NATURE_PRESETS).join(", ")}`
       );
     }
-    // Convert preset hue+chroma to a primary HEX via OKLCH
     return oklchToHex({ L: 0.55, C: preset.chroma, H: preset.hue });
   }
 

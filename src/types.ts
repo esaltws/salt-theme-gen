@@ -163,6 +163,39 @@ export type SurfaceElevation = {
   popover: string;    // popover / tooltip / dropdown
 };
 
+// ─── Base Color Override (user input — no on-colors) ─────────────────
+
+export type BaseColorKey =
+  | "primary" | "secondary" | "tertiary" | "quaternary"
+  | "background" | "surface" | "text" | "muted" | "border"
+  | "danger" | "success" | "warning" | "info";
+
+export type BaseColorOverride = Partial<Record<BaseColorKey, string>>;
+
+export type GenerateThemeColors = {
+  light?: BaseColorOverride;
+  dark?: BaseColorOverride;
+  /** Applies to both modes; mode-specific keys win per-key */
+  both?: BaseColorOverride;
+};
+
+export type ThemeWarning = {
+  mode: "light" | "dark";
+  key: BaseColorKey;
+  /** Original user-provided hex */
+  value: string;
+  /** Background it was checked against */
+  background: string;
+  /** Actual contrast ratio */
+  ratio: number;
+  /** Minimum ratio required */
+  required: number;
+  /** "warn" = kept user value; "corrected" = replaced with WCAG-corrected value */
+  action: "warn" | "corrected";
+  /** Final value used in the theme */
+  finalValue: string;
+};
+
 // ─── Accessibility ───────────────────────────────────────────────────
 
 export type ContrastEntry = {
@@ -211,6 +244,8 @@ export type GeneratedThemeMode = {
 export type GeneratedTheme = {
   light: GeneratedThemeMode;
   dark: GeneratedThemeMode;
+  /** Present only when user-provided colors triggered WCAG failures */
+  warnings?: ThemeWarning[];
 };
 
 // ─── Input Options ───────────────────────────────────────────────────
@@ -228,6 +263,17 @@ export type GenerateThemeOptions = {
   quaternary?: string;
   /** Color harmony strategy (default: "analogous") */
   harmony?: ColorHarmony;
+  /**
+   * Provide any subset of the 13 base semantic colors per mode.
+   * Missing colors are auto-derived from the primary seed.
+   */
+  colors?: GenerateThemeColors;
+  /**
+   * Controls WCAG conflict resolution for user-provided colors.
+   * false (default): keep user value, warn on failure.
+   * true: auto-correct failing value (hue preserved), warn on failure.
+   */
+  override?: boolean;
   /** Spacing scale preset or custom object */
   spacing?: SpacingPreset | SpacingScale;
   /** Font size scale preset or custom object */
