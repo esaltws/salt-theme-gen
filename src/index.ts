@@ -96,3 +96,7 @@ export type { TailwindThemeExtend, TailwindConfigResult } from "./tailwind.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
+
+// ─── Color Blindness Simulation ───────────────────────────────────────
+export { simulateColorBlindness, simulateTheme } from "./color-blindness.js";
+export type { ColorBlindnessType } from "./color-blindness.js";
