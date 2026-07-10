@@ -88,5 +88,11 @@ export { generateTonalPalette, generateTonalPalettes } from "./palettes.js";
 export { generateCssVariables } from "./css-variables.js";
 export type { CssFormat, CssVariablesOptions, CssVariablesResult } from "./css-variables.js";
 
+// ─── Design Token Exports ─────────────────────────────────────────────
+export { generateDtcgTokens } from "./dtcg.js";
+export type { DtcgToken, DtcgColorToken, DtcgDimensionToken, DtcgGroup, DtcgTokensResult } from "./dtcg.js";
+export { generateTailwindConfig } from "./tailwind.js";
+export type { TailwindThemeExtend, TailwindConfigResult } from "./tailwind.js";
+
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
