@@ -210,6 +210,7 @@ export type AccessibilityReport = {
   quaternaryOnBackground: ContrastEntry;
   textOnBackground: ContrastEntry;
   textOnSurface: ContrastEntry;
+  mutedOnBackground: ContrastEntry;
   dangerOnBackground: ContrastEntry;
   successOnBackground: ContrastEntry;
   warningOnBackground: ContrastEntry;
@@ -222,6 +223,10 @@ export type AccessibilityReport = {
   onSuccessOnSuccess: ContrastEntry;
   onWarningOnWarning: ContrastEntry;
   onInfoOnInfo: ContrastEntry;
+  textOnCard: ContrastEntry;
+  textOnElevated: ContrastEntry;
+  textOnModal: ContrastEntry;
+  textOnPopover: ContrastEntry;
 };
 
 // ─── Generated Theme Output ──────────────────────────────────────────

@@ -190,7 +190,7 @@ function generateModeWithOverrides(
 
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
-  const accessibility = buildAccessibilityReport(colors);
+  const accessibility = buildAccessibilityReport(colors, surfaceElevation);
 
   return {
     result: { mode, colors, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility },
@@ -293,7 +293,7 @@ function generateMode(
   const colors = deriveColors(primaryHex, mode, colorOpts);
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
-  const accessibility = buildAccessibilityReport(colors);
+  const accessibility = buildAccessibilityReport(colors, surfaceElevation);
 
   return {
     mode,

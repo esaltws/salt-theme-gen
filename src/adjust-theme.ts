@@ -167,7 +167,7 @@ function adjustMode(
 
   // 7. Accessibility
   const accessibility: AccessibilityReport = anyColorChanged
-    ? buildAccessibilityReport(mergedColors)
+    ? buildAccessibilityReport(mergedColors, surfaceElevation)
     : mode.accessibility;
 
   return {

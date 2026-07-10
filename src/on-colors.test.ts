@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { deriveOnColor, autoCorrectContrast, buildAccessibilityReport } from "./on-colors";
 import { contrastRatio, hexToOklch } from "./color-math";
-import { deriveColors } from "./butterfly";
+import { deriveColors, deriveSurfaceElevation } from "./butterfly";
 import { expectValidHex } from "./test-helpers";
 
 // ─── deriveOnColor ──────────────────────────────────────────────────
@@ -108,19 +108,21 @@ describe("autoCorrectContrast", () => {
 
 describe("buildAccessibilityReport", () => {
   const lightColors = deriveColors("#1e90ff", "light");
-  const report = buildAccessibilityReport(lightColors);
+  const surfaceElevation = deriveSurfaceElevation(lightColors.surface, lightColors.primary, "light");
+  const report = buildAccessibilityReport(lightColors, surfaceElevation);
 
   const reportKeys = [
     "primaryOnBackground", "secondaryOnBackground", "tertiaryOnBackground", "quaternaryOnBackground",
-    "textOnBackground", "textOnSurface",
+    "textOnBackground", "textOnSurface", "mutedOnBackground",
     "dangerOnBackground", "successOnBackground",
     "warningOnBackground", "infoOnBackground",
     "onPrimaryOnPrimary", "onSecondaryOnSecondary", "onTertiaryOnTertiary", "onQuaternaryOnQuaternary",
     "onDangerOnDanger", "onSuccessOnSuccess",
     "onWarningOnWarning", "onInfoOnInfo",
+    "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
   ];
 
-  it("returns object with all 18 keys", () => {
+  it("returns object with all 23 keys", () => {
     for (const key of reportKeys) {
       expect(report).toHaveProperty(key);
     }

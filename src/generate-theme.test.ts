@@ -218,8 +218,8 @@ describe("generateTheme - output structure", () => {
     }
   });
 
-  it("accessibility object has 18 entries", () => {
-    expect(Object.keys(theme.light.accessibility)).toHaveLength(18);
+  it("accessibility object has 23 entries", () => {
+    expect(Object.keys(theme.light.accessibility)).toHaveLength(23);
   });
 
   it("all color values in output match hex format", () => {

@@ -32,10 +32,11 @@ const STATE_KEYS = ["hover", "pressed", "focused", "disabled"] as const;
 
 const ACCESSIBILITY_KEYS = [
   "primaryOnBackground", "secondaryOnBackground", "tertiaryOnBackground", "quaternaryOnBackground",
-  "textOnBackground", "textOnSurface",
+  "textOnBackground", "textOnSurface", "mutedOnBackground",
   "dangerOnBackground", "successOnBackground", "warningOnBackground", "infoOnBackground",
   "onPrimaryOnPrimary", "onSecondaryOnSecondary", "onTertiaryOnTertiary", "onQuaternaryOnQuaternary",
   "onDangerOnDanger", "onSuccessOnSuccess", "onWarningOnWarning", "onInfoOnInfo",
+  "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
 ] as const;
 
 // ─── Helpers ────────────────────────────────────────────────────────

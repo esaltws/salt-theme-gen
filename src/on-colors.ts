@@ -5,7 +5,7 @@ import {
   oklchToHex,
   clampOklch,
 } from "./color-math.js";
-import type { SemanticColors, AccessibilityReport, ContrastEntry } from "./types.js";
+import type { SemanticColors, SurfaceElevation, AccessibilityReport, ContrastEntry } from "./types.js";
 
 /**
  * Derive the "on" color for a given background.
@@ -109,7 +109,10 @@ function binarySearchL(
 /**
  * Build a contrast report for all key color pairs.
  */
-export function buildAccessibilityReport(colors: SemanticColors): AccessibilityReport {
+export function buildAccessibilityReport(
+  colors: SemanticColors,
+  surfaceElevation: SurfaceElevation
+): AccessibilityReport {
   return {
     primaryOnBackground: makeEntry(colors.primary, colors.background),
     secondaryOnBackground: makeEntry(colors.secondary, colors.background),
@@ -117,6 +120,7 @@ export function buildAccessibilityReport(colors: SemanticColors): AccessibilityR
     quaternaryOnBackground: makeEntry(colors.quaternary, colors.background),
     textOnBackground: makeEntry(colors.text, colors.background),
     textOnSurface: makeEntry(colors.text, colors.surface),
+    mutedOnBackground: makeEntry(colors.muted, colors.background),
     dangerOnBackground: makeEntry(colors.danger, colors.background),
     successOnBackground: makeEntry(colors.success, colors.background),
     warningOnBackground: makeEntry(colors.warning, colors.background),
@@ -129,6 +133,10 @@ export function buildAccessibilityReport(colors: SemanticColors): AccessibilityR
     onSuccessOnSuccess: makeEntry(colors.onSuccess, colors.success),
     onWarningOnWarning: makeEntry(colors.onWarning, colors.warning),
     onInfoOnInfo: makeEntry(colors.onInfo, colors.info),
+    textOnCard: makeEntry(colors.text, surfaceElevation.card),
+    textOnElevated: makeEntry(colors.text, surfaceElevation.elevated),
+    textOnModal: makeEntry(colors.text, surfaceElevation.modal),
+    textOnPopover: makeEntry(colors.text, surfaceElevation.popover),
   };
 }
 
