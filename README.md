@@ -1,8 +1,17 @@
 # salt-theme-gen
 
-OKLCH-based design system generator. One color in — complete light + dark theme out.
+**One color. 150+ design tokens. Light + dark. Accessible by default.**
 
-Zero dependencies. Pure TypeScript. Works everywhere: React Native, React, Next.js, Vue, Node, Bun, Deno.
+Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, font sizes, CSS custom properties, Tailwind config, DTCG tokens, WCAG and APCA contrast reports, and color blindness simulation. All from a single function call.
+
+```ts
+const theme = generateTheme({ primary: '#0E9D8E' });
+```
+
+Built on **OKLCH** — the perceptually uniform color space that makes hue shifts, dark mode, and harmony actually look right. Not HSL. Not sRGB math. OKLCH.
+
+**Zero dependencies. Pure TypeScript. Strict types throughout.**
+Works in React Native, React, Next.js, Vue, Svelte, Angular, Node, Bun, Deno — or any JavaScript runtime.
 
 [![npm](https://img.shields.io/npm/v/salt-theme-gen)](https://www.npmjs.com/package/salt-theme-gen)
 [![license](https://img.shields.io/npm/l/salt-theme-gen)](LICENSE)
