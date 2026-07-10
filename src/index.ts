@@ -25,6 +25,10 @@ export type {
   Oklab,
   OKLCH,
   FontLevel,
+  BaseColorKey,
+  BaseColorOverride,
+  GenerateThemeColors,
+  ThemeWarning,
 } from "./types.js";
 
 // ─── Preset Data (for UI pickers, iteration) ────────────────────────

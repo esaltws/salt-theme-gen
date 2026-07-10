@@ -1,5 +1,5 @@
 import { isValidHex } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeMode } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeMode, BaseColorKey } from "./types.js";
 
 // ─── Shape Definitions ──────────────────────────────────────────────
 
@@ -14,6 +14,18 @@ const SURFACE_ELEVATION_KEYS = ["card", "elevated", "modal", "popover"] as const
 const SPACING_KEYS = ["none", "xs", "sm", "md", "lg", "xl", "xxl"] as const;
 const RADIUS_KEYS = ["none", "sm", "md", "lg", "xl", "xxl", "pill"] as const;
 const FONT_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+
+const ICON_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+const SIZE_MAP_KEYS  = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+const DIMENSION_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+
+const BASE_COLOR_KEYS: BaseColorKey[] = [
+  "primary", "secondary", "tertiary", "quaternary",
+  "background", "surface", "text", "muted", "border",
+  "danger", "success", "warning", "info",
+];
+
+const WARNING_ACTIONS = new Set(["warn", "corrected"]);
 
 const INTENT_KEYS = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
 const STATE_KEYS = ["hover", "pressed", "focused", "disabled"] as const;
@@ -96,6 +108,11 @@ function validateMode(v: unknown, path: string): void {
   // fontSizes
   validateNumberObject(requireObject(obj.fontSizes, `${path}.fontSizes`), FONT_SIZE_KEYS, `${path}.fontSizes`);
 
+  // iconSizes, sizeMap, dimensions
+  validateNumberObject(requireObject(obj.iconSizes, `${path}.iconSizes`), ICON_SIZE_KEYS, `${path}.iconSizes`);
+  validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
+  validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
+
   // fontLevel
   const fl = obj.fontLevel;
   if (typeof fl !== "number" || fl < 8 || fl > 18 || fl !== Math.floor(fl)) {
@@ -119,6 +136,26 @@ function validateMode(v: unknown, path: string): void {
       throw new Error(`${path}.accessibility.${key}.level: expected "AAA", "AA", or "fail", got ${JSON.stringify(entry.level)}`);
     }
   }
+}
+
+// ─── Warning Validator ───────────────────────────────────────────────
+
+function validateThemeWarning(v: unknown, path: string): void {
+  const obj = requireObject(v, path);
+  if (obj.mode !== "light" && obj.mode !== "dark") {
+    throw new Error(`${path}.mode: expected "light" or "dark", got ${JSON.stringify(obj.mode)}`);
+  }
+  if (!BASE_COLOR_KEYS.includes(obj.key as BaseColorKey)) {
+    throw new Error(`${path}.key: expected BaseColorKey, got ${JSON.stringify(obj.key)}`);
+  }
+  requireHex(obj.value, `${path}.value`);
+  requireHex(obj.background, `${path}.background`);
+  requireNumber(obj.ratio, `${path}.ratio`);
+  requireNumber(obj.required, `${path}.required`);
+  if (!WARNING_ACTIONS.has(obj.action as string)) {
+    throw new Error(`${path}.action: expected "warn" or "corrected", got ${JSON.stringify(obj.action)}`);
+  }
+  requireHex(obj.finalValue, `${path}.finalValue`);
 }
 
 // ─── Public API ─────────────────────────────────────────────────────
@@ -147,5 +184,15 @@ export function parseThemeJSON(value: unknown): GeneratedTheme {
     throw new Error(`theme.dark.mode: expected "dark", got ${JSON.stringify(dark.mode)}`);
   }
 
-  return { light, dark };
+  // warnings — optional, validate shape if present
+  if ("warnings" in obj && obj.warnings !== undefined) {
+    if (!Array.isArray(obj.warnings)) {
+      throw new Error(`theme.warnings: expected array, got ${typeof obj.warnings}`);
+    }
+    for (let i = 0; i < obj.warnings.length; i++) {
+      validateThemeWarning(obj.warnings[i], `theme.warnings[${i}]`);
+    }
+  }
+
+  return { light, dark, ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }) };
 }

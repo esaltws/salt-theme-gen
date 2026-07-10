@@ -6,7 +6,7 @@ import { RADIUS_PRESETS } from "./presets/radius-presets";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets";
 import { NATURE_PRESETS } from "./presets/nature-presets";
 import { expectValidHex } from "./test-helpers";
-import type { ThemePreset } from "./types";
+import type { ThemePreset, BaseColorOverride } from "./types";
 
 const presetNames = Object.keys(NATURE_PRESETS) as ThemePreset[];
 
@@ -287,5 +287,183 @@ describe("generateTheme - WCAG compliance", () => {
         expect(ratio).toBeGreaterThanOrEqual(4.5);
       }
     }
+  });
+});
+
+// ─── colors input — WCAG fail + override: false (keep user value) ────
+
+describe("generateTheme - colors.both WCAG fail, override: false", () => {
+  // Very light primary that cannot pass 4.5:1 on the light background
+  const theme = generateTheme({ colors: { both: { primary: "#d0e8f0" } }, override: false });
+
+  it("produces warnings", () => {
+    expect(theme.warnings).toBeDefined();
+    expect(theme.warnings!.length).toBeGreaterThan(0);
+  });
+
+  it("light mode warning has action='warn'", () => {
+    const warn = theme.warnings!.find((w) => w.key === "primary" && w.mode === "light");
+    expect(warn).toBeDefined();
+    expect(warn!.action).toBe("warn");
+  });
+
+  it("user value is kept in output", () => {
+    const warn = theme.warnings!.find((w) => w.key === "primary" && w.mode === "light");
+    expect(theme.light.colors.primary).toBe(warn!.value);
+    expect(warn!.finalValue).toBe(warn!.value);
+  });
+
+  it("on-color is still auto-derived from the kept user value", () => {
+    expectValidHex(theme.light.colors.onPrimary);
+    expect(contrastRatio(theme.light.colors.onPrimary, theme.light.colors.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+// ─── colors input — WCAG fail + override: true (auto-correct) ────────
+
+describe("generateTheme - colors.both WCAG fail, override: true", () => {
+  const theme = generateTheme({ colors: { both: { primary: "#d0e8f0" } }, override: true });
+
+  it("produces warnings with action='corrected'", () => {
+    const warn = theme.warnings!.find((w) => w.key === "primary" && w.mode === "light");
+    expect(warn).toBeDefined();
+    expect(warn!.action).toBe("corrected");
+  });
+
+  it("corrected value passes WCAG AA in output", () => {
+    expect(contrastRatio(theme.light.colors.primary, theme.light.colors.background)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("correction preserves hue within 2°", () => {
+    const originalH = hexToOklch("#d0e8f0").H;
+    const correctedH = hexToOklch(theme.light.colors.primary).H;
+    expect(Math.abs(correctedH - originalH)).toBeLessThan(2);
+  });
+
+  it("warning.value is original; warning.finalValue is corrected", () => {
+    const warn = theme.warnings!.find((w) => w.key === "primary" && w.mode === "light");
+    expect(warn!.value).toBe("#d0e8f0");
+    expect(warn!.finalValue).toBe(theme.light.colors.primary);
+    expect(warn!.finalValue).not.toBe(warn!.value);
+  });
+});
+
+// ─── user-provided background triggers intent re-correction ──────────
+
+describe("generateTheme - user background cascades to derived intent colors", () => {
+  // Dark background in light mode — butterfly intent colors may fail on it
+  const theme = generateTheme({ colors: { light: { background: "#1a1a2e" } } });
+  const intentKeys = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
+
+  it("applies the user background", () => {
+    expect(theme.light.colors.background).toBe("#1a1a2e");
+  });
+
+  it("all non-overridden intent colors still pass WCAG AA against the new background", () => {
+    for (const key of intentKeys) {
+      const ratio = contrastRatio(theme.light.colors[key], theme.light.colors.background);
+      expect(ratio).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("dark mode is unaffected", () => {
+    expect(theme.dark.colors.background).not.toBe("#1a1a2e");
+  });
+});
+
+// ─── mode-specific override ──────────────────────────────────────────
+
+describe("generateTheme - mode-specific color override", () => {
+  const base = generateTheme({ primary: "#0e9d8e" });
+  const themed = generateTheme({ primary: "#0e9d8e", colors: { light: { danger: "#c0392b" } } });
+
+  it("overrides light danger only", () => {
+    expect(themed.light.colors.danger).toBe("#c0392b");
+  });
+
+  it("dark danger is unchanged from no-override baseline", () => {
+    expect(themed.dark.colors.danger).toBe(base.dark.colors.danger);
+  });
+});
+
+// ─── precedence: colors[mode] > colors.both > options.secondary ──────
+
+describe("generateTheme - override precedence", () => {
+  it("colors.light wins over colors.both for same key", () => {
+    const theme = generateTheme({
+      colors: { both: { secondary: "#aabbcc" }, light: { secondary: "#ff0000" } },
+    });
+    expect(theme.light.colors.secondary).toBe("#ff0000");
+    expect(theme.dark.colors.secondary).toBe("#aabbcc");
+  });
+
+  it("colors.both wins over legacy options.secondary", () => {
+    const theme = generateTheme({
+      secondary: "#aabbcc",
+      colors: { both: { secondary: "#ff4444" } },
+    });
+    expect(theme.light.colors.secondary).toBe("#ff4444");
+    expect(theme.dark.colors.secondary).toBe("#ff4444");
+  });
+
+  it("legacy options.secondary still works when no colors.* override", () => {
+    const theme = generateTheme({ secondary: "#ff00ff" });
+    expect(theme.light.colors.secondary).toBe("#ff00ff");
+    expect(theme.dark.colors.secondary).toBe("#ff00ff");
+  });
+});
+
+// ─── no warnings on passing colors ──────────────────────────────────
+
+describe("generateTheme - no warnings when user colors pass WCAG", () => {
+  it("high-contrast primary produces no warnings", () => {
+    // Very dark navy easily passes 4.5:1 on light background
+    const theme = generateTheme({ colors: { both: { primary: "#1a237e" } } });
+    const lightWarns = (theme.warnings ?? []).filter((w) => w.mode === "light" && w.key === "primary");
+    expect(lightWarns).toHaveLength(0);
+  });
+
+  it("no light-mode warning for a dark primary that passes on light background", () => {
+    const theme = generateTheme({ colors: { both: { primary: "#1a237e" } } });
+    const lightWarn = (theme.warnings ?? []).find((w) => w.key === "primary" && w.mode === "light");
+    expect(lightWarn).toBeUndefined();
+  });
+});
+
+// ─── full-mode bypass — all 13 colors provided ──────────────────────
+
+describe("generateTheme - full-mode bypass", () => {
+  const fullLight: BaseColorOverride = {
+    primary: "#3498db", secondary: "#2ecc71", tertiary: "#e74c3c",
+    quaternary: "#f39c12", background: "#ecf0f1", surface: "#ffffff",
+    text: "#2c3e50", muted: "#7f8c8d", border: "#bdc3c7",
+    danger: "#c0392b", success: "#27ae60", warning: "#d4ac0d",
+    info: "#2980b9",
+  };
+
+  const theme = generateTheme({ colors: { light: fullLight } });
+
+  it("uses exact user values for light mode base colors", () => {
+    expect(theme.light.colors.background).toBe("#ecf0f1");
+    expect(theme.light.colors.text).toBe("#2c3e50");
+    expect(theme.light.colors.primary).toBe("#3498db");
+  });
+
+  it("auto-derives on-colors for the full light mode", () => {
+    expectValidHex(theme.light.colors.onPrimary);
+    expect(contrastRatio(theme.light.colors.onPrimary, theme.light.colors.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("dark mode is butterfly-derived from light primary as seed", () => {
+    expectValidHex(theme.dark.colors.primary);
+    const lightH = hexToOklch("#3498db").H;
+    const darkH  = hexToOklch(theme.dark.colors.primary).H;
+    expect(Math.abs(darkH - lightH)).toBeLessThan(2);
+  });
+
+  it("dark mode background is darker than light mode background", () => {
+    const lightBgL = hexToOklch(theme.light.colors.background).L;
+    const darkBgL  = hexToOklch(theme.dark.colors.background).L;
+    expect(darkBgL).toBeLessThan(lightBgL);
   });
 });
