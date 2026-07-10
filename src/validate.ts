@@ -29,7 +29,10 @@ const BASE_COLOR_KEYS: BaseColorKey[] = [
 
 const WARNING_ACTIONS = new Set(["warn", "corrected"]);
 
-const INTENT_KEYS = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
+const TONAL_PALETTE_KEYS = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
+const TONAL_STEP_STR_KEYS = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"] as const;
+
+const INTENT_KEYS = TONAL_PALETTE_KEYS;
 const STATE_KEYS = ["hover", "pressed", "focused", "disabled"] as const;
 
 const ACCESSIBILITY_KEYS = [
@@ -99,6 +102,17 @@ function validateMode(v: unknown, path: string): void {
 
   // colors
   validateHexObject(requireObject(obj.colors, `${path}.colors`), SEMANTIC_COLOR_KEYS, `${path}.colors`);
+
+  // palettes
+  const palettes = requireObject(obj.palettes, `${path}.palettes`);
+  requireKeys(palettes, TONAL_PALETTE_KEYS, `${path}.palettes`);
+  for (const key of TONAL_PALETTE_KEYS) {
+    validateHexObject(
+      requireObject(palettes[key], `${path}.palettes.${key}`),
+      TONAL_STEP_STR_KEYS,
+      `${path}.palettes.${key}`
+    );
+  }
 
   // surfaceElevation
   validateHexObject(requireObject(obj.surfaceElevation, `${path}.surfaceElevation`), SURFACE_ELEVATION_KEYS, `${path}.surfaceElevation`);

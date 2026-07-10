@@ -1,6 +1,7 @@
 import { deriveOnColor, buildAccessibilityReport } from "./on-colors.js";
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
+import { generateTonalPalettes } from "./palettes.js";
 import type {
   GeneratedTheme,
   GeneratedThemeMode,
@@ -9,6 +10,7 @@ import type {
   StateColors,
   SurfaceElevation,
   AccessibilityReport,
+  TonalPalettes,
   SpacingScale,
   RadiusScale,
   FontSizeScale,
@@ -167,7 +169,13 @@ function adjustMode(
     surfaceElevation = mode.surfaceElevation;
   }
 
-  // 7. Accessibility
+  // 7. Palettes — regenerate if any of the 8 palette source colors changed
+  const anyPaletteInputChanged = INTENT_KEYS.some((k) => colorChanged(k));
+  const palettes: TonalPalettes = anyPaletteInputChanged
+    ? generateTonalPalettes(mergedColors)
+    : mode.palettes;
+
+  // 8. Accessibility
   const accessibility: AccessibilityReport = anyColorChanged
     ? buildAccessibilityReport(mergedColors, surfaceElevation)
     : mode.accessibility;
@@ -175,6 +183,7 @@ function adjustMode(
   return {
     mode: mode.mode,
     colors: mergedColors,
+    palettes,
     surfaceElevation,
     spacing,
     radius,

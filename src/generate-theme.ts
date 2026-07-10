@@ -2,6 +2,7 @@ import { parseColor, oklchToHex, contrastRatio } from "./color-math.js";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { buildAccessibilityReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
+import { generateTonalPalettes } from "./palettes.js";
 import { SPACING_PRESETS } from "./presets/spacing-presets.js";
 import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
@@ -190,12 +191,13 @@ function generateModeWithOverrides(
 
   const { colors, warnings } = applyUserOverridesWithWCAG(derived, userOverrides, overrideFlag, mode);
 
+  const palettes = generateTonalPalettes(colors);
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
   const accessibility = buildAccessibilityReport(colors, surfaceElevation);
 
   return {
-    result: { mode, colors, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility },
+    result: { mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility },
     warnings,
   };
 }
@@ -293,6 +295,7 @@ function generateMode(
   fontLevel: FontLevel
 ): GeneratedThemeMode {
   const colors = deriveColors(primaryHex, mode, colorOpts);
+  const palettes = generateTonalPalettes(colors);
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
   const accessibility = buildAccessibilityReport(colors, surfaceElevation);
@@ -300,6 +303,7 @@ function generateMode(
   return {
     mode,
     colors,
+    palettes,
     surfaceElevation,
     spacing,
     radius,

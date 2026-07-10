@@ -29,6 +29,10 @@ export type {
   BaseColorOverride,
   GenerateThemeColors,
   ThemeWarning,
+  TonalStep,
+  TonalPalette,
+  TonalPaletteKey,
+  TonalPalettes,
 } from "./types.js";
 
 // ─── Preset Data (for UI pickers, iteration) ────────────────────────
@@ -71,6 +75,9 @@ export { adjustTheme } from "./adjust-theme.js";
 export type { ThemeModeOverrides, ThemeOverrides } from "./adjust-theme.js";
 export { diffTheme } from "./diff-theme.js";
 export type { FieldChange, ThemeModeDiff, ThemeDiff } from "./diff-theme.js";
+
+// ─── Tonal Palettes ──────────────────────────────────────────────────
+export { generateTonalPalette, generateTonalPalettes } from "./palettes.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";

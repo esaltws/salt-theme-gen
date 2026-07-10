@@ -165,6 +165,15 @@ export type SurfaceElevation = {
   popover: string;    // popover / tooltip / dropdown
 };
 
+// ─── Tonal Palettes ──────────────────────────────────────────────────
+
+export type TonalStep = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
+export type TonalPalette = Record<TonalStep, string>;
+export type TonalPaletteKey =
+  | "primary" | "secondary" | "tertiary" | "quaternary"
+  | "danger" | "success" | "warning" | "info";
+export type TonalPalettes = Record<TonalPaletteKey, TonalPalette>;
+
 // ─── Base Color Override (user input — no on-colors) ─────────────────
 
 export type BaseColorKey =
@@ -238,6 +247,7 @@ export type AccessibilityReport = {
 export type GeneratedThemeMode = {
   mode: "light" | "dark";
   colors: SemanticColors;
+  palettes: TonalPalettes;
   surfaceElevation: SurfaceElevation;
   spacing: SpacingScale;
   radius: RadiusScale;
