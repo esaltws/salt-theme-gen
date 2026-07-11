@@ -1,3 +1,4 @@
+import { parseColor } from "./color-math.js";
 import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-colors.js";
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
@@ -121,9 +122,15 @@ function adjustMode(
     ? (Math.max(8, Math.min(18, overrides.fontLevel)) as FontLevel)
     : mode.fontLevel;
 
-  // 2. Merge colors
+  // 2. Merge colors — normalize any CSS color string to hex before merging
   const colorOverrides = overrides.colors ?? {};
-  const mergedColors: SemanticColors = { ...mode.colors, ...colorOverrides };
+  const normalizedColorOverrides: Partial<SemanticColors> = {};
+  for (const [key, value] of Object.entries(colorOverrides)) {
+    if (value !== undefined) {
+      normalizedColorOverrides[key as keyof SemanticColors] = parseColor(value);
+    }
+  }
+  const mergedColors: SemanticColors = { ...mode.colors, ...normalizedColorOverrides };
 
   // 3. Re-derive on-colors for changed bases (unless explicitly overridden)
   for (const [base, onKey] of BASE_TO_ON) {

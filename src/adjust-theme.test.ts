@@ -324,3 +324,55 @@ describe("adjustTheme - round-trip", () => {
     expect(contrastRatio(result.light.colors.onPrimary, "#ff0000")).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+// ─── oklch color input ──────────────────────────────────────────────
+
+describe("adjustTheme - oklch color input", () => {
+  it("accepts oklch() string as primary override and stores hex", () => {
+    const result = adjustTheme(theme, {
+      light: { colors: { primary: "oklch(0.52 0.20 218)" } },
+    });
+    expect(result.light.colors.primary).toMatch(/^#[0-9a-f]{6}$/);
+    expect(result.light.colors.primary).not.toContain("NaN");
+  });
+
+  it("derives valid WCAG-AA on-color when oklch primary is overridden", () => {
+    const result = adjustTheme(theme, {
+      light: { colors: { primary: "oklch(0.52 0.20 218)" } },
+    });
+    expectValidHex(result.light.colors.onPrimary);
+    expect(
+      contrastRatio(result.light.colors.onPrimary, result.light.colors.primary)
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("accepts oklch() in dark mode override", () => {
+    const result = adjustTheme(theme, {
+      dark: { colors: { primary: "oklch(0.68 0.20 218)" } },
+    });
+    expect(result.dark.colors.primary).toMatch(/^#[0-9a-f]{6}$/);
+    expect(result.dark.colors.primary).not.toContain("NaN");
+  });
+
+  it("accepts oklch() via both key", () => {
+    const result = adjustTheme(theme, {
+      both: { colors: { danger: "oklch(0.55 0.22 25)" } },
+    });
+    expect(result.light.colors.danger).toMatch(/^#[0-9a-f]{6}$/);
+    expect(result.dark.colors.danger).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("does not mutate base theme when oklch override is applied", () => {
+    const original = JSON.parse(JSON.stringify(theme));
+    adjustTheme(theme, { light: { colors: { primary: "oklch(0.52 0.20 218)" } } });
+    expect(theme).toEqual(original);
+  });
+
+  it("regenerates accessibility report after oklch primary override", () => {
+    const result = adjustTheme(theme, {
+      light: { colors: { primary: "oklch(0.52 0.20 218)" } },
+    });
+    expect(result.light.accessibility.primaryOnBackground.ratio).toBeGreaterThan(0);
+    expect(result.light.accessibility.primaryOnBackground.level).not.toBe("fail");
+  });
+});

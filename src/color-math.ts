@@ -103,12 +103,28 @@ export function parseColor(input: string): string {
     return rgbToHex({ r, g, b });
   }
 
-  // 3. CSS named color
+  // 3. oklch()
+  const oklchMatch = trimmed.match(
+    /^oklch\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\)$/i
+  );
+  if (oklchMatch) {
+    const L = parseFloat(oklchMatch[1]);
+    const C = parseFloat(oklchMatch[2]);
+    const H = parseFloat(oklchMatch[3]);
+    if (isNaN(L) || isNaN(C) || isNaN(H) || L < 0 || L > 1 || C < 0) {
+      throw new Error(
+        `Invalid oklch() color: "${trimmed}". L must be 0–1, C must be ≥ 0.`
+      );
+    }
+    return oklchToHex({ L, C, H });
+  }
+
+  // 4. CSS named color
   const named = CSS_NAMED_COLORS[trimmed.toLowerCase()];
   if (named) return named;
 
   throw new Error(
-    `Unrecognized color: "${trimmed}". Expected HEX (#RGB/#RRGGBB), rgb(r,g,b), or a CSS color name.`
+    `Unrecognized color: "${trimmed}". Expected HEX (#RGB/#RRGGBB), rgb(r,g,b), oklch(L C H), or a CSS color name.`
   );
 }
 

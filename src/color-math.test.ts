@@ -157,6 +157,48 @@ describe("parseColor", () => {
       expect(() => parseColor("notacolor")).toThrow("Unrecognized color");
     });
   });
+
+  describe("oklch() inputs", () => {
+    it("parses oklch() and returns a valid hex", () => {
+      const result = parseColor("oklch(0.55 0.18 220)");
+      expect(result).toMatch(/^#[0-9a-f]{6}$/);
+      expect(result).not.toContain("NaN");
+    });
+
+    it("oklch(0 0 0) returns black", () => {
+      expect(parseColor("oklch(0 0 0)")).toBe("#000000");
+    });
+
+    it("oklch(1 0 0) returns white", () => {
+      expect(parseColor("oklch(1 0 0)")).toBe("#ffffff");
+    });
+
+    it("parses oklch() with extra whitespace", () => {
+      const result = parseColor("  oklch( 0.55  0.18  220 )  ");
+      expect(result).toMatch(/^#[0-9a-f]{6}$/);
+    });
+
+    it("is case-insensitive", () => {
+      const result = parseColor("OKLCH(0.55 0.18 220)");
+      expect(result).toMatch(/^#[0-9a-f]{6}$/);
+    });
+
+    it("throws for L > 1", () => {
+      expect(() => parseColor("oklch(1.5 0.18 220)")).toThrow("Invalid oklch()");
+    });
+
+    it("throws for L < 0", () => {
+      expect(() => parseColor("oklch(-0.1 0.18 220)")).toThrow("Invalid oklch()");
+    });
+
+    it("throws for C < 0", () => {
+      expect(() => parseColor("oklch(0.5 -0.1 220)")).toThrow("Invalid oklch()");
+    });
+
+    it("error message mentions oklch() as a valid format", () => {
+      expect(() => parseColor("notacolor")).toThrow("oklch(L C H)");
+    });
+  });
 });
 
 // ─── hexToRgb / rgbToHex ────────────────────────────────────────────
