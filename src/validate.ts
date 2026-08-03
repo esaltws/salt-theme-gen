@@ -1,5 +1,7 @@
-import { isValidHex } from "./color-math.js";
+import { parseColor } from "./color-math.js";
 import type { GeneratedTheme, GeneratedThemeMode, BaseColorKey } from "./types.js";
+
+const HSL_RE = /^hsla?\(\s*-?[\d.]+[\s,][\s\S]*?\)/i;
 
 // ─── Shape Definitions ──────────────────────────────────────────────
 
@@ -56,9 +58,14 @@ function requireObject(v: unknown, path: string): Record<string, unknown> {
   return v;
 }
 
-function requireHex(v: unknown, path: string): void {
-  if (typeof v !== "string" || !isValidHex(v)) {
-    throw new Error(`${path}: expected hex color string, got ${JSON.stringify(v)}`);
+function isValidColor(v: string): boolean {
+  if (HSL_RE.test(v)) return true;
+  try { parseColor(v); return true; } catch { return false; }
+}
+
+function requireColor(v: unknown, path: string): void {
+  if (typeof v !== "string" || !isValidColor(v)) {
+    throw new Error(`${path}: expected CSS color string (hex, oklch, rgb, hsl), got ${JSON.stringify(v)}`);
   }
 }
 
@@ -76,10 +83,10 @@ function requireKeys(obj: Record<string, unknown>, keys: readonly string[], path
   }
 }
 
-function validateHexObject(obj: Record<string, unknown>, keys: readonly string[], path: string): void {
+function validateColorObject(obj: Record<string, unknown>, keys: readonly string[], path: string): void {
   requireKeys(obj, keys, path);
   for (const key of keys) {
-    requireHex(obj[key], `${path}.${key}`);
+    requireColor(obj[key], `${path}.${key}`);
   }
 }
 
@@ -101,13 +108,13 @@ function validateMode(v: unknown, path: string): void {
   }
 
   // colors
-  validateHexObject(requireObject(obj.colors, `${path}.colors`), SEMANTIC_COLOR_KEYS, `${path}.colors`);
+  validateColorObject(requireObject(obj.colors, `${path}.colors`), SEMANTIC_COLOR_KEYS, `${path}.colors`);
 
   // palettes
   const palettes = requireObject(obj.palettes, `${path}.palettes`);
   requireKeys(palettes, TONAL_PALETTE_KEYS, `${path}.palettes`);
   for (const key of TONAL_PALETTE_KEYS) {
-    validateHexObject(
+    validateColorObject(
       requireObject(palettes[key], `${path}.palettes.${key}`),
       TONAL_STEP_STR_KEYS,
       `${path}.palettes.${key}`
@@ -115,7 +122,7 @@ function validateMode(v: unknown, path: string): void {
   }
 
   // surfaceElevation
-  validateHexObject(requireObject(obj.surfaceElevation, `${path}.surfaceElevation`), SURFACE_ELEVATION_KEYS, `${path}.surfaceElevation`);
+  validateColorObject(requireObject(obj.surfaceElevation, `${path}.surfaceElevation`), SURFACE_ELEVATION_KEYS, `${path}.surfaceElevation`);
 
   // spacing
   validateNumberObject(requireObject(obj.spacing, `${path}.spacing`), SPACING_KEYS, `${path}.spacing`);
@@ -141,7 +148,7 @@ function validateMode(v: unknown, path: string): void {
   const states = requireObject(obj.states, `${path}.states`);
   requireKeys(states, INTENT_KEYS, `${path}.states`);
   for (const intent of INTENT_KEYS) {
-    validateHexObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
+    validateColorObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
   }
 
   // accessibility (WCAG)
@@ -177,14 +184,14 @@ function validateThemeWarning(v: unknown, path: string): void {
   if (!BASE_COLOR_KEYS.includes(obj.key as BaseColorKey)) {
     throw new Error(`${path}.key: expected BaseColorKey, got ${JSON.stringify(obj.key)}`);
   }
-  requireHex(obj.value, `${path}.value`);
-  requireHex(obj.background, `${path}.background`);
+  requireColor(obj.value, `${path}.value`);
+  requireColor(obj.background, `${path}.background`);
   requireNumber(obj.ratio, `${path}.ratio`);
   requireNumber(obj.required, `${path}.required`);
   if (!WARNING_ACTIONS.has(obj.action as string)) {
     throw new Error(`${path}.action: expected "warn" or "corrected", got ${JSON.stringify(obj.action)}`);
   }
-  requireHex(obj.finalValue, `${path}.finalValue`);
+  requireColor(obj.finalValue, `${path}.finalValue`);
 }
 
 // ─── Public API ─────────────────────────────────────────────────────
