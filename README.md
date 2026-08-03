@@ -1,6 +1,6 @@
 # salt-theme-gen
 
-**One color. 150+ design tokens. Light + dark. Accessible by default.**
+**One color. 380+ design tokens. Light + dark. Accessible by default.**
 
 Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, font sizes, CSS custom properties, Tailwind config, DTCG tokens, WCAG and APCA contrast reports, and color blindness simulation. All from a single function call.
 
@@ -43,12 +43,12 @@ const theme = generateTheme({ preset: 'ocean' });
 
 `theme.light` and `theme.dark` each contain:
 
-- **21 semantic colors** — `primary`, `onPrimary`, `background`, `surface`, `text`, `danger`, `success` …
+- **23 semantic colors** — `primary`, `onPrimary`, `background`, `surface`, `text`, `danger`, `success` …
 - **32 state colors** — hover, pressed, focused, disabled for all 8 intents
 - **4 surface elevation levels** — card, elevated, modal, popover
 - **88 tonal palette steps** — 11-step scales for all 8 intent colors
 - **Spacing, radius, font size scales** — 7 steps each
-- **WCAG accessibility report** — 18 pre-computed contrast checks
+- **WCAG accessibility report** — 25 pre-computed contrast checks
 - **APCA contrast report** — 25 perceptual contrast checks
 
 ---
@@ -61,7 +61,7 @@ import { generateCssVariables } from 'salt-theme-gen';
 const { css } = generateCssVariables(theme, { format: 'both' });
 // → ready-to-inject stylesheet
 // → hex fallback + @supports oklch() for modern browsers
-// → 150+ --salt-* custom properties
+// → 380+ --salt-* custom properties
 ```
 
 ```css
@@ -73,7 +73,7 @@ const { css } = generateCssVariables(theme, { format: 'both' });
   --salt-state-primary-hover: #0068c4;
   --salt-spacing-md: 12px;
   --salt-radius-pill: 9999px;
-  /* ... 150+ tokens */
+  /* ... 380+ tokens */
 }
 [data-theme='dark'] { --salt-color-primary: #459af9; /* ... */ }
 @supports (color: oklch(0 0 0)) { /* oklch values for modern browsers */ }

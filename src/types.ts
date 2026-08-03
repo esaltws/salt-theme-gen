@@ -108,7 +108,7 @@ export type DimensionScale = {
   "3xl": number;
 };
 
-// ─── Semantic Colors (21 keys, matching ui-kit colors) ───────────────
+// ─── Semantic Colors (23 keys, matching ui-kit colors) ───────────────
 
 export type SemanticColors = {
   primary: string;

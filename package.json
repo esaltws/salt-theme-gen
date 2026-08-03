@@ -1,7 +1,7 @@
 {
   "name": "salt-theme-gen",
   "version": "1.3.1",
-  "description": "One color → 150+ design tokens. OKLCH-based theme generator with CSS variables, Tailwind config, DTCG export, APCA contrast, tonal palettes, and color blindness simulation. Zero deps, strict TypeScript.",
+  "description": "One color → 380+ design tokens. OKLCH-based theme generator with CSS variables, Tailwind config, DTCG export, APCA contrast, tonal palettes, and color blindness simulation. Zero deps, strict TypeScript.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/cjs/index.d.ts",
