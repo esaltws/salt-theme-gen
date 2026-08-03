@@ -158,6 +158,56 @@ describe("parseColor", () => {
     });
   });
 
+  describe("HSL inputs", () => {
+    it("parses hsl() with commas — red", () => {
+      expect(parseColor("hsl(0, 100%, 50%)")).toBe("#ff0000");
+    });
+
+    it("parses hsl() with spaces — green", () => {
+      expect(parseColor("hsl(120 100% 50%)")).toBe("#00ff00");
+    });
+
+    it("parses hsl() — blue", () => {
+      expect(parseColor("hsl(240, 100%, 50%)")).toBe("#0000ff");
+    });
+
+    it("parses hsl() — black", () => {
+      expect(parseColor("hsl(0, 0%, 0%)")).toBe("#000000");
+    });
+
+    it("parses hsl() — white", () => {
+      expect(parseColor("hsl(0, 0%, 100%)")).toBe("#ffffff");
+    });
+
+    it("parses hsla() ignoring alpha", () => {
+      expect(parseColor("hsla(0, 100%, 50%, 0.5)")).toBe("#ff0000");
+    });
+
+    it("parses modern hsl() with slash alpha", () => {
+      expect(parseColor("hsl(0 100% 50% / 0.5)")).toBe("#ff0000");
+    });
+
+    it("parses hsl() with deg suffix", () => {
+      expect(parseColor("hsl(0deg, 100%, 50%)")).toBe("#ff0000");
+    });
+
+    it("normalizes H values over 360", () => {
+      expect(parseColor("hsl(360, 100%, 50%)")).toBe(parseColor("hsl(0, 100%, 50%)"));
+    });
+
+    it("normalizes negative H values", () => {
+      expect(parseColor("hsl(-120, 100%, 50%)")).toBe(parseColor("hsl(240, 100%, 50%)"));
+    });
+
+    it("throws if saturation > 100%", () => {
+      expect(() => parseColor("hsl(0, 110%, 50%)")).toThrow("0–100%");
+    });
+
+    it("throws if lightness > 100%", () => {
+      expect(() => parseColor("hsl(0, 100%, 110%)")).toThrow("0–100%");
+    });
+  });
+
   describe("oklch() inputs", () => {
     it("parses oklch() and returns a valid hex", () => {
       const result = parseColor("oklch(0.55 0.18 220)");

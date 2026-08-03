@@ -98,13 +98,13 @@ describe("parseThemeJSON - colors validation", () => {
   it("rejects non-hex color value", () => {
     const obj = validThemeObj();
     obj.light.colors.primary = "not-a-color";
-    expect(() => parseThemeJSON(obj)).toThrow("expected hex color string");
+    expect(() => parseThemeJSON(obj)).toThrow("expected CSS color string");
   });
 
   it("rejects number as color value", () => {
     const obj = validThemeObj();
     obj.light.colors.background = 123;
-    expect(() => parseThemeJSON(obj)).toThrow("expected hex color string");
+    expect(() => parseThemeJSON(obj)).toThrow("expected CSS color string");
   });
 
   it("rejects null colors object", () => {
@@ -126,7 +126,7 @@ describe("parseThemeJSON - surfaceElevation validation", () => {
   it("rejects non-hex elevation value", () => {
     const obj = validThemeObj();
     obj.dark.surfaceElevation.card = 42;
-    expect(() => parseThemeJSON(obj)).toThrow("expected hex color string");
+    expect(() => parseThemeJSON(obj)).toThrow("expected CSS color string");
   });
 });
 
@@ -210,7 +210,7 @@ describe("parseThemeJSON - states validation", () => {
   it("rejects non-hex state value", () => {
     const obj = validThemeObj();
     obj.dark.states.danger.hover = 0;
-    expect(() => parseThemeJSON(obj)).toThrow("expected hex color string");
+    expect(() => parseThemeJSON(obj)).toThrow("expected CSS color string");
   });
 });
 

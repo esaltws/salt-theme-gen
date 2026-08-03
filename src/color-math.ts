@@ -76,6 +76,9 @@ export function normalizeHex(hex: string): string {
  * - HEX: "#ff0000", "#f00"
  * - RGB: "rgb(255, 0, 0)", "rgb(255 0 0)"
  * - RGBA: "rgba(255, 0, 0, 1)" (alpha is ignored)
+ * - HSL: "hsl(220, 80%, 53%)", "hsl(220 80% 53%)"
+ * - HSLA: "hsla(220, 80%, 53%, 0.5)" (alpha is ignored)
+ * - oklch: "oklch(0.55 0.18 220)"
  * - CSS named colors: "red", "teal", "coral", etc.
  */
 export function parseColor(input: string): string {
@@ -103,7 +106,23 @@ export function parseColor(input: string): string {
     return rgbToHex({ r, g, b });
   }
 
-  // 3. oklch()
+  // 3. hsl() / hsla()
+  const hslMatch = trimmed.match(
+    /^hsla?\(\s*(-?[\d.]+)(?:deg)?\s*[,\s]\s*([\d.]+)%\s*[,\s]\s*([\d.]+)%\s*(?:[,/]\s*[\d.]+%?\s*)?\)$/i
+  );
+  if (hslMatch) {
+    const h = ((parseFloat(hslMatch[1]) % 360) + 360) % 360;
+    const s = parseFloat(hslMatch[2]);
+    const l = parseFloat(hslMatch[3]);
+    if (s > 100 || l > 100) {
+      throw new Error(
+        `HSL saturation and lightness must be 0–100%. Got: hsl(${hslMatch[1]}, ${s}%, ${l}%).`
+      );
+    }
+    return rgbToHex(hslToRgb(h, s, l));
+  }
+
+  // 4. oklch()
   const oklchMatch = trimmed.match(
     /^oklch\(\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\)$/i
   );
@@ -119,13 +138,30 @@ export function parseColor(input: string): string {
     return oklchToHex({ L, C, H });
   }
 
-  // 4. CSS named color
+  // 5. CSS named color
   const named = CSS_NAMED_COLORS[trimmed.toLowerCase()];
   if (named) return named;
 
   throw new Error(
-    `Unrecognized color: "${trimmed}". Expected HEX (#RGB/#RRGGBB), rgb(r,g,b), oklch(L C H), or a CSS color name.`
+    `Unrecognized color: "${trimmed}". Expected HEX (#RGB/#RRGGBB), rgb(r,g,b), hsl(h,s%,l%), oklch(L C H), or a CSS color name.`
   );
+}
+
+// ─── HSL → sRGB ─────────────────────────────────────────────────────
+
+function hslToRgb(h: number, s: number, l: number): RGB {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+  };
+  return {
+    r: Math.round(f(0) * 255),
+    g: Math.round(f(8) * 255),
+    b: Math.round(f(4) * 255),
+  };
 }
 
 // ─── HEX ↔ sRGB ─────────────────────────────────────────────────────
