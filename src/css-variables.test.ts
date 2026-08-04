@@ -26,11 +26,12 @@ describe('generateCssVariables — format: "hex" (default)', () => {
     expect(result.light).toContain("--salt-color-on-surface:");
   });
 
-  it("numeric tokens use px units", () => {
+  it("spacing and radius use px; font-size and icon-size use rem", () => {
     expect(result.light).toMatch(/--salt-spacing-md: \d+px;/);
     expect(result.light).toMatch(/--salt-radius-md: \d+px;/);
-    expect(result.light).toMatch(/--salt-font-size-md: \d+px;/);
-    expect(result.light).toMatch(/--salt-font-level: \d+px;/);
+    expect(result.light).toMatch(/--salt-font-size-md: [\d.]+rem;/);
+    expect(result.light).toMatch(/--salt-font-level: [\d.]+rem;/);
+    expect(result.light).toMatch(/--salt-icon-size-md: [\d.]+rem;/);
   });
 
   it("css string contains both default selectors", () => {
@@ -58,9 +59,10 @@ describe('generateCssVariables — format: "oklch"', () => {
     expect(result.dark).toMatch(/--salt-color-primary: oklch\(\d+\.\d+% \d+\.\d+ \d+\.\d+\);/);
   });
 
-  it("numeric tokens still use px", () => {
+  it("spacing and radius still use px; font-size uses rem", () => {
     expect(result.light).toMatch(/--salt-spacing-md: \d+px;/);
     expect(result.light).toMatch(/--salt-radius-md: \d+px;/);
+    expect(result.light).toMatch(/--salt-font-size-md: [\d.]+rem;/);
   });
 
   it("no hex color values in output", () => {
@@ -205,16 +207,16 @@ describe("generateCssVariables — token completeness", () => {
     }
   });
 
-  it("includes font-size scale and font-level", () => {
+  it("includes font-size scale and font-level in rem", () => {
     for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
-      expect(result.light).toContain(`--salt-font-size-${key}:`);
+      expect(result.light).toMatch(new RegExp(`--salt-font-size-${key}: [\\d.]+rem;`));
     }
-    expect(result.light).toContain("--salt-font-level:");
+    expect(result.light).toMatch(/--salt-font-level: [\d.]+rem;/);
   });
 
-  it("includes icon-size, size, and dimension scales", () => {
+  it("includes icon-size in rem; size and dimension in px", () => {
     for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
-      expect(result.light).toContain(`--salt-icon-size-${key}:`);
+      expect(result.light).toMatch(new RegExp(`--salt-icon-size-${key}: [\\d.]+rem;`));
       expect(result.light).toContain(`--salt-size-${key}:`);
       expect(result.light).toContain(`--salt-dimension-${key}:`);
     }

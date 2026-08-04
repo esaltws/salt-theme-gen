@@ -147,7 +147,7 @@ function applyRule(
 }
 
 /**
- * Derive all 21 semantic colors from a primary HEX using the OKLCH butterfly rule.
+ * Derive all 23 semantic colors from a primary HEX using the OKLCH butterfly rule.
  *
  * Overloads:
  * - `deriveColors(hex, mode)` — default analogous harmony

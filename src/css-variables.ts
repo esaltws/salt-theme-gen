@@ -74,8 +74,14 @@ function extraColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "b
   return out;
 }
 
-// Dimension tokens: spacing, radius, font sizes, icon sizes, etc.
-// These are always px values — format has no effect and they never go in @supports.
+// Converts a px number to rem (base 16). Zero stays "0".
+function rem(val: number): string {
+  return val === 0 ? "0" : `${+(val / 16).toFixed(4)}rem`;
+}
+
+// Dimension tokens — format has no effect, never go in @supports.
+// Font sizes and icon sizes → rem (scales with user font preference, WCAG 1.4.4).
+// Spacing, radius, size map, dimensions → px (layout values, not text-relative).
 function dimensionDecls(mode: GeneratedThemeMode): string[] {
   const out: string[] = [];
 
@@ -86,11 +92,11 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
     out.push(`${P}-radius-${key}: ${val}px;`);
   }
   for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
-    out.push(`${P}-font-size-${key}: ${val}px;`);
+    out.push(`${P}-font-size-${key}: ${rem(val)};`);
   }
-  out.push(`${P}-font-level: ${mode.fontLevel}px;`);
+  out.push(`${P}-font-level: ${rem(mode.fontLevel)};`);
   for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
-    out.push(`${P}-icon-size-${key}: ${val}px;`);
+    out.push(`${P}-icon-size-${key}: ${rem(val)};`);
   }
   for (const [key, val] of Object.entries(mode.sizeMap) as [string, number][]) {
     out.push(`${P}-size-${key}: ${val}px;`);
