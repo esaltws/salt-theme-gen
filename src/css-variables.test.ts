@@ -88,14 +88,22 @@ describe('generateCssVariables — format: "both"', () => {
     expect(result.css).toMatch(/@supports[\s\S]*oklch\(/);
   });
 
-  it("@supports block does NOT repeat spacing/radius/font-size", () => {
+  it("@supports block upgrades all color tokens to oklch (semantic, palette, surface, state)", () => {
+    const supportsStart = result.css.indexOf("@supports");
+    const supportsBlock = result.css.slice(supportsStart);
+    expect(supportsBlock).toMatch(/--salt-color-primary: oklch\(/);
+    expect(supportsBlock).toMatch(/--salt-palette-primary-500: oklch\(/);
+    expect(supportsBlock).toMatch(/--salt-surface-card: oklch\(/);
+    expect(supportsBlock).toMatch(/--salt-state-primary-hover: oklch\(/);
+  });
+
+  it("@supports block does NOT include dimension tokens (spacing/radius/font-size)", () => {
     const supportsStart = result.css.indexOf("@supports");
     const supportsBlock = result.css.slice(supportsStart);
     expect(supportsBlock).not.toContain("--salt-spacing");
     expect(supportsBlock).not.toContain("--salt-radius");
     expect(supportsBlock).not.toContain("--salt-font-size");
     expect(supportsBlock).not.toContain("--salt-font-level");
-    expect(supportsBlock).not.toContain("--salt-palette");
   });
 
   it("light/dark fields contain hex declarations", () => {

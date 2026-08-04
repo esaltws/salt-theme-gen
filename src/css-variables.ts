@@ -46,7 +46,9 @@ function colorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">
   return out;
 }
 
-function nonColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
+// Color tokens beyond semanticColors: palettes, surface elevations, state colors.
+// These use hex/oklch depending on format and belong in the @supports block.
+function extraColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
   const out: string[] = [];
   const cv = (hex: string) => (format === "oklch" ? oklchCss(hex) : hex);
 
@@ -69,40 +71,39 @@ function nonColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "bot
     }
   }
 
-  // Spacing
+  return out;
+}
+
+// Dimension tokens: spacing, radius, font sizes, icon sizes, etc.
+// These are always px values — format has no effect and they never go in @supports.
+function dimensionDecls(mode: GeneratedThemeMode): string[] {
+  const out: string[] = [];
+
   for (const [key, val] of Object.entries(mode.spacing) as [string, number][]) {
     out.push(`${P}-spacing-${key}: ${val}px;`);
   }
-
-  // Radius
   for (const [key, val] of Object.entries(mode.radius) as [string, number][]) {
     out.push(`${P}-radius-${key}: ${val}px;`);
   }
-
-  // Font sizes
   for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
     out.push(`${P}-font-size-${key}: ${val}px;`);
   }
-
-  // Font level
   out.push(`${P}-font-level: ${mode.fontLevel}px;`);
-
-  // Icon sizes
   for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
     out.push(`${P}-icon-size-${key}: ${val}px;`);
   }
-
-  // Size map
   for (const [key, val] of Object.entries(mode.sizeMap) as [string, number][]) {
     out.push(`${P}-size-${key}: ${val}px;`);
   }
-
-  // Dimensions
   for (const [key, val] of Object.entries(mode.dimensions) as [string, number][]) {
     out.push(`${P}-dimension-${key}: ${val}px;`);
   }
 
   return out;
+}
+
+function nonColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
+  return [...extraColorDecls(mode, format), ...dimensionDecls(mode)];
 }
 
 // ─── Block Composers ─────────────────────────────────────────────────
@@ -163,8 +164,8 @@ export function generateCssVariables(
   let css: string;
 
   if (format === "both") {
-    const lightOklch = colorDecls(theme.light, "oklch");
-    const darkOklch  = colorDecls(theme.dark,  "oklch");
+    const lightOklch = [...colorDecls(theme.light, "oklch"), ...extraColorDecls(theme.light, "oklch")];
+    const darkOklch  = [...colorDecls(theme.dark,  "oklch"), ...extraColorDecls(theme.dark,  "oklch")];
 
     const supportsBlock = [
       "@supports (color: oklch(0 0 0)) {",
