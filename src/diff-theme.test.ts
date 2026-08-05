@@ -98,11 +98,11 @@ describe("diffTheme - numeric scales", () => {
     });
   });
 
-  it("detects fontLevel change", () => {
-    const adjusted = adjustTheme(theme, { light: { fontLevel: 12 } });
+  it("detects baseFont change", () => {
+    const adjusted = adjustTheme(theme, { light: { baseFont: 12 } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.light.fontLevel).toEqual({
-      old: theme.light.fontLevel,
+    expect(diff.light.baseFont).toEqual({
+      old: theme.light.baseFont,
       new: 12,
     });
   });

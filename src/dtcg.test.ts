@@ -147,8 +147,8 @@ describe("generateDtcgTokens — dimension scales", () => {
     expect(val).toBeGreaterThan(100); // pill should be large (e.g. 9999px)
   });
 
-  it("fontSize.level is a dimension token (base font size)", () => {
-    const tok = getLeaf(light, "fontSize", "level") as DtcgToken;
+  it("fontSize.base is a dimension token (base font size)", () => {
+    const tok = getLeaf(light, "fontSize", "base") as DtcgToken;
     expect(isDimToken(tok)).toBe(true);
     expect(tok.$value).toMatch(/^\d+px$/);
   });
@@ -171,6 +171,111 @@ describe("generateDtcgTokens — dimension scales", () => {
     expect(light).toHaveProperty("iconSize");
     expect(light).toHaveProperty("size");
     expect(light).toHaveProperty("dimension");
+  });
+});
+
+// ─── Semantic font sizes ─────────────────────────────────────────────
+
+describe("generateDtcgTokens — semanticFontSize group", () => {
+  it("semanticFontSize.body is a dimension token", () => {
+    const tok = getLeaf(light, "semanticFontSize", "body") as DtcgToken;
+    expect(isDimToken(tok)).toBe(true);
+    expect(tok.$value).toMatch(/^\d+\.?\d*px$/);
+  });
+
+  it("includes all 9 semantic font size keys", () => {
+    const group = (light as DtcgGroup).semanticFontSize as DtcgGroup;
+    for (const key of ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"]) {
+      expect(group, `missing semanticFontSize.${key}`).toHaveProperty(key);
+    }
+  });
+});
+
+// ─── Line heights ─────────────────────────────────────────────────────
+
+describe("generateDtcgTokens — lineHeight group", () => {
+  it("lineHeight.normal is a number token with value 1.5", () => {
+    const tok = getLeaf(light, "lineHeight", "normal") as DtcgToken;
+    expect(tok.$type).toBe("number");
+    expect(tok.$value).toBe(1.5);
+  });
+
+  it("includes all 6 line-height keys", () => {
+    const group = (light as DtcgGroup).lineHeight as DtcgGroup;
+    for (const key of ["none", "tight", "snug", "normal", "relaxed", "loose"]) {
+      expect(group, `missing lineHeight.${key}`).toHaveProperty(key);
+    }
+  });
+});
+
+// ─── Font weights ─────────────────────────────────────────────────────
+
+describe("generateDtcgTokens — fontWeight group", () => {
+  it("fontWeight.bold is a fontWeight token with value 700", () => {
+    const tok = getLeaf(light, "fontWeight", "bold") as DtcgToken;
+    expect(tok.$type).toBe("fontWeight");
+    expect(tok.$value).toBe(700);
+  });
+
+  it("includes all 6 font-weight keys", () => {
+    const group = (light as DtcgGroup).fontWeight as DtcgGroup;
+    for (const key of ["light", "regular", "medium", "semibold", "bold", "extrabold"]) {
+      expect(group, `missing fontWeight.${key}`).toHaveProperty(key);
+    }
+  });
+});
+
+// ─── Letter spacings ──────────────────────────────────────────────────
+
+describe("generateDtcgTokens — letterSpacing group", () => {
+  it("letterSpacing.normal is a dimension token with value '0'", () => {
+    const tok = getLeaf(light, "letterSpacing", "normal") as DtcgToken;
+    expect(tok.$type).toBe("dimension");
+    expect(tok.$value).toBe("0");
+  });
+
+  it("letterSpacing.tight is a dimension token with em value", () => {
+    const tok = getLeaf(light, "letterSpacing", "tight") as DtcgToken;
+    expect(tok.$type).toBe("dimension");
+    expect(tok.$value).toMatch(/em$/);
+  });
+
+  it("includes all 5 letter-spacing keys", () => {
+    const group = (light as DtcgGroup).letterSpacing as DtcgGroup;
+    for (const key of ["tight", "normal", "wide", "wider", "widest"]) {
+      expect(group, `missing letterSpacing.${key}`).toHaveProperty(key);
+    }
+  });
+});
+
+// ─── Typography composite tokens ──────────────────────────────────────
+
+describe("generateDtcgTokens — typography group", () => {
+  it("typography.body is a typography token", () => {
+    const tok = getLeaf(light, "typography", "body") as DtcgToken;
+    expect(tok.$type).toBe("typography");
+  });
+
+  it("typography.body.$value has fontSize, fontWeight, lineHeight, letterSpacing", () => {
+    const tok = getLeaf(light, "typography", "body") as DtcgToken;
+    const val = tok.$value as Record<string, string>;
+    expect(val).toHaveProperty("fontSize");
+    expect(val).toHaveProperty("fontWeight");
+    expect(val).toHaveProperty("lineHeight");
+    expect(val).toHaveProperty("letterSpacing");
+  });
+
+  it("typography.display uses extrabold weight", () => {
+    const tok = getLeaf(light, "typography", "display") as DtcgToken;
+    const val = tok.$value as Record<string, string>;
+    expect(val.fontWeight).toContain("extrabold");
+  });
+
+  it("includes all 9 typography style keys", () => {
+    const group = (light as DtcgGroup).typography as DtcgGroup;
+    for (const key of ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"]) {
+      expect(group, `missing typography.${key}`).toHaveProperty(key);
+    }
   });
 });
 

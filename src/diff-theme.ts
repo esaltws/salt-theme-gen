@@ -22,7 +22,8 @@ export type ThemeModeDiff = {
   spacing?: Partial<Record<keyof SpacingScale, FieldChange<number>>>;
   radius?: Partial<Record<keyof RadiusScale, FieldChange<number>>>;
   fontSizes?: Partial<Record<keyof FontSizeScale, FieldChange<number>>>;
-  fontLevel?: FieldChange<number>;
+  baseFont?: FieldChange<number>;
+  fontScale?: FieldChange<number>;
   states?: Partial<Record<keyof IntentStates, Partial<Record<keyof StateColors, FieldChange<string>>>>>;
   accessibility?: Partial<Record<keyof AccessibilityReport, { ratio?: FieldChange<number>; level?: FieldChange<string> }>>;
 };
@@ -122,8 +123,11 @@ function diffMode(a: GeneratedThemeMode, b: GeneratedThemeMode): ThemeModeDiff {
   const fontSizes = diffFlat(a.fontSizes, b.fontSizes, FONT_SIZE_KEYS);
   if (fontSizes) diff.fontSizes = fontSizes;
 
-  if (a.fontLevel !== b.fontLevel) {
-    diff.fontLevel = { old: a.fontLevel, new: b.fontLevel };
+  if (a.baseFont !== b.baseFont) {
+    diff.baseFont = { old: a.baseFont, new: b.baseFont };
+  }
+  if (a.fontScale !== b.fontScale) {
+    diff.fontScale = { old: a.fontScale, new: b.fontScale };
   }
 
   const states = diffStates(a.states, b.states);

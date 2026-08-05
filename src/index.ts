@@ -27,7 +27,7 @@ export type {
   RGB,
   Oklab,
   OKLCH,
-  FontLevel,
+  // FontLevel,
   BaseColorKey,
   BaseColorOverride,
   GenerateThemeColors,

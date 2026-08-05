@@ -65,17 +65,15 @@ describe("adjustTheme - numeric scales", () => {
     expect(result.light.fontSizes.sm).toBe(theme.light.fontSizes.sm);
   });
 
-  it("fontLevel override is applied", () => {
-    const result = adjustTheme(theme, { light: { fontLevel: 12 } });
-    expect(result.light.fontLevel).toBe(12);
-    expect(result.dark.fontLevel).toBe(theme.dark.fontLevel);
+  it("baseFont override is applied", () => {
+    const result = adjustTheme(theme, { light: { baseFont: 12 } });
+    expect(result.light.baseFont).toBe(12);
+    expect(result.dark.baseFont).toBe(theme.dark.baseFont);
   });
 
-  it("fontLevel is clamped to 8–18 range", () => {
-    const resultLow = adjustTheme(theme, { light: { fontLevel: 5 as any } });
-    expect(resultLow.light.fontLevel).toBe(8);
-    const resultHigh = adjustTheme(theme, { light: { fontLevel: 25 as any } });
-    expect(resultHigh.light.fontLevel).toBe(18);
+  it("baseFont is clamped to >= 8", () => {
+    const resultLow = adjustTheme(theme, { light: { baseFont: 5 as any } });
+    expect(resultLow.light.baseFont).toBe(8);
   });
 });
 
@@ -312,14 +310,14 @@ describe("adjustTheme - round-trip", () => {
         spacing: { none: 0, xs: 2, sm: 4, md: 8, lg: 16, xl: 32, xxl: 64 },
         radius: { none: 0, sm: 2, md: 4, lg: 8, xl: 16, xxl: 24, pill: 9999 },
         fontSizes: { xs: 10, sm: 12, md: 14, lg: 18, xl: 24, xxl: 32, "3xl": 48 },
-        fontLevel: 14,
+        baseFont: 14,
       },
     });
     expect(result.light.colors.primary).toBe("#ff0000");
     expect(result.light.spacing.md).toBe(8);
     expect(result.light.radius.pill).toBe(9999);
     expect(result.light.fontSizes["3xl"]).toBe(48);
-    expect(result.light.fontLevel).toBe(14);
+    expect(result.light.baseFont).toBe(14);
     expectValidHex(result.light.colors.onPrimary);
     expect(contrastRatio(result.light.colors.onPrimary, "#ff0000")).toBeGreaterThanOrEqual(4.5);
   });

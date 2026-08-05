@@ -25,9 +25,9 @@ describe("generateTheme - defaults", () => {
     expect(theme.dark.mode).toBe("dark");
   });
 
-  it("default fontLevel is 16", () => {
-    expect(theme.light.fontLevel).toBe(16);
-    expect(theme.dark.fontLevel).toBe(16);
+  it("default baseFont is 16", () => {
+    expect(theme.light.baseFont).toBe(16);
+    expect(theme.dark.baseFont).toBe(16);
   });
 
   it("default spacing matches SPACING_PRESETS.default", () => {
@@ -175,27 +175,80 @@ describe("generateTheme - scale presets", () => {
   });
 });
 
-// ─── fontLevel ──────────────────────────────────────────────────────
+// ─── baseFont ──────────────────────────────────────────────────────
 
-describe("generateTheme - fontLevel", () => {
-  it("default fontLevel is 16", () => {
+describe("generateTheme - baseFont", () => {
+  it("default baseFont is 16", () => {
     const theme = generateTheme();
-    expect(theme.light.fontLevel).toBe(16);
+    expect(theme.light.baseFont).toBe(16);
   });
 
-  it("respects provided fontLevel", () => {
-    const theme = generateTheme({ fontLevel: 12 });
-    expect(theme.light.fontLevel).toBe(12);
+  it("respects provided baseFont", () => {
+    const theme = generateTheme({ baseFont: 12 });
+    expect(theme.light.baseFont).toBe(12);
   });
 
   it("clamps below minimum to 8", () => {
-    const theme = generateTheme({ fontLevel: 5 });
-    expect(theme.light.fontLevel).toBe(8);
+    const theme = generateTheme({ baseFont: 5 });
+    expect(theme.light.baseFont).toBe(8);
+  });
+});
+
+describe("generateTheme - fontScale", () => {
+  it("default fontScale is 1.25 (major-third)", () => {
+    const theme = generateTheme({ primary: "#1e90ff" });
+    expect(theme.light.fontScale).toBe(1.25);
   });
 
-  it("clamps above maximum to 18", () => {
-    const theme = generateTheme({ fontLevel: 25 });
-    expect(theme.light.fontLevel).toBe(18);
+  it("named scale 'golden-ratio' resolves to 1.618", () => {
+    const theme = generateTheme({ primary: "#1e90ff", fontScale: "golden-ratio" });
+    expect(theme.light.fontScale).toBe(1.618);
+  });
+
+  it("custom numeric fontScale is accepted", () => {
+    const theme = generateTheme({ primary: "#1e90ff", fontScale: 1.5 });
+    expect(theme.light.fontScale).toBe(1.5);
+  });
+});
+
+describe("generateTheme - semanticFontSizes", () => {
+  it("body size equals baseFont", () => {
+    const theme = generateTheme({ primary: "#1e90ff", baseFont: 16 });
+    expect(theme.light.semanticFontSizes.body).toBe(16);
+  });
+
+  it("display is larger than heading-1 is larger than body", () => {
+    const t = generateTheme({ primary: "#1e90ff" });
+    const s = t.light.semanticFontSizes;
+    expect(s.display).toBeGreaterThan(s["heading-1"]);
+    expect(s["heading-1"]).toBeGreaterThan(s["heading-2"]);
+    expect(s["heading-2"]).toBeGreaterThan(s.body);
+    expect(s.body).toBeGreaterThan(s.caption);
+  });
+});
+
+describe("generateTheme - lineHeights, fontWeights, letterSpacings", () => {
+  const theme = generateTheme({ primary: "#1e90ff" });
+
+  it("lineHeights has expected keys", () => {
+    const lh = theme.light.lineHeights;
+    expect(lh.none).toBe(1);
+    expect(lh.normal).toBe(1.5);
+    expect(lh.loose).toBe(2);
+  });
+
+  it("fontWeights has expected keys", () => {
+    const fw = theme.light.fontWeights;
+    expect(fw.regular).toBe(400);
+    expect(fw.bold).toBe(700);
+    expect(fw.extrabold).toBe(800);
+  });
+
+  it("letterSpacings has expected keys", () => {
+    const ls = theme.light.letterSpacings;
+    expect(ls.normal).toBe(0);
+    expect(ls.tight).toBe(-0.04);
+    expect(ls.widest).toBe(0.1);
   });
 });
 

@@ -3,6 +3,7 @@ import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-c
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
+import { computeSemanticFontSizes } from "./typography-utils.js";
 import type {
   GeneratedTheme,
   GeneratedThemeMode,
@@ -16,7 +17,6 @@ import type {
   SpacingScale,
   RadiusScale,
   FontSizeScale,
-  FontLevel,
 } from "./types.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -26,7 +26,8 @@ export type ThemeModeOverrides = {
   spacing?: Partial<SpacingScale>;
   radius?: Partial<RadiusScale>;
   fontSizes?: Partial<FontSizeScale>;
-  fontLevel?: FontLevel;
+  baseFont?: number;
+  fontScale?: number;
   states?: Partial<Record<keyof IntentStates, Partial<StateColors>>>;
   surfaceElevation?: Partial<SurfaceElevation>;
 };
@@ -81,7 +82,8 @@ function mergeOverrides(
     fontSizes: base.fontSizes || specific.fontSizes
       ? { ...base.fontSizes, ...specific.fontSizes }
       : undefined,
-    fontLevel: specific.fontLevel ?? base.fontLevel,
+    baseFont: specific.baseFont ?? base.baseFont,
+    fontScale: specific.fontScale ?? base.fontScale,
     states: mergeNestedPartial(base.states, specific.states),
     surfaceElevation: base.surfaceElevation || specific.surfaceElevation
       ? { ...base.surfaceElevation, ...specific.surfaceElevation }
@@ -118,9 +120,15 @@ function adjustMode(
   const fontSizes = overrides.fontSizes
     ? { ...mode.fontSizes, ...overrides.fontSizes }
     : mode.fontSizes;
-  const fontLevel = overrides.fontLevel !== undefined
-    ? (Math.max(8, Math.min(18, overrides.fontLevel)) as FontLevel)
-    : mode.fontLevel;
+  const baseFont = overrides.baseFont !== undefined
+    ? Math.max(8, overrides.baseFont)
+    : mode.baseFont;
+  const fontScale = overrides.fontScale !== undefined
+    ? overrides.fontScale
+    : mode.fontScale;
+  const semanticFontSizes = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
+    ? computeSemanticFontSizes(baseFont, fontScale)
+    : mode.semanticFontSizes;
 
   // 2. Merge colors — normalize any CSS color string to hex before merging
   const colorOverrides = overrides.colors ?? {};
@@ -202,7 +210,12 @@ function adjustMode(
     iconSizes: mode.iconSizes,
     sizeMap: mode.sizeMap,
     dimensions: mode.dimensions,
-    fontLevel,
+    baseFont,
+    fontScale,
+    semanticFontSizes,
+    lineHeights: mode.lineHeights,
+    fontWeights: mode.fontWeights,
+    letterSpacings: mode.letterSpacings,
     states,
     accessibility,
     apca,

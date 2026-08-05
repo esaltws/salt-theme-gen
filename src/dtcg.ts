@@ -2,9 +2,13 @@ import type { GeneratedTheme, GeneratedThemeMode } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
-export type DtcgColorToken     = { $value: string; $type: "color" };
-export type DtcgDimensionToken = { $value: string; $type: "dimension" };
-export type DtcgToken  = DtcgColorToken | DtcgDimensionToken;
+export type DtcgColorToken      = { $value: string; $type: "color" };
+export type DtcgDimensionToken  = { $value: string; $type: "dimension" };
+export type DtcgNumberToken     = { $value: number; $type: "number" };
+export type DtcgFontWeightToken = { $value: number; $type: "fontWeight" };
+export type DtcgTypographyValue = { fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+export type DtcgTypographyToken = { $value: DtcgTypographyValue; $type: "typography" };
+export type DtcgToken  = DtcgColorToken | DtcgDimensionToken | DtcgNumberToken | DtcgFontWeightToken | DtcgTypographyToken;
 export type DtcgGroup  = { [key: string]: DtcgToken | DtcgGroup };
 
 export type DtcgTokensResult = {
@@ -74,12 +78,61 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
     radiusGroup[key] = dim(val);
   }
 
-  // Font sizes (7 keys) + base font level
+  // Font sizes (7 keys, t-shirt scale)
   const fontSizeGroup: DtcgGroup = {};
   for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
     fontSizeGroup[key] = dim(val);
   }
-  fontSizeGroup.level = dim(mode.fontLevel);
+  fontSizeGroup.base = dim(mode.baseFont);
+
+  // Semantic font sizes (9 keys)
+  const semanticFontSizeGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.semanticFontSizes) as [string, number][]) {
+    semanticFontSizeGroup[key] = dim(val);
+  }
+
+  // Line heights (unitless)
+  const lineHeightGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
+    lineHeightGroup[key] = { $value: val, $type: "number" } as DtcgNumberToken;
+  }
+
+  // Font weights
+  const fontWeightGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.fontWeights) as [string, number][]) {
+    fontWeightGroup[key] = { $value: val, $type: "fontWeight" } as DtcgFontWeightToken;
+  }
+
+  // Letter spacings (em)
+  const letterSpacingGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.letterSpacings) as [string, number][]) {
+    letterSpacingGroup[key] = { $value: val === 0 ? "0" : `${val}em`, $type: "dimension" } as DtcgDimensionToken;
+  }
+
+  // Typography composite tokens (per W3C DTCG spec)
+  const TYPOGRAPHY_PAIRINGS: Record<string, { weight: string; lineHeight: string; letterSpacing: string }> = {
+    "caption":    { weight: "regular",   lineHeight: "normal",  letterSpacing: "wider" },
+    "body-sm":    { weight: "regular",   lineHeight: "normal",  letterSpacing: "normal" },
+    "body":       { weight: "regular",   lineHeight: "normal",  letterSpacing: "normal" },
+    "body-lg":    { weight: "regular",   lineHeight: "relaxed", letterSpacing: "normal" },
+    "subheading": { weight: "semibold",  lineHeight: "snug",    letterSpacing: "wide" },
+    "heading-3":  { weight: "semibold",  lineHeight: "tight",   letterSpacing: "normal" },
+    "heading-2":  { weight: "bold",      lineHeight: "tight",   letterSpacing: "tight" },
+    "heading-1":  { weight: "bold",      lineHeight: "tight",   letterSpacing: "tight" },
+    "display":    { weight: "extrabold", lineHeight: "none",    letterSpacing: "tight" },
+  };
+  const typographyGroup: DtcgGroup = {};
+  for (const [key, { weight, lineHeight, letterSpacing }] of Object.entries(TYPOGRAPHY_PAIRINGS)) {
+    typographyGroup[key] = {
+      $type: "typography",
+      $value: {
+        fontSize:      `{semanticFontSize.${key}}`,
+        fontWeight:    `{fontWeight.${weight}}`,
+        lineHeight:    `{lineHeight.${lineHeight}}`,
+        letterSpacing: `{letterSpacing.${letterSpacing}}`,
+      },
+    } as DtcgTypographyToken;
+  }
 
   // Icon sizes, size map, dimensions
   const iconSizeGroup: DtcgGroup = {};
@@ -104,12 +157,17 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
       elevation: elevationGroup,
       state:     stateGroup,
     },
-    spacing:   spacingGroup,
-    radius:    radiusGroup,
-    fontSize:  fontSizeGroup,
-    iconSize:  iconSizeGroup,
-    size:      sizeGroup,
-    dimension: dimensionGroup,
+    spacing:          spacingGroup,
+    radius:           radiusGroup,
+    fontSize:         fontSizeGroup,
+    semanticFontSize: semanticFontSizeGroup,
+    lineHeight:       lineHeightGroup,
+    fontWeight:       fontWeightGroup,
+    letterSpacing:    letterSpacingGroup,
+    typography:       typographyGroup,
+    iconSize:         iconSizeGroup,
+    size:             sizeGroup,
+    dimension:        dimensionGroup,
   };
 }
 

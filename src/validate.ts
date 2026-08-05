@@ -31,6 +31,11 @@ const BASE_COLOR_KEYS: BaseColorKey[] = [
 
 const WARNING_ACTIONS = new Set(["warn", "corrected"]);
 
+const SEMANTIC_FONT_SIZE_KEYS = ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"] as const;
+const LINE_HEIGHT_KEYS = ["none", "tight", "snug", "normal", "relaxed", "loose"] as const;
+const FONT_WEIGHT_KEYS = ["light", "regular", "medium", "semibold", "bold", "extrabold"] as const;
+const LETTER_SPACING_KEYS = ["tight", "normal", "wide", "wider", "widest"] as const;
+
 const TONAL_PALETTE_KEYS = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
 const TONAL_STEP_STR_KEYS = ["50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950"] as const;
 
@@ -138,11 +143,29 @@ function validateMode(v: unknown, path: string): void {
   validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
   validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
 
-  // fontLevel
-  const fl = obj.fontLevel;
-  if (typeof fl !== "number" || fl < 8 || fl > 18 || fl !== Math.floor(fl)) {
-    throw new Error(`${path}.fontLevel: expected integer 8–18, got ${JSON.stringify(fl)}`);
+  // baseFont
+  const bf = obj.baseFont;
+  if (typeof bf !== "number" || !isFinite(bf) || bf < 8) {
+    throw new Error(`${path}.baseFont: expected number >= 8, got ${JSON.stringify(bf)}`);
   }
+
+  // fontScale
+  const fs = obj.fontScale;
+  if (typeof fs !== "number" || !isFinite(fs) || fs <= 0) {
+    throw new Error(`${path}.fontScale: expected positive number, got ${JSON.stringify(fs)}`);
+  }
+
+  // semanticFontSizes
+  validateNumberObject(requireObject(obj.semanticFontSizes, `${path}.semanticFontSizes`), SEMANTIC_FONT_SIZE_KEYS, `${path}.semanticFontSizes`);
+
+  // lineHeights
+  validateNumberObject(requireObject(obj.lineHeights, `${path}.lineHeights`), LINE_HEIGHT_KEYS, `${path}.lineHeights`);
+
+  // fontWeights
+  validateNumberObject(requireObject(obj.fontWeights, `${path}.fontWeights`), FONT_WEIGHT_KEYS, `${path}.fontWeights`);
+
+  // letterSpacings
+  validateNumberObject(requireObject(obj.letterSpacings, `${path}.letterSpacings`), LETTER_SPACING_KEYS, `${path}.letterSpacings`);
 
   // states
   const states = requireObject(obj.states, `${path}.states`);

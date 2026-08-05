@@ -158,31 +158,35 @@ describe("parseThemeJSON - scale validation", () => {
   });
 });
 
-// ─── fontLevel ──────────────────────────────────────────────────────
+// ─── baseFont ──────────────────────────────────────────────────────
 
-describe("parseThemeJSON - fontLevel validation", () => {
-  it("rejects fontLevel below 8", () => {
+describe("parseThemeJSON - baseFont validation", () => {
+  it("rejects baseFont below 8", () => {
     const obj = validThemeObj();
-    obj.light.fontLevel = 5;
-    expect(() => parseThemeJSON(obj)).toThrow("expected integer 8–18");
+    obj.light.baseFont = 5;
+    expect(() => parseThemeJSON(obj)).toThrow("expected number >= 8");
   });
 
-  it("rejects fontLevel above 18", () => {
+  it("rejects string baseFont", () => {
     const obj = validThemeObj();
-    obj.light.fontLevel = 20;
-    expect(() => parseThemeJSON(obj)).toThrow("expected integer 8–18");
+    obj.light.baseFont = "16";
+    expect(() => parseThemeJSON(obj)).toThrow("expected number >= 8");
+  });
+});
+
+// ─── new typography fields ──────────────────────────────────────────
+
+describe("parseThemeJSON - new typography fields", () => {
+  it("rejects missing semanticFontSizes", () => {
+    const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
+    delete obj.light.semanticFontSizes;
+    expect(() => parseThemeJSON(obj)).toThrow("semanticFontSizes");
   });
 
-  it("rejects non-integer fontLevel", () => {
-    const obj = validThemeObj();
-    obj.light.fontLevel = 12.5;
-    expect(() => parseThemeJSON(obj)).toThrow("expected integer 8–18");
-  });
-
-  it("rejects string fontLevel", () => {
-    const obj = validThemeObj();
-    obj.light.fontLevel = "16";
-    expect(() => parseThemeJSON(obj)).toThrow("expected integer 8–18");
+  it("rejects missing lineHeights", () => {
+    const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
+    delete obj.light.lineHeights;
+    expect(() => parseThemeJSON(obj)).toThrow("lineHeights");
   });
 });
 

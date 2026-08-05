@@ -30,7 +30,7 @@ describe('generateCssVariables — format: "hex" (default)', () => {
     expect(result.light).toMatch(/--salt-spacing-md: \d+px;/);
     expect(result.light).toMatch(/--salt-radius-md: \d+px;/);
     expect(result.light).toMatch(/--salt-font-size-md: [\d.]+rem;/);
-    expect(result.light).toMatch(/--salt-font-level: [\d.]+rem;/);
+    expect(result.light).toMatch(/--salt-font-base: [\d.]+rem;/);
     expect(result.light).toMatch(/--salt-icon-size-md: [\d.]+rem;/);
   });
 
@@ -105,7 +105,7 @@ describe('generateCssVariables — format: "both"', () => {
     expect(supportsBlock).not.toContain("--salt-spacing");
     expect(supportsBlock).not.toContain("--salt-radius");
     expect(supportsBlock).not.toContain("--salt-font-size");
-    expect(supportsBlock).not.toContain("--salt-font-level");
+    expect(supportsBlock).not.toContain("--salt-font-base");
   });
 
   it("light/dark fields contain hex declarations", () => {
@@ -207,11 +207,45 @@ describe("generateCssVariables — token completeness", () => {
     }
   });
 
-  it("includes font-size scale and font-level in rem", () => {
+  it("includes font-size scale and font-base in rem", () => {
     for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
       expect(result.light).toMatch(new RegExp(`--salt-font-size-${key}: [\\d.]+rem;`));
     }
-    expect(result.light).toMatch(/--salt-font-level: [\d.]+rem;/);
+    expect(result.light).toMatch(/--salt-font-base: [\d.]+rem;/);
+  });
+
+  it("includes font-base in rem", () => {
+    expect(result.light).toMatch(/--salt-font-base: [\d.]+rem;/);
+  });
+
+  it("includes semantic font sizes", () => {
+    for (const key of ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"]) {
+      expect(result.light, `missing --salt-font-size-${key}`).toContain(`--salt-font-size-${key}:`);
+    }
+  });
+
+  it("semantic heading tokens use fluid clamp()", () => {
+    for (const key of ["subheading", "heading-3", "heading-2", "heading-1", "display"]) {
+      expect(result.light).toMatch(new RegExp(`--salt-font-size-${key}: clamp\\(`));
+    }
+  });
+
+  it("includes line-height scale", () => {
+    for (const key of ["none", "tight", "snug", "normal", "relaxed", "loose"]) {
+      expect(result.light).toContain(`--salt-line-height-${key}:`);
+    }
+  });
+
+  it("includes font-weight scale", () => {
+    for (const key of ["light", "regular", "medium", "semibold", "bold", "extrabold"]) {
+      expect(result.light).toContain(`--salt-font-weight-${key}:`);
+    }
+  });
+
+  it("includes letter-spacing scale", () => {
+    for (const key of ["tight", "normal", "wide", "wider", "widest"]) {
+      expect(result.light).toContain(`--salt-letter-spacing-${key}:`);
+    }
   });
 
   it("includes icon-size in rem; size and dimension in px", () => {

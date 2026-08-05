@@ -6,7 +6,55 @@ export type Oklab = { L: number; a: number; b: number }; // L: 0–1, a/b: ~±0.
 
 export type OKLCH = { L: number; C: number; H: number }; // L: 0–1, C: 0–~0.4, H: 0–360
 
-export type FontLevel = 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18;
+// ─── Typography ───────────────────────────────────────────────────────
+
+export type FontScaleName =
+  | "minor-second"
+  | "major-second"
+  | "minor-third"
+  | "major-third"
+  | "perfect-fourth"
+  | "augmented-fourth"
+  | "perfect-fifth"
+  | "golden-ratio";
+
+export type SemanticFontSizes = {
+  caption:     number;
+  "body-sm":   number;
+  body:        number;
+  "body-lg":   number;
+  subheading:  number;
+  "heading-3": number;
+  "heading-2": number;
+  "heading-1": number;
+  display:     number;
+};
+
+export type LineHeightScale = {
+  none:    number;
+  tight:   number;
+  snug:    number;
+  normal:  number;
+  relaxed: number;
+  loose:   number;
+};
+
+export type FontWeightScale = {
+  light:     number;
+  regular:   number;
+  medium:    number;
+  semibold:  number;
+  bold:      number;
+  extrabold: number;
+};
+
+export type LetterSpacingScale = {
+  tight:   number;
+  normal:  number;
+  wide:    number;
+  wider:   number;
+  widest:  number;
+};
 
 // ─── Color Harmony ──────────────────────────────────────────────────
 
@@ -294,7 +342,12 @@ export type GeneratedThemeMode = {
   iconSizes: IconSizeScale;
   sizeMap: SizeMapScale;
   dimensions: DimensionScale;
-  fontLevel: FontLevel;
+  baseFont: number;
+  fontScale: number;
+  semanticFontSizes: SemanticFontSizes;
+  lineHeights: LineHeightScale;
+  fontWeights: FontWeightScale;
+  letterSpacings: LetterSpacingScale;
   states: IntentStates;
   accessibility: AccessibilityReport;
   apca: APCAReport;
@@ -339,8 +392,10 @@ export type GenerateThemeOptions = {
   fontSize?: FontSizePreset | FontSizeScale;
   /** Radius scale preset or custom object */
   radius?: RadiusPreset | RadiusScale;
-  /** Font level for typography (8–18, default 16) */
-  fontLevel?: number;
+  /** Base font size in px (≥ 8, default 16). */
+  baseFont?: number;
+  /** Modular scale ratio for semantic font sizes. Named or custom number. Default: "major-third" (1.25). */
+  fontScale?: FontScaleName | number;
 };
 
 // ─── Nature Preset Data ──────────────────────────────────────────────

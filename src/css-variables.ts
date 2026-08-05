@@ -79,6 +79,14 @@ function rem(val: number): string {
   return val === 0 ? "0" : `${+(val / 16).toFixed(4)}rem`;
 }
 
+// Fluid clamp from 65% of maxPx (at 320px viewport) to maxPx (at 1280px viewport)
+function fluidRem(maxPx: number): string {
+  const minPx = maxPx * 0.65;
+  const slope = (maxPx - minPx) / 960;
+  const intercept = minPx - slope * 320;
+  return `clamp(${rem(minPx)}, ${(slope * 100).toFixed(4)}vw + ${intercept.toFixed(4)}px, ${rem(maxPx)})`;
+}
+
 // Dimension tokens — format has no effect, never go in @supports.
 // Font sizes and icon sizes → rem (scales with user font preference, WCAG 1.4.4).
 // Spacing, radius, size map, dimensions → px (layout values, not text-relative).
@@ -94,7 +102,7 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
   for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
     out.push(`${P}-font-size-${key}: ${rem(val)};`);
   }
-  out.push(`${P}-font-level: ${rem(mode.fontLevel)};`);
+  out.push(`${P}-font-base: ${rem(mode.baseFont)};`);
   for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
     out.push(`${P}-icon-size-${key}: ${rem(val)};`);
   }
@@ -103,6 +111,31 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
   }
   for (const [key, val] of Object.entries(mode.dimensions) as [string, number][]) {
     out.push(`${P}-dimension-${key}: ${val}px;`);
+  }
+
+  // Semantic font sizes — fluid clamp() for headings/display, rem for body/caption
+  const FLUID_FONT_KEYS = new Set(["subheading", "heading-3", "heading-2", "heading-1", "display"]);
+  for (const [key, val] of Object.entries(mode.semanticFontSizes) as [string, number][]) {
+    if (FLUID_FONT_KEYS.has(key)) {
+      out.push(`${P}-font-size-${key}: ${fluidRem(val)};`);
+    } else {
+      out.push(`${P}-font-size-${key}: ${rem(val)};`);
+    }
+  }
+
+  // Line heights (unitless)
+  for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
+    out.push(`${P}-line-height-${key}: ${val};`);
+  }
+
+  // Font weights
+  for (const [key, val] of Object.entries(mode.fontWeights) as [string, number][]) {
+    out.push(`${P}-font-weight-${key}: ${val};`);
+  }
+
+  // Letter spacings (em, 0 stays "0")
+  for (const [key, val] of Object.entries(mode.letterSpacings) as [string, number][]) {
+    out.push(`${P}-letter-spacing-${key}: ${val === 0 ? "0" : `${val}em`};`);
   }
 
   return out;

@@ -8,11 +8,11 @@ import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
 import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
+import { resolveFontScale, computeSemanticFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
   GeneratedThemeMode,
-  FontLevel,
   SpacingPreset,
   FontSizePreset,
   RadiusPreset,
@@ -170,7 +170,8 @@ function generateModeWithOverrides(
   spacing: SpacingScale,
   radius: RadiusScale,
   fontSizes: FontSizeScale,
-  fontLevel: FontLevel
+  baseFont: number,
+  fontScale: number
 ): { result: GeneratedThemeMode; warnings: ThemeWarning[] } {
   let derived: SemanticColors;
 
@@ -198,7 +199,16 @@ function generateModeWithOverrides(
   const apca = buildAPCAReport(colors, surfaceElevation);
 
   return {
-    result: { mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes, iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes, fontLevel, states, accessibility, apca },
+    result: {
+      mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes,
+      iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes,
+      baseFont, fontScale,
+      semanticFontSizes: computeSemanticFontSizes(baseFont, fontScale),
+      lineHeights: DEFAULT_LINE_HEIGHTS,
+      fontWeights: DEFAULT_FONT_WEIGHTS,
+      letterSpacings: DEFAULT_LETTER_SPACINGS,
+      states, accessibility, apca,
+    },
     warnings,
   };
 }
@@ -238,7 +248,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   const spacing = resolveScale<SpacingPreset, SpacingScale>(options.spacing, SPACING_PRESETS, "default");
   const fontSize = resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
   const radius = resolveScale<RadiusPreset, RadiusScale>(options.radius, RADIUS_PRESETS, "default");
-  const fontLevel = Math.max(8, Math.min(18, options.fontLevel ?? 16)) as FontLevel;
+  const baseFont  = Math.max(8, options.baseFont ?? 16);
+  const fontScale = resolveFontScale(options.fontScale);
 
   // 3. Fast path — no user color overrides
   const hasColorOverrides =
@@ -248,8 +259,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     options.quaternary !== undefined;
 
   if (!hasColorOverrides) {
-    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, fontLevel);
-    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, fontLevel);
+    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale);
+    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale);
     return { light, dark };
   }
 
@@ -274,10 +285,10 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   }
 
   const { result: light, warnings: lightWarns } = generateModeWithOverrides(
-    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, fontLevel
+    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale
   );
   const { result: dark, warnings: darkWarns } = generateModeWithOverrides(
-    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, fontLevel
+    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale
   );
 
   const allWarnings = [...lightWarns, ...darkWarns];
@@ -293,7 +304,8 @@ function generateMode(
   spacing: SpacingScale,
   radius: RadiusScale,
   fontSizes: FontSizeScale,
-  fontLevel: FontLevel
+  baseFont: number,
+  fontScale: number
 ): GeneratedThemeMode {
   const colors = deriveColors(primaryHex, mode, colorOpts);
   const palettes = generateTonalPalettes(colors);
@@ -313,7 +325,12 @@ function generateMode(
     iconSizes: fontSizes,
     sizeMap: fontSizes,
     dimensions: fontSizes,
-    fontLevel,
+    baseFont,
+    fontScale,
+    semanticFontSizes: computeSemanticFontSizes(baseFont, fontScale),
+    lineHeights: DEFAULT_LINE_HEIGHTS,
+    fontWeights: DEFAULT_FONT_WEIGHTS,
+    letterSpacings: DEFAULT_LETTER_SPACINGS,
     states,
     accessibility,
     apca,
