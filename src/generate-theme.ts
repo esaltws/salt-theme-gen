@@ -375,18 +375,16 @@ function resolvePrimary(options: GenerateThemeOptions): string {
   return oklchToHex({ L: 0.55, C: ocean.chroma, H: ocean.hue });
 }
 
-function resolveScale<P extends string, S>(
-  input: P | S | undefined,
+function resolveScale<P extends string, S extends Record<string, unknown>>(
+  input: P | Partial<S> | undefined,
   presets: Record<string, S>,
   defaultKey: string
 ): S {
   if (input === undefined) return presets[defaultKey];
   if (typeof input === "string") {
     const preset = presets[input];
-    if (!preset) {
-      throw new Error(`Unknown scale preset: "${input}"`);
-    }
+    if (!preset) throw new Error(`Unknown scale preset: "${input}"`);
     return preset;
   }
-  return input as S;
+  return { ...presets[defaultKey], ...input } as S;
 }

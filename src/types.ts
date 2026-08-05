@@ -414,12 +414,12 @@ export type GenerateThemeOptions = {
    * true: auto-correct failing value (hue preserved), warn on failure.
    */
   override?: boolean;
-  /** Spacing scale preset or custom object */
-  spacing?: SpacingPreset | SpacingScale;
-  /** Font size scale preset or custom object */
-  fontSize?: FontSizePreset | FontSizeScale;
-  /** Radius scale preset or custom object */
-  radius?: RadiusPreset | RadiusScale;
+  /** Spacing scale preset, full custom object, or partial override merged with the default preset. */
+  spacing?: SpacingPreset | Partial<SpacingScale>;
+  /** Font size scale preset, full custom object, or partial override merged with the default preset. */
+  fontSize?: FontSizePreset | Partial<FontSizeScale>;
+  /** Radius scale preset, full custom object, or partial override merged with the default preset. */
+  radius?: RadiusPreset | Partial<RadiusScale>;
   /** Base font size in px (≥ 8, default 16). */
   baseFont?: number;
   /** Modular scale ratio for semantic font sizes. Named or custom number. Default: "major-third" (1.25). */
