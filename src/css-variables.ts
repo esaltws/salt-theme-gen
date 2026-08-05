@@ -18,11 +18,23 @@ export type CssVariablesResult = {
   light: string;
   /** Dark-mode declarations only — no selector wrapper, for custom injection. */
   dark: string;
+  /** Typography utility classes (.salt-caption, .salt-body-medium, etc.) that reference the CSS vars. */
+  classes: string;
 };
 
 // ─── Constants ───────────────────────────────────────────────────────
 
 const P = "--salt";
+
+const DEFAULT_SANS_FAMILY = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+
+const SANS_TYPE_KEYS = new Set(["caption", "labelSmall", "labelMedium", "bodySmall", "bodyMedium", "bodyLarge"]);
+
+const TYPOGRAPHY_CLASS_KEYS = [
+  "caption", "labelSmall", "labelMedium",
+  "bodySmall", "bodyMedium", "bodyLarge",
+  "titleSmall", "titleMedium", "titleLarge", "display",
+];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
@@ -119,22 +131,18 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
   for (const [key, style] of Object.entries(mode.typography) as [string, TypographyStyle][]) {
     const kebab = camelToKebab(key);
     const sizeVal = FLUID_TYPE_KEYS.has(key) ? fluidRem(style.fontSize) : rem(style.fontSize);
+    const globalFamilyVar = SANS_TYPE_KEYS.has(key) ? `${P}-font-family-sans` : `${P}-font-family-display`;
     out.push(`${P}-type-${kebab}-size: ${sizeVal};`);
     out.push(`${P}-type-${kebab}-line-height: ${style.lineHeight};`);
     out.push(`${P}-type-${kebab}-weight: ${style.fontWeight};`);
     out.push(`${P}-type-${kebab}-letter-spacing: ${style.letterSpacing === 0 ? "0" : `${style.letterSpacing}em`};`);
-    if (style.fontFamily) {
-      out.push(`${P}-type-${kebab}-family: ${style.fontFamily};`);
-    }
+    out.push(`${P}-type-${kebab}-family: var(${globalFamilyVar});`);
   }
 
-  // Global font family vars
-  if (mode.fontFamilySans) {
-    out.push(`${P}-font-family-sans: ${mode.fontFamilySans};`);
-  }
-  if (mode.fontFamilyDisplay) {
-    out.push(`${P}-font-family-display: ${mode.fontFamilyDisplay};`);
-  }
+  // Global font family — always emitted; defaults to system stack when user provides none
+  const sansFamily = mode.fontFamilySans ?? DEFAULT_SANS_FAMILY;
+  out.push(`${P}-font-family-sans: ${sansFamily};`);
+  out.push(`${P}-font-family-display: ${mode.fontFamilyDisplay ?? sansFamily};`);
 
   // Line heights (unitless)
   for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
@@ -156,6 +164,23 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
 
 function nonColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
   return [...extraColorDecls(mode, format), ...dimensionDecls(mode)];
+}
+
+// ─── Typography Classes ───────────────────────────────────────────────
+
+function buildTypographyClasses(): string {
+  return TYPOGRAPHY_CLASS_KEYS.map((key) => {
+    const kebab = camelToKebab(key);
+    return [
+      `.salt-${kebab} {`,
+      `  font-size: var(${P}-type-${kebab}-size);`,
+      `  line-height: var(${P}-type-${kebab}-line-height);`,
+      `  font-weight: var(${P}-type-${kebab}-weight);`,
+      `  letter-spacing: var(${P}-type-${kebab}-letter-spacing);`,
+      `  font-family: var(${P}-type-${kebab}-family);`,
+      `}`,
+    ].join("\n");
+  }).join("\n\n");
 }
 
 // ─── Block Composers ─────────────────────────────────────────────────
@@ -239,5 +264,5 @@ export function generateCssVariables(
     ].join("\n\n");
   }
 
-  return { css, light, dark };
+  return { css, light, dark, classes: buildTypographyClasses() };
 }
