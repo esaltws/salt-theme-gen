@@ -67,6 +67,13 @@ export type LetterSpacingScale = {
   widest:  number;
 };
 
+export type FontFamilyOptions = {
+  /** Font family for body/UI tokens (caption, label, body). */
+  sans?: string;
+  /** Font family for heading/display tokens (titleSmall–display). */
+  display?: string;
+};
+
 // ─── Color Harmony ──────────────────────────────────────────────────
 
 export type ColorHarmony =
@@ -355,6 +362,8 @@ export type GeneratedThemeMode = {
   dimensions: DimensionScale;
   baseFont: number;
   fontScale: number;
+  fontFamilySans?: string;
+  fontFamilyDisplay?: string;
   typography: TypographyScale;
   lineHeights: LineHeightScale;
   fontWeights: FontWeightScale;
@@ -407,6 +416,8 @@ export type GenerateThemeOptions = {
   baseFont?: number;
   /** Modular scale ratio for semantic font sizes. Named or custom number. Default: "major-third" (1.25). */
   fontScale?: FontScaleName | number;
+  /** Font families applied to typography tokens. Not loaded — bring your own @font-face. */
+  fontFamily?: FontFamilyOptions;
 };
 
 // ─── Nature Preset Data ──────────────────────────────────────────────

@@ -142,14 +142,13 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
     spacing:      spacingGroup,
     radius:       radiusGroup,
     fontSize:     fontSizeGroup,
+    lineHeight:   lineHeightGroup,
+    fontWeight:   fontWeightGroup,
+    letterSpacing: letterSpacingGroup,
     typography:   typographyGroup,
-    lineHeight:       lineHeightGroup,
-    fontWeight:       fontWeightGroup,
-    letterSpacing:    letterSpacingGroup,
-    typography:       typographyGroup,
-    iconSize:         iconSizeGroup,
-    size:             sizeGroup,
-    dimension:        dimensionGroup,
+    iconSize:     iconSizeGroup,
+    size:         sizeGroup,
+    dimension:    dimensionGroup,
   };
 }
 

@@ -28,6 +28,8 @@ export type ThemeModeOverrides = {
   fontSizes?: Partial<FontSizeScale>;
   baseFont?: number;
   fontScale?: number;
+  fontFamilySans?: string;
+  fontFamilyDisplay?: string;
   states?: Partial<Record<keyof IntentStates, Partial<StateColors>>>;
   surfaceElevation?: Partial<SurfaceElevation>;
 };
@@ -84,6 +86,8 @@ function mergeOverrides(
       : undefined,
     baseFont: specific.baseFont ?? base.baseFont,
     fontScale: specific.fontScale ?? base.fontScale,
+    fontFamilySans: specific.fontFamilySans ?? base.fontFamilySans,
+    fontFamilyDisplay: specific.fontFamilyDisplay ?? base.fontFamilyDisplay,
     states: mergeNestedPartial(base.states, specific.states),
     surfaceElevation: base.surfaceElevation || specific.surfaceElevation
       ? { ...base.surfaceElevation, ...specific.surfaceElevation }
@@ -126,8 +130,15 @@ function adjustMode(
   const fontScale = overrides.fontScale !== undefined
     ? overrides.fontScale
     : mode.fontScale;
-  const typography = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
-    ? computeTypographyScale(baseFont, fontScale)
+  const fontFamilySans = overrides.fontFamilySans !== undefined
+    ? overrides.fontFamilySans
+    : mode.fontFamilySans;
+  const fontFamilyDisplay = overrides.fontFamilyDisplay !== undefined
+    ? overrides.fontFamilyDisplay
+    : mode.fontFamilyDisplay;
+  const fontFamilyChanged = overrides.fontFamilySans !== undefined || overrides.fontFamilyDisplay !== undefined;
+  const typography = (overrides.baseFont !== undefined || overrides.fontScale !== undefined || fontFamilyChanged)
+    ? computeTypographyScale(baseFont, fontScale, { sans: fontFamilySans, display: fontFamilyDisplay })
     : mode.typography;
 
   // 2. Merge colors — normalize any CSS color string to hex before merging
@@ -212,6 +223,8 @@ function adjustMode(
     dimensions: mode.dimensions,
     baseFont,
     fontScale,
+    fontFamilySans,
+    fontFamilyDisplay,
     typography,
     lineHeights: mode.lineHeights,
     fontWeights: mode.fontWeights,

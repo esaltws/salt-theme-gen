@@ -23,6 +23,7 @@ import type {
   BaseColorKey,
   BaseColorOverride,
   ThemeWarning,
+  FontFamilyOptions,
 } from "./types.js";
 
 // ─── Base color key registry ──────────────────────────────────────────
@@ -171,7 +172,8 @@ function generateModeWithOverrides(
   radius: RadiusScale,
   fontSizes: FontSizeScale,
   baseFont: number,
-  fontScale: number
+  fontScale: number,
+  fontFamily?: FontFamilyOptions
 ): { result: GeneratedThemeMode; warnings: ThemeWarning[] } {
   let derived: SemanticColors;
 
@@ -203,7 +205,9 @@ function generateModeWithOverrides(
       mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes,
       iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes,
       baseFont, fontScale,
-      typography: computeTypographyScale(baseFont, fontScale),
+      fontFamilySans: fontFamily?.sans,
+      fontFamilyDisplay: fontFamily?.display,
+      typography: computeTypographyScale(baseFont, fontScale, fontFamily),
       lineHeights: DEFAULT_LINE_HEIGHTS,
       fontWeights: DEFAULT_FONT_WEIGHTS,
       letterSpacings: DEFAULT_LETTER_SPACINGS,
@@ -250,6 +254,7 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   const radius = resolveScale<RadiusPreset, RadiusScale>(options.radius, RADIUS_PRESETS, "default");
   const baseFont  = Math.max(8, options.baseFont ?? 16);
   const fontScale = resolveFontScale(options.fontScale);
+  const fontFamily = options.fontFamily;
 
   // 3. Fast path — no user color overrides
   const hasColorOverrides =
@@ -259,8 +264,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     options.quaternary !== undefined;
 
   if (!hasColorOverrides) {
-    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale);
-    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale);
+    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale, fontFamily);
     return { light, dark };
   }
 
@@ -285,10 +290,10 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   }
 
   const { result: light, warnings: lightWarns } = generateModeWithOverrides(
-    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale
+    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale, fontFamily
   );
   const { result: dark, warnings: darkWarns } = generateModeWithOverrides(
-    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale
+    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale, fontFamily
   );
 
   const allWarnings = [...lightWarns, ...darkWarns];
@@ -305,7 +310,8 @@ function generateMode(
   radius: RadiusScale,
   fontSizes: FontSizeScale,
   baseFont: number,
-  fontScale: number
+  fontScale: number,
+  fontFamily?: FontFamilyOptions
 ): GeneratedThemeMode {
   const colors = deriveColors(primaryHex, mode, colorOpts);
   const palettes = generateTonalPalettes(colors);
@@ -327,7 +333,9 @@ function generateMode(
     dimensions: fontSizes,
     baseFont,
     fontScale,
-    typography: computeTypographyScale(baseFont, fontScale),
+    fontFamilySans: fontFamily?.sans,
+    fontFamilyDisplay: fontFamily?.display,
+    typography: computeTypographyScale(baseFont, fontScale, fontFamily),
     lineHeights: DEFAULT_LINE_HEIGHTS,
     fontWeights: DEFAULT_FONT_WEIGHTS,
     letterSpacings: DEFAULT_LETTER_SPACINGS,

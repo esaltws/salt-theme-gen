@@ -128,6 +128,14 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
     }
   }
 
+  // Global font family vars
+  if (mode.fontFamilySans) {
+    out.push(`${P}-font-family-sans: ${mode.fontFamilySans};`);
+  }
+  if (mode.fontFamilyDisplay) {
+    out.push(`${P}-font-family-display: ${mode.fontFamilyDisplay};`);
+  }
+
   // Line heights (unitless)
   for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
     out.push(`${P}-line-height-${key}: ${val};`);

@@ -155,6 +155,14 @@ function validateMode(v: unknown, path: string): void {
     throw new Error(`${path}.fontScale: expected positive number, got ${JSON.stringify(fs)}`);
   }
 
+  // fontFamilySans / fontFamilyDisplay (optional strings)
+  if (obj.fontFamilySans !== undefined && typeof obj.fontFamilySans !== "string") {
+    throw new Error(`${path}.fontFamilySans: expected string, got ${JSON.stringify(obj.fontFamilySans)}`);
+  }
+  if (obj.fontFamilyDisplay !== undefined && typeof obj.fontFamilyDisplay !== "string") {
+    throw new Error(`${path}.fontFamilyDisplay: expected string, got ${JSON.stringify(obj.fontFamilyDisplay)}`);
+  }
+
   // typography
   const typo = requireObject(obj.typography, `${path}.typography`);
   requireKeys(typo, TYPOGRAPHY_SCALE_KEYS, `${path}.typography`);

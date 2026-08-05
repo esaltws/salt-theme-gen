@@ -57,11 +57,24 @@ const TYPOGRAPHY_DEFAULTS: Record<keyof TypographyScale, TypographyDefaults> = {
   display:     { step:  5, lineHeight: 1.1,   fontWeight: 700, letterSpacing: -0.03 },
 };
 
-export function computeTypographyScale(baseFont: number, ratio: number): TypographyScale {
+const SANS_TYPOGRAPHY_KEYS = new Set(["caption", "labelSmall", "labelMedium", "bodySmall", "bodyMedium", "bodyLarge"]);
+
+export function computeTypographyScale(
+  baseFont: number,
+  ratio: number,
+  fontFamily?: { sans?: string; display?: string }
+): TypographyScale {
   const size = (step: number) => Math.round(baseFont * Math.pow(ratio, step) * 2) / 2;
   const out = {} as TypographyScale;
   for (const [key, d] of Object.entries(TYPOGRAPHY_DEFAULTS) as [keyof TypographyScale, TypographyDefaults][]) {
-    out[key] = { fontSize: size(d.step), lineHeight: d.lineHeight, fontWeight: d.fontWeight, letterSpacing: d.letterSpacing };
+    const family = SANS_TYPOGRAPHY_KEYS.has(key) ? fontFamily?.sans : fontFamily?.display;
+    out[key] = {
+      fontSize: size(d.step),
+      lineHeight: d.lineHeight,
+      fontWeight: d.fontWeight,
+      letterSpacing: d.letterSpacing,
+      ...(family && { fontFamily: family }),
+    };
   }
   return out;
 }
