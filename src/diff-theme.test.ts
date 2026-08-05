@@ -67,51 +67,46 @@ describe("diffTheme - single color change", () => {
 
 describe("diffTheme - numeric scales", () => {
   it("detects spacing change", () => {
-    const adjusted = adjustTheme(theme, { both: { spacing: { md: 99 } } });
+    const adjusted = adjustTheme(theme, { tokens: { spacing: { md: 99 } } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.light.spacing?.md).toEqual({
-      old: theme.light.spacing.md,
-      new: 99,
-    });
-    expect(diff.dark.spacing?.md).toEqual({
-      old: theme.dark.spacing.md,
+    expect(diff.tokens.spacing?.md).toEqual({
+      old: theme.tokens.spacing.md,
       new: 99,
     });
   });
 
   it("detects radius change", () => {
-    const adjusted = adjustTheme(theme, { dark: { radius: { pill: 100 } } });
+    const adjusted = adjustTheme(theme, { tokens: { radius: { pill: 100 } } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.dark.radius?.pill).toEqual({
-      old: theme.dark.radius.pill,
+    expect(diff.tokens.radius?.pill).toEqual({
+      old: theme.tokens.radius.pill,
       new: 100,
     });
-    expect(diff.light.radius?.pill).toBeUndefined();
   });
 
   it("detects fontSizes change", () => {
-    const adjusted = adjustTheme(theme, { light: { fontSizes: { xl: 30 } } });
+    const adjusted = adjustTheme(theme, { tokens: { fontSizes: { xl: 30 } } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.light.fontSizes?.xl).toEqual({
-      old: theme.light.fontSizes.xl,
+    expect(diff.tokens.fontSizes?.xl).toEqual({
+      old: theme.tokens.fontSizes.xl,
       new: 30,
     });
   });
 
   it("detects baseFont change", () => {
-    const adjusted = adjustTheme(theme, { light: { baseFont: 12 } });
+    const adjusted = adjustTheme(theme, { tokens: { baseFont: 12 } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.light.baseFont).toEqual({
-      old: theme.light.baseFont,
+    expect(diff.tokens.baseFont).toEqual({
+      old: theme.tokens.baseFont,
       new: 12,
     });
   });
 
   it("unchanged scales are absent from diff", () => {
-    const adjusted = adjustTheme(theme, { light: { spacing: { md: 99 } } });
+    const adjusted = adjustTheme(theme, { tokens: { spacing: { md: 99 } } });
     const diff = diffTheme(theme, adjusted);
-    expect(diff.light.radius).toBeUndefined();
-    expect(diff.light.fontSizes).toBeUndefined();
+    expect(diff.tokens.radius).toBeUndefined();
+    expect(diff.tokens.fontSizes).toBeUndefined();
   });
 });
 
@@ -167,7 +162,7 @@ describe("diffTheme - accessibility", () => {
   });
 
   it("no color change means no accessibility diff", () => {
-    const adjusted = adjustTheme(theme, { light: { spacing: { md: 99 } } });
+    const adjusted = adjustTheme(theme, { tokens: { spacing: { md: 99 } } });
     const diff = diffTheme(theme, adjusted);
     expect(diff.light.accessibility).toBeUndefined();
   });
@@ -199,16 +194,16 @@ describe("diffTheme - surface elevation", () => {
 describe("diffTheme - round-trip with adjustTheme", () => {
   it("adjusting then diffing shows exactly what changed", () => {
     const adjusted = adjustTheme(theme, {
-      both: { colors: { primary: "#ff0000" }, spacing: { md: 99 } },
+      both: { colors: { primary: "#ff0000" } },
+      tokens: { spacing: { md: 99 } },
     });
     const diff = diffTheme(theme, adjusted);
     expect(diff.identical).toBe(false);
     // primary changed in both
     expect(diff.light.colors?.primary?.new).toBe("#ff0000");
     expect(diff.dark.colors?.primary?.new).toBe("#ff0000");
-    // spacing changed in both
-    expect(diff.light.spacing?.md?.new).toBe(99);
-    expect(diff.dark.spacing?.md?.new).toBe(99);
+    // spacing changed (mode-agnostic)
+    expect(diff.tokens.spacing?.md?.new).toBe(99);
     // secondary unchanged
     expect(diff.light.colors?.secondary).toBeUndefined();
   });

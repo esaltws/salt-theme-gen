@@ -62,6 +62,12 @@ describe("parseThemeJSON - root errors", () => {
     delete obj.dark;
     expect(() => parseThemeJSON(obj)).toThrow('missing required key "dark"');
   });
+
+  it("rejects object missing tokens", () => {
+    const obj = validThemeObj();
+    delete obj.tokens;
+    expect(() => parseThemeJSON(obj)).toThrow('missing required key "tokens"');
+  });
 });
 
 // ─── mode field ─────────────────────────────────────────────────────
@@ -135,25 +141,25 @@ describe("parseThemeJSON - surfaceElevation validation", () => {
 describe("parseThemeJSON - scale validation", () => {
   it("rejects missing spacing key", () => {
     const obj = validThemeObj();
-    delete obj.light.spacing.md;
+    delete obj.tokens.spacing.md;
     expect(() => parseThemeJSON(obj)).toThrow('missing required key "md"');
   });
 
   it("rejects string in radius scale", () => {
     const obj = validThemeObj();
-    obj.light.radius.pill = "big";
+    obj.tokens.radius.pill = "big";
     expect(() => parseThemeJSON(obj)).toThrow("expected number");
   });
 
   it("rejects missing fontSizes key", () => {
     const obj = validThemeObj();
-    delete obj.light.fontSizes["3xl"];
+    delete obj.tokens.fontSizes["3xl"];
     expect(() => parseThemeJSON(obj)).toThrow('missing required key "3xl"');
   });
 
   it("rejects NaN in scale", () => {
     const obj = validThemeObj();
-    obj.light.spacing.xs = NaN;
+    obj.tokens.spacing.xs = NaN;
     expect(() => parseThemeJSON(obj)).toThrow("expected number");
   });
 });
@@ -163,13 +169,13 @@ describe("parseThemeJSON - scale validation", () => {
 describe("parseThemeJSON - baseFont validation", () => {
   it("rejects baseFont below 8", () => {
     const obj = validThemeObj();
-    obj.light.baseFont = 5;
+    obj.tokens.baseFont = 5;
     expect(() => parseThemeJSON(obj)).toThrow("expected number >= 8");
   });
 
   it("rejects string baseFont", () => {
     const obj = validThemeObj();
-    obj.light.baseFont = "16";
+    obj.tokens.baseFont = "16";
     expect(() => parseThemeJSON(obj)).toThrow("expected number >= 8");
   });
 });
@@ -179,19 +185,19 @@ describe("parseThemeJSON - baseFont validation", () => {
 describe("parseThemeJSON - new typography fields", () => {
   it("rejects missing typography", () => {
     const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
-    delete obj.light.typography;
+    delete obj.tokens.typography;
     expect(() => parseThemeJSON(obj)).toThrow("typography");
   });
 
   it("rejects invalid fontWeight in typography", () => {
     const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
-    obj.light.typography.bodyMedium.fontWeight = 350;
+    obj.tokens.typography.bodyMedium.fontWeight = 350;
     expect(() => parseThemeJSON(obj)).toThrow("fontWeight");
   });
 
   it("rejects missing lineHeights", () => {
     const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
-    delete obj.light.lineHeights;
+    delete obj.tokens.lineHeights;
     expect(() => parseThemeJSON(obj)).toThrow("lineHeights");
   });
 });

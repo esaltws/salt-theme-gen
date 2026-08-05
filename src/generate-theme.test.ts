@@ -15,9 +15,10 @@ const presetNames = Object.keys(NATURE_PRESETS) as ThemePreset[];
 describe("generateTheme - defaults", () => {
   const theme = generateTheme();
 
-  it("returns { light, dark } when called with no arguments", () => {
+  it("returns { light, dark, tokens } when called with no arguments", () => {
     expect(theme).toHaveProperty("light");
     expect(theme).toHaveProperty("dark");
+    expect(theme).toHaveProperty("tokens");
   });
 
   it("light.mode === 'light' and dark.mode === 'dark'", () => {
@@ -26,20 +27,19 @@ describe("generateTheme - defaults", () => {
   });
 
   it("default baseFont is 16", () => {
-    expect(theme.light.baseFont).toBe(16);
-    expect(theme.dark.baseFont).toBe(16);
+    expect(theme.tokens.baseFont).toBe(16);
   });
 
   it("default spacing matches SPACING_PRESETS.default", () => {
-    expect(theme.light.spacing).toEqual(SPACING_PRESETS.default);
+    expect(theme.tokens.spacing).toEqual(SPACING_PRESETS.default);
   });
 
   it("default radius matches RADIUS_PRESETS.default", () => {
-    expect(theme.light.radius).toEqual(RADIUS_PRESETS.default);
+    expect(theme.tokens.radius).toEqual(RADIUS_PRESETS.default);
   });
 
   it("default fontSizes matches FONT_SIZE_PRESETS.default", () => {
-    expect(theme.light.fontSizes).toEqual(FONT_SIZE_PRESETS.default);
+    expect(theme.tokens.fontSizes).toEqual(FONT_SIZE_PRESETS.default);
   });
 
   it("light.colors has all 23 keys", () => {
@@ -151,23 +151,23 @@ describe("generateTheme - secondary override", () => {
 describe("generateTheme - scale presets", () => {
   it("spacing 'compact' uses compact values", () => {
     const theme = generateTheme({ spacing: "compact" });
-    expect(theme.light.spacing).toEqual(SPACING_PRESETS.compact);
+    expect(theme.tokens.spacing).toEqual(SPACING_PRESETS.compact);
   });
 
   it("spacing custom object is passed through", () => {
     const custom = { none: 0, xs: 1, sm: 2, md: 3, lg: 4, xl: 5, xxl: 6 };
     const theme = generateTheme({ spacing: custom });
-    expect(theme.light.spacing).toEqual(custom);
+    expect(theme.tokens.spacing).toEqual(custom);
   });
 
   it("radius 'pill' uses pill values", () => {
     const theme = generateTheme({ radius: "pill" });
-    expect(theme.light.radius).toEqual(RADIUS_PRESETS.pill);
+    expect(theme.tokens.radius).toEqual(RADIUS_PRESETS.pill);
   });
 
   it("fontSize 'editorial' uses editorial values", () => {
     const theme = generateTheme({ fontSize: "editorial" });
-    expect(theme.light.fontSizes).toEqual(FONT_SIZE_PRESETS.editorial);
+    expect(theme.tokens.fontSizes).toEqual(FONT_SIZE_PRESETS.editorial);
   });
 
   it("unknown scale preset throws", () => {
@@ -180,34 +180,34 @@ describe("generateTheme - scale presets", () => {
 describe("generateTheme - baseFont", () => {
   it("default baseFont is 16", () => {
     const theme = generateTheme();
-    expect(theme.light.baseFont).toBe(16);
+    expect(theme.tokens.baseFont).toBe(16);
   });
 
   it("respects provided baseFont", () => {
     const theme = generateTheme({ baseFont: 12 });
-    expect(theme.light.baseFont).toBe(12);
+    expect(theme.tokens.baseFont).toBe(12);
   });
 
   it("clamps below minimum to 8", () => {
     const theme = generateTheme({ baseFont: 5 });
-    expect(theme.light.baseFont).toBe(8);
+    expect(theme.tokens.baseFont).toBe(8);
   });
 });
 
 describe("generateTheme - fontScale", () => {
   it("default fontScale is 1.25 (major-third)", () => {
     const theme = generateTheme({ primary: "#1e90ff" });
-    expect(theme.light.fontScale).toBe(1.25);
+    expect(theme.tokens.fontScale).toBe(1.25);
   });
 
   it("named scale 'golden-ratio' resolves to 1.618", () => {
     const theme = generateTheme({ primary: "#1e90ff", fontScale: "golden-ratio" });
-    expect(theme.light.fontScale).toBe(1.618);
+    expect(theme.tokens.fontScale).toBe(1.618);
   });
 
   it("custom numeric fontScale is accepted", () => {
     const theme = generateTheme({ primary: "#1e90ff", fontScale: 1.5 });
-    expect(theme.light.fontScale).toBe(1.5);
+    expect(theme.tokens.fontScale).toBe(1.5);
   });
 });
 
@@ -216,22 +216,22 @@ describe("generateTheme - typography", () => {
 
   it("has all 10 typography keys", () => {
     const keys = ["caption", "labelSmall", "labelMedium", "bodySmall", "bodyMedium", "bodyLarge", "titleSmall", "titleMedium", "titleLarge", "display"];
-    for (const key of keys) expect(theme.light.typography).toHaveProperty(key);
+    for (const key of keys) expect(theme.tokens.typography).toHaveProperty(key);
   });
 
   it("bodyMedium.fontSize equals baseFont", () => {
-    expect(theme.light.typography.bodyMedium.fontSize).toBe(16);
+    expect(theme.tokens.typography.bodyMedium.fontSize).toBe(16);
   });
 
   it("display.fontSize > titleLarge.fontSize > bodyMedium.fontSize > caption.fontSize", () => {
-    const t = theme.light.typography;
+    const t = theme.tokens.typography;
     expect(t.display.fontSize).toBeGreaterThan(t.titleLarge.fontSize);
     expect(t.titleLarge.fontSize).toBeGreaterThan(t.bodyMedium.fontSize);
     expect(t.bodyMedium.fontSize).toBeGreaterThan(t.caption.fontSize);
   });
 
   it("each style has fontSize, lineHeight, fontWeight, letterSpacing", () => {
-    for (const style of Object.values(theme.light.typography)) {
+    for (const style of Object.values(theme.tokens.typography)) {
       expect(typeof style.fontSize).toBe("number");
       expect(typeof style.lineHeight).toBe("number");
       expect([400, 500, 600, 700]).toContain(style.fontWeight);
@@ -240,14 +240,14 @@ describe("generateTheme - typography", () => {
   });
 
   it("title and display styles have fontWeight >= 600", () => {
-    const t = theme.light.typography;
+    const t = theme.tokens.typography;
     expect(t.titleSmall.fontWeight).toBeGreaterThanOrEqual(600);
     expect(t.titleLarge.fontWeight).toBeGreaterThanOrEqual(600);
     expect(t.display.fontWeight).toBeGreaterThanOrEqual(600);
   });
 
   it("body styles have fontWeight 400", () => {
-    const t = theme.light.typography;
+    const t = theme.tokens.typography;
     expect(t.bodySmall.fontWeight).toBe(400);
     expect(t.bodyMedium.fontWeight).toBe(400);
     expect(t.bodyLarge.fontWeight).toBe(400);
@@ -258,21 +258,21 @@ describe("generateTheme - lineHeights, fontWeights, letterSpacings", () => {
   const theme = generateTheme({ primary: "#1e90ff" });
 
   it("lineHeights has expected keys", () => {
-    const lh = theme.light.lineHeights;
+    const lh = theme.tokens.lineHeights;
     expect(lh.none).toBe(1);
     expect(lh.normal).toBe(1.5);
     expect(lh.loose).toBe(2);
   });
 
   it("fontWeights has expected keys", () => {
-    const fw = theme.light.fontWeights;
+    const fw = theme.tokens.fontWeights;
     expect(fw.regular).toBe(400);
     expect(fw.bold).toBe(700);
     expect(fw.extrabold).toBe(800);
   });
 
   it("letterSpacings has expected keys", () => {
-    const ls = theme.light.letterSpacings;
+    const ls = theme.tokens.letterSpacings;
     expect(ls.normal).toBe(0);
     expect(ls.tight).toBe(-0.04);
     expect(ls.widest).toBe(0.1);
@@ -288,6 +288,18 @@ describe("generateTheme - output structure", () => {
     const lightKeys = Object.keys(theme.light).sort();
     const darkKeys = Object.keys(theme.dark).sort();
     expect(lightKeys).toEqual(darkKeys);
+  });
+
+  it("has tokens object with spacing, radius, fontSizes", () => {
+    expect(theme.tokens).toHaveProperty("spacing");
+    expect(theme.tokens).toHaveProperty("radius");
+    expect(theme.tokens).toHaveProperty("fontSizes");
+    expect(theme.tokens).toHaveProperty("baseFont");
+    expect(theme.tokens).toHaveProperty("fontScale");
+    expect(theme.tokens).toHaveProperty("typography");
+    expect(theme.tokens).toHaveProperty("lineHeights");
+    expect(theme.tokens).toHaveProperty("fontWeights");
+    expect(theme.tokens).toHaveProperty("letterSpacings");
   });
 
   it("states object has 8 intents with 4 states each", () => {

@@ -13,7 +13,8 @@ import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_BORDER_WIDTHS,
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
-  GeneratedThemeMode,
+  GeneratedThemeColors,
+  GeneratedThemeTokens,
   SpacingPreset,
   FontSizePreset,
   RadiusPreset,
@@ -163,38 +164,57 @@ function applyUserOverridesWithWCAG(
   return { colors: working as SemanticColors, warnings };
 }
 
-function generateModeWithOverrides(
-  mode: "light" | "dark",
-  primaryHex: string,
-  harmony: DeriveColorsOptions["harmony"],
-  userOverrides: BaseColorOverride,
-  overrideFlag: boolean,
+function buildTokens(
   spacing: SpacingScale,
   radius: RadiusScale,
   fontSizes: FontSizeScale,
   baseFont: number,
   fontScale: number,
   fontFamily?: FontFamilyOptions
-): { result: GeneratedThemeMode; warnings: ThemeWarning[] } {
+): GeneratedThemeTokens {
+  return {
+    spacing,
+    radius,
+    fontSizes,
+    iconSizes: DEFAULT_ICON_SIZES,
+    icons: DEFAULT_SEMANTIC_ICON_SIZES,
+    borderWidths: DEFAULT_BORDER_WIDTHS,
+    avatarSizes: DEFAULT_AVATAR_SIZES,
+    breakpoints: DEFAULT_BREAKPOINTS,
+    sizeMap: fontSizes,
+    dimensions: fontSizes,
+    baseFont,
+    fontScale,
+    fontFamilySans: fontFamily?.sans,
+    fontFamilyDisplay: fontFamily?.display,
+    typography: computeTypographyScale(baseFont, fontScale, fontFamily),
+    lineHeights: DEFAULT_LINE_HEIGHTS,
+    fontWeights: DEFAULT_FONT_WEIGHTS,
+    letterSpacings: DEFAULT_LETTER_SPACINGS,
+  };
+}
+
+function generateModeWithOverrides(
+  mode: "light" | "dark",
+  primaryHex: string,
+  harmony: DeriveColorsOptions["harmony"],
+  userOverrides: BaseColorOverride,
+  overrideFlag: boolean,
+): { result: GeneratedThemeColors; warnings: ThemeWarning[] } {
   let derived: SemanticColors;
 
   if (isFullySpecified(userOverrides)) {
-    // Full-mode bypass: build base colors directly from user overrides
     const base: Record<string, string> = {};
     for (const k of ALL_BASE_KEYS) base[k] = userOverrides[k]!;
-    // Derive on-colors as placeholders so the shape is complete before WCAG pass
     for (const [baseKey, onKey] of BASE_TO_ON) {
       base[onKey as string] = deriveOnColor(base[baseKey]);
     }
     derived = base as unknown as SemanticColors;
-    // Still run WCAG checks even in full bypass (warnings only, no cascade re-correction)
   } else {
-    // Normal butterfly derivation — no user overrides passed to butterfly
     derived = deriveColors(primaryHex, mode, { harmony });
   }
 
   const { colors, warnings } = applyUserOverridesWithWCAG(derived, userOverrides, overrideFlag, mode);
-
   const palettes = generateTonalPalettes(colors);
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
@@ -202,23 +222,7 @@ function generateModeWithOverrides(
   const apca = buildAPCAReport(colors, surfaceElevation);
 
   return {
-    result: {
-      mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes,
-      iconSizes: DEFAULT_ICON_SIZES,
-      icons: DEFAULT_SEMANTIC_ICON_SIZES,
-      borderWidths: DEFAULT_BORDER_WIDTHS,
-      avatarSizes: DEFAULT_AVATAR_SIZES,
-      breakpoints: DEFAULT_BREAKPOINTS,
-      sizeMap: fontSizes, dimensions: fontSizes,
-      baseFont, fontScale,
-      fontFamilySans: fontFamily?.sans,
-      fontFamilyDisplay: fontFamily?.display,
-      typography: computeTypographyScale(baseFont, fontScale, fontFamily),
-      lineHeights: DEFAULT_LINE_HEIGHTS,
-      fontWeights: DEFAULT_FONT_WEIGHTS,
-      letterSpacings: DEFAULT_LETTER_SPACINGS,
-      states, accessibility, apca,
-    },
+    result: { mode, colors, palettes, surfaceElevation, states, accessibility, apca },
     warnings,
   };
 }
@@ -270,9 +274,10 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     options.quaternary !== undefined;
 
   if (!hasColorOverrides) {
-    const light = generateMode("light", primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale, fontFamily);
-    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony }, spacing, radius, fontSize, baseFont, fontScale, fontFamily);
-    return { light, dark };
+    const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+    const light = generateMode("light", primaryHex, { harmony: options.harmony });
+    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony });
+    return { light, dark, tokens };
   }
 
   // 4. New path — resolve per-mode overrides
@@ -295,64 +300,32 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     darkPrimary = darkOverrides.primary;
   }
 
+  const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
   const { result: light, warnings: lightWarns } = generateModeWithOverrides(
-    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale, fontFamily
+    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag
   );
   const { result: dark, warnings: darkWarns } = generateModeWithOverrides(
-    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, spacing, radius, fontSize, baseFont, fontScale, fontFamily
+    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag
   );
 
   const allWarnings = [...lightWarns, ...darkWarns];
-  return { light, dark, ...(allWarnings.length > 0 && { warnings: allWarnings }) };
+  return { light, dark, tokens, ...(allWarnings.length > 0 && { warnings: allWarnings }) };
 }
 
-// ─── Original fast-path mode generator (unchanged) ───────────────────
+// ─── Fast-path mode generator (color-only) ───────────────────────────
 
 function generateMode(
   mode: "light" | "dark",
   primaryHex: string,
   colorOpts: DeriveColorsOptions,
-  spacing: SpacingScale,
-  radius: RadiusScale,
-  fontSizes: FontSizeScale,
-  baseFont: number,
-  fontScale: number,
-  fontFamily?: FontFamilyOptions
-): GeneratedThemeMode {
+): GeneratedThemeColors {
   const colors = deriveColors(primaryHex, mode, colorOpts);
   const palettes = generateTonalPalettes(colors);
   const surfaceElevation = deriveSurfaceElevation(colors.surface, colors.primary, mode);
   const states = deriveAllIntentStates(colors);
   const accessibility = buildAccessibilityReport(colors, surfaceElevation);
   const apca = buildAPCAReport(colors, surfaceElevation);
-
-  return {
-    mode,
-    colors,
-    palettes,
-    surfaceElevation,
-    spacing,
-    radius,
-    fontSizes,
-    iconSizes: DEFAULT_ICON_SIZES,
-    icons: DEFAULT_SEMANTIC_ICON_SIZES,
-    borderWidths: DEFAULT_BORDER_WIDTHS,
-    avatarSizes: DEFAULT_AVATAR_SIZES,
-    breakpoints: DEFAULT_BREAKPOINTS,
-    sizeMap: fontSizes,
-    dimensions: fontSizes,
-    baseFont,
-    fontScale,
-    fontFamilySans: fontFamily?.sans,
-    fontFamilyDisplay: fontFamily?.display,
-    typography: computeTypographyScale(baseFont, fontScale, fontFamily),
-    lineHeights: DEFAULT_LINE_HEIGHTS,
-    fontWeights: DEFAULT_FONT_WEIGHTS,
-    letterSpacings: DEFAULT_LETTER_SPACINGS,
-    states,
-    accessibility,
-    apca,
-  };
+  return { mode, colors, palettes, surfaceElevation, states, accessibility, apca };
 }
 
 function resolvePrimary(options: GenerateThemeOptions): string {

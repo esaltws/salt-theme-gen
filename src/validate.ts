@@ -1,5 +1,5 @@
 import { parseColor } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeMode, BaseColorKey } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, BaseColorKey } from "./types.js";
 
 const HSL_RE = /^hsla?\(\s*-?[\d.]+[\s,][\s\S]*?\)/i;
 
@@ -106,7 +106,7 @@ function validateNumberObject(obj: Record<string, unknown>, keys: readonly strin
   }
 }
 
-// ─── Mode Validator ─────────────────────────────────────────────────
+// ─── Colors Mode Validator ──────────────────────────────────────────
 
 function validateMode(v: unknown, path: string): void {
   const obj = requireObject(v, path);
@@ -132,6 +132,41 @@ function validateMode(v: unknown, path: string): void {
 
   // surfaceElevation
   validateColorObject(requireObject(obj.surfaceElevation, `${path}.surfaceElevation`), SURFACE_ELEVATION_KEYS, `${path}.surfaceElevation`);
+
+  // states
+  const states = requireObject(obj.states, `${path}.states`);
+  requireKeys(states, INTENT_KEYS, `${path}.states`);
+  for (const intent of INTENT_KEYS) {
+    validateColorObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
+  }
+
+  // accessibility (WCAG)
+  const acc = requireObject(obj.accessibility, `${path}.accessibility`);
+  requireKeys(acc, ACCESSIBILITY_KEYS, `${path}.accessibility`);
+  for (const key of ACCESSIBILITY_KEYS) {
+    const entry = requireObject(acc[key], `${path}.accessibility.${key}`);
+    requireNumber(entry.ratio, `${path}.accessibility.${key}.ratio`);
+    if (entry.level !== "AAA" && entry.level !== "AA" && entry.level !== "fail") {
+      throw new Error(`${path}.accessibility.${key}.level: expected "AAA", "AA", or "fail", got ${JSON.stringify(entry.level)}`);
+    }
+  }
+
+  // apca
+  const apca = requireObject(obj.apca, `${path}.apca`);
+  requireKeys(apca, ACCESSIBILITY_KEYS, `${path}.apca`);
+  for (const key of ACCESSIBILITY_KEYS) {
+    const entry = requireObject(apca[key], `${path}.apca.${key}`);
+    requireNumber(entry.lc, `${path}.apca.${key}.lc`);
+    if (entry.level !== "Lc75" && entry.level !== "Lc60" && entry.level !== "Lc45" && entry.level !== "fail") {
+      throw new Error(`${path}.apca.${key}.level: expected "Lc75", "Lc60", "Lc45", or "fail", got ${JSON.stringify(entry.level)}`);
+    }
+  }
+}
+
+// ─── Tokens Validator ───────────────────────────────────────────────
+
+function validateTokens(v: unknown, path: string): void {
+  const obj = requireObject(v, path);
 
   // spacing
   validateNumberObject(requireObject(obj.spacing, `${path}.spacing`), SPACING_KEYS, `${path}.spacing`);
@@ -194,35 +229,6 @@ function validateMode(v: unknown, path: string): void {
 
   // letterSpacings
   validateNumberObject(requireObject(obj.letterSpacings, `${path}.letterSpacings`), LETTER_SPACING_KEYS, `${path}.letterSpacings`);
-
-  // states
-  const states = requireObject(obj.states, `${path}.states`);
-  requireKeys(states, INTENT_KEYS, `${path}.states`);
-  for (const intent of INTENT_KEYS) {
-    validateColorObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
-  }
-
-  // accessibility (WCAG)
-  const acc = requireObject(obj.accessibility, `${path}.accessibility`);
-  requireKeys(acc, ACCESSIBILITY_KEYS, `${path}.accessibility`);
-  for (const key of ACCESSIBILITY_KEYS) {
-    const entry = requireObject(acc[key], `${path}.accessibility.${key}`);
-    requireNumber(entry.ratio, `${path}.accessibility.${key}.ratio`);
-    if (entry.level !== "AAA" && entry.level !== "AA" && entry.level !== "fail") {
-      throw new Error(`${path}.accessibility.${key}.level: expected "AAA", "AA", or "fail", got ${JSON.stringify(entry.level)}`);
-    }
-  }
-
-  // apca
-  const apca = requireObject(obj.apca, `${path}.apca`);
-  requireKeys(apca, ACCESSIBILITY_KEYS, `${path}.apca`);
-  for (const key of ACCESSIBILITY_KEYS) {
-    const entry = requireObject(apca[key], `${path}.apca.${key}`);
-    requireNumber(entry.lc, `${path}.apca.${key}.lc`);
-    if (entry.level !== "Lc75" && entry.level !== "Lc60" && entry.level !== "Lc45" && entry.level !== "fail") {
-      throw new Error(`${path}.apca.${key}.level: expected "Lc75", "Lc60", "Lc45", or "fail", got ${JSON.stringify(entry.level)}`);
-    }
-  }
 }
 
 // ─── Warning Validator ───────────────────────────────────────────────
@@ -257,12 +263,14 @@ function validateThemeWarning(v: unknown, path: string): void {
  */
 export function parseThemeJSON(value: unknown): GeneratedTheme {
   const obj = requireObject(value, "theme");
-  requireKeys(obj, ["light", "dark"], "theme");
+  requireKeys(obj, ["light", "dark", "tokens"], "theme");
   validateMode(obj.light, "theme.light");
   validateMode(obj.dark, "theme.dark");
+  validateTokens(obj.tokens, "theme.tokens");
 
-  const light = obj.light as GeneratedThemeMode;
-  const dark = obj.dark as GeneratedThemeMode;
+  const light  = obj.light  as GeneratedThemeColors;
+  const dark   = obj.dark   as GeneratedThemeColors;
+  const tokens = obj.tokens as GeneratedThemeTokens;
 
   if (light.mode !== "light") {
     throw new Error(`theme.light.mode: expected "light", got ${JSON.stringify(light.mode)}`);
@@ -281,5 +289,5 @@ export function parseThemeJSON(value: unknown): GeneratedTheme {
     }
   }
 
-  return { light, dark, ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }) };
+  return { light, dark, tokens, ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }) };
 }

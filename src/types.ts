@@ -353,37 +353,43 @@ export type APCAReport = {
 
 // ─── Generated Theme Output ──────────────────────────────────────────
 
-export type GeneratedThemeMode = {
-  mode: "light" | "dark";
-  colors: SemanticColors;
-  palettes: TonalPalettes;
+/** Color-only output for one mode. Changes between light and dark. */
+export type GeneratedThemeColors = {
+  mode:             "light" | "dark";
+  colors:           SemanticColors;
+  palettes:         TonalPalettes;
   surfaceElevation: SurfaceElevation;
-  spacing: SpacingScale;
-  radius: RadiusScale;
-  fontSizes: FontSizeScale;
-  iconSizes: IconSizeScale;
-  icons: SemanticIconSizes;
-  borderWidths: BorderWidthScale;
-  avatarSizes: AvatarSizeScale;
-  breakpoints: BreakpointScale;
-  sizeMap: SizeMapScale;
-  dimensions: DimensionScale;
-  baseFont: number;
-  fontScale: number;
-  fontFamilySans?: string;
+  states:           IntentStates;
+  accessibility:    AccessibilityReport;
+  apca:             APCAReport;
+};
+
+/** Non-color tokens. Identical in both modes — stored once at theme root. */
+export type GeneratedThemeTokens = {
+  spacing:        SpacingScale;
+  radius:         RadiusScale;
+  fontSizes:      FontSizeScale;
+  iconSizes:      IconSizeScale;
+  icons:          SemanticIconSizes;
+  borderWidths:   BorderWidthScale;
+  avatarSizes:    AvatarSizeScale;
+  breakpoints:    BreakpointScale;
+  sizeMap:        SizeMapScale;
+  dimensions:     DimensionScale;
+  baseFont:       number;
+  fontScale:      number;
+  fontFamilySans?:    string;
   fontFamilyDisplay?: string;
-  typography: TypographyScale;
-  lineHeights: LineHeightScale;
-  fontWeights: FontWeightScale;
+  typography:     TypographyScale;
+  lineHeights:    LineHeightScale;
+  fontWeights:    FontWeightScale;
   letterSpacings: LetterSpacingScale;
-  states: IntentStates;
-  accessibility: AccessibilityReport;
-  apca: APCAReport;
 };
 
 export type GeneratedTheme = {
-  light: GeneratedThemeMode;
-  dark: GeneratedThemeMode;
+  light:   GeneratedThemeColors;
+  dark:    GeneratedThemeColors;
+  tokens:  GeneratedThemeTokens;
   /** Present only when user-provided colors triggered WCAG failures */
   warnings?: ThemeWarning[];
 };

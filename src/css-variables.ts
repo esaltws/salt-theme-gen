@@ -1,5 +1,5 @@
 import { hexToOklch } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeMode, TypographyStyle } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, TypographyStyle } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -49,9 +49,9 @@ function oklchCss(hex: string): string {
 
 // ─── Declaration Builders ────────────────────────────────────────────
 
-function colorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
+function colorDecls(colors: GeneratedThemeColors, format: Exclude<CssFormat, "both">): string[] {
   const out: string[] = [];
-  for (const [key, hex] of Object.entries(mode.colors) as [string, string][]) {
+  for (const [key, hex] of Object.entries(colors.colors) as [string, string][]) {
     const value = format === "oklch" ? oklchCss(hex) : hex;
     out.push(`${P}-color-${camelToKebab(key)}: ${value};`);
   }
@@ -59,25 +59,25 @@ function colorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">
 }
 
 // Color tokens beyond semanticColors: palettes, surface elevations, state colors.
-// These use hex/oklch depending on format and belong in the @supports block.
-function extraColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
+// These are per-mode and use hex/oklch depending on format.
+function extraColorDecls(colors: GeneratedThemeColors, format: Exclude<CssFormat, "both">): string[] {
   const out: string[] = [];
   const cv = (hex: string) => (format === "oklch" ? oklchCss(hex) : hex);
 
   // Tonal palettes (8 keys × 11 steps)
-  for (const [pk, palette] of Object.entries(mode.palettes)) {
+  for (const [pk, palette] of Object.entries(colors.palettes)) {
     for (const [step, hex] of Object.entries(palette as Record<string, string>)) {
       out.push(`${P}-palette-${pk}-${step}: ${cv(hex)};`);
     }
   }
 
   // Surface elevation
-  for (const [key, hex] of Object.entries(mode.surfaceElevation) as [string, string][]) {
+  for (const [key, hex] of Object.entries(colors.surfaceElevation) as [string, string][]) {
     out.push(`${P}-surface-${key}: ${cv(hex)};`);
   }
 
   // State colors (8 intents × 4 states)
-  for (const [intent, states] of Object.entries(mode.states)) {
+  for (const [intent, states] of Object.entries(colors.states)) {
     for (const [state, hex] of Object.entries(states as Record<string, string>)) {
       out.push(`${P}-state-${intent}-${state}: ${cv(hex)};`);
     }
@@ -102,45 +102,46 @@ function fluidRem(maxPx: number): string {
 // Dimension tokens — format has no effect, never go in @supports.
 // Font sizes and icon sizes → rem (scales with user font preference, WCAG 1.4.4).
 // Spacing, radius, size map, dimensions → px (layout values, not text-relative).
-function dimensionDecls(mode: GeneratedThemeMode): string[] {
+// These are mode-agnostic (from theme.tokens) and emitted only under the light selector.
+function dimensionDecls(tokens: GeneratedThemeTokens): string[] {
   const out: string[] = [];
 
-  for (const [key, val] of Object.entries(mode.spacing) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.spacing) as [string, number][]) {
     out.push(`${P}-spacing-${key}: ${val}px;`);
   }
-  for (const [key, val] of Object.entries(mode.radius) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.radius) as [string, number][]) {
     out.push(`${P}-radius-${key}: ${val}px;`);
   }
-  for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.fontSizes) as [string, number][]) {
     out.push(`${P}-font-size-${key}: ${rem(val)};`);
   }
-  out.push(`${P}-font-base: ${rem(mode.baseFont)};`);
-  for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
+  out.push(`${P}-font-base: ${rem(tokens.baseFont)};`);
+  for (const [key, val] of Object.entries(tokens.iconSizes) as [string, number][]) {
     out.push(`${P}-icon-size-${key}: ${rem(val)};`);
   }
-  for (const [key, val] of Object.entries(mode.icons) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.icons) as [string, number][]) {
     out.push(`${P}-icon-${key}: ${rem(val)};`);
   }
-  for (const [key, val] of Object.entries(mode.borderWidths) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.borderWidths) as [string, number][]) {
     out.push(`${P}-border-width-${key}: ${val === 0 ? "0" : `${val}px`};`);
   }
-  for (const [key, val] of Object.entries(mode.avatarSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.avatarSizes) as [string, number][]) {
     out.push(`${P}-avatar-${key}: ${val}px;`);
   }
-  for (const [key, val] of Object.entries(mode.breakpoints) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.breakpoints) as [string, number][]) {
     out.push(`${P}-breakpoint-${key}: ${val}px;`);
   }
-  for (const [key, val] of Object.entries(mode.sizeMap) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
     out.push(`${P}-size-${key}: ${val}px;`);
   }
-  for (const [key, val] of Object.entries(mode.dimensions) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.dimensions) as [string, number][]) {
     out.push(`${P}-dimension-${key}: ${val}px;`);
   }
 
   // Typography composite styles — flat CSS vars per property
   // titleSmall, titleMedium, titleLarge, display use fluid clamp()
   const FLUID_TYPE_KEYS = new Set(["titleSmall", "titleMedium", "titleLarge", "display"]);
-  for (const [key, style] of Object.entries(mode.typography) as [string, TypographyStyle][]) {
+  for (const [key, style] of Object.entries(tokens.typography) as [string, TypographyStyle][]) {
     const kebab = camelToKebab(key);
     const sizeVal = FLUID_TYPE_KEYS.has(key) ? fluidRem(style.fontSize) : rem(style.fontSize);
     const globalFamilyVar = SANS_TYPE_KEYS.has(key) ? `${P}-font-family-sans` : `${P}-font-family-display`;
@@ -152,30 +153,26 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
   }
 
   // Global font family — always emitted; defaults to system stack when user provides none
-  const sansFamily = mode.fontFamilySans ?? DEFAULT_SANS_FAMILY;
+  const sansFamily = tokens.fontFamilySans ?? DEFAULT_SANS_FAMILY;
   out.push(`${P}-font-family-sans: ${sansFamily};`);
-  out.push(`${P}-font-family-display: ${mode.fontFamilyDisplay ?? sansFamily};`);
+  out.push(`${P}-font-family-display: ${tokens.fontFamilyDisplay ?? sansFamily};`);
 
   // Line heights (unitless)
-  for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.lineHeights) as [string, number][]) {
     out.push(`${P}-line-height-${key}: ${val};`);
   }
 
   // Font weights
-  for (const [key, val] of Object.entries(mode.fontWeights) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.fontWeights) as [string, number][]) {
     out.push(`${P}-font-weight-${key}: ${val};`);
   }
 
   // Letter spacings (em, 0 stays "0")
-  for (const [key, val] of Object.entries(mode.letterSpacings) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.letterSpacings) as [string, number][]) {
     out.push(`${P}-letter-spacing-${key}: ${val === 0 ? "0" : `${val}em`};`);
   }
 
   return out;
-}
-
-function nonColorDecls(mode: GeneratedThemeMode, format: Exclude<CssFormat, "both">): string[] {
-  return [...extraColorDecls(mode, format), ...dimensionDecls(mode)];
 }
 
 // ─── Typography Classes ───────────────────────────────────────────────
@@ -238,13 +235,16 @@ export function generateCssVariables(
   const darkSel      = options?.darkSelector  ?? "[data-theme='dark']";
   const baseFormat   = format === "both" ? "hex" : format;
 
-  const lightColors    = colorDecls(theme.light, baseFormat);
-  const lightNonColor  = nonColorDecls(theme.light, baseFormat);
-  const darkColors     = colorDecls(theme.dark,  baseFormat);
-  const darkNonColor   = nonColorDecls(theme.dark,  baseFormat);
+  const lightColors    = colorDecls(theme.light,  baseFormat);
+  const lightExtras    = extraColorDecls(theme.light,  baseFormat);
+  const darkColors     = colorDecls(theme.dark,   baseFormat);
+  const darkExtras     = extraColorDecls(theme.dark,   baseFormat);
+  const tokenDecls     = dimensionDecls(theme.tokens);
 
-  const lightAll = [...lightColors, ...lightNonColor];
-  const darkAll  = [...darkColors,  ...darkNonColor];
+  // Light selector: all color vars + all mode-agnostic token vars
+  const lightAll = [...lightColors, ...lightExtras, ...tokenDecls];
+  // Dark selector: only color vars (tokens are mode-agnostic, emit once in light)
+  const darkAll  = [...darkColors,  ...darkExtras];
 
   // `light` / `dark` return values: indented declaration lines without a selector
   const light = lightAll.map((d) => `  ${d}`).join("\n");

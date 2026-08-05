@@ -1,6 +1,7 @@
 import type {
   GeneratedTheme,
-  GeneratedThemeMode,
+  GeneratedThemeColors,
+  GeneratedThemeTokens,
   SemanticColors,
   SurfaceElevation,
   SpacingScale,
@@ -12,29 +13,36 @@ import type {
   ContrastEntry,
 } from "./types.js";
 
-// ─── Types ─────────────────────────────��────────────────────────────
+// ─── Types ──────────────────────────────────────────────────────────
 
 export type FieldChange<T = unknown> = { old: T; new: T };
 
-export type ThemeModeDiff = {
+export type ThemeColorsDiff = {
   colors?: Partial<Record<keyof SemanticColors, FieldChange<string>>>;
   surfaceElevation?: Partial<Record<keyof SurfaceElevation, FieldChange<string>>>;
+  states?: Partial<Record<keyof IntentStates, Partial<Record<keyof StateColors, FieldChange<string>>>>>;
+  accessibility?: Partial<Record<keyof AccessibilityReport, { ratio?: FieldChange<number>; level?: FieldChange<string> }>>;
+};
+
+export type ThemeTokensDiff = {
   spacing?: Partial<Record<keyof SpacingScale, FieldChange<number>>>;
   radius?: Partial<Record<keyof RadiusScale, FieldChange<number>>>;
   fontSizes?: Partial<Record<keyof FontSizeScale, FieldChange<number>>>;
   baseFont?: FieldChange<number>;
   fontScale?: FieldChange<number>;
-  states?: Partial<Record<keyof IntentStates, Partial<Record<keyof StateColors, FieldChange<string>>>>>;
-  accessibility?: Partial<Record<keyof AccessibilityReport, { ratio?: FieldChange<number>; level?: FieldChange<string> }>>;
 };
 
 export type ThemeDiff = {
-  light: ThemeModeDiff;
-  dark: ThemeModeDiff;
+  light: ThemeColorsDiff;
+  dark: ThemeColorsDiff;
+  tokens: ThemeTokensDiff;
   identical: boolean;
 };
 
-// ─── Constants ───────────��──────────────────────────────────────────
+// Keep backward-compatible alias
+export type ThemeModeDiff = ThemeColorsDiff;
+
+// ─── Constants ──────────────────────────────────────────────────────
 
 const SEMANTIC_KEYS: (keyof SemanticColors)[] = [
   "primary", "secondary", "tertiary", "quaternary", "background", "surface", "text",
@@ -56,7 +64,7 @@ const ACCESSIBILITY_KEYS: (keyof AccessibilityReport)[] = [
   "onDangerOnDanger", "onSuccessOnSuccess", "onWarningOnWarning", "onInfoOnInfo",
 ];
 
-// ─── Helpers ───────────────────────────────────────���────────────────
+// ─── Helpers ────────────────────────────────────────────────────────
 
 function diffFlat<K extends string, V>(
   a: Record<K, V>,
@@ -73,7 +81,7 @@ function diffFlat<K extends string, V>(
   return result;
 }
 
-function diffStates(a: IntentStates, b: IntentStates): ThemeModeDiff["states"] {
+function diffStates(a: IntentStates, b: IntentStates): ThemeColorsDiff["states"] {
   let result: Partial<Record<keyof IntentStates, Partial<Record<keyof StateColors, FieldChange<string>>>>> | undefined;
   for (const intent of INTENT_KEYS) {
     const d = diffFlat(a[intent], b[intent], STATE_KEYS);
@@ -85,7 +93,7 @@ function diffStates(a: IntentStates, b: IntentStates): ThemeModeDiff["states"] {
   return result;
 }
 
-function diffAccessibility(a: AccessibilityReport, b: AccessibilityReport): ThemeModeDiff["accessibility"] {
+function diffAccessibility(a: AccessibilityReport, b: AccessibilityReport): ThemeColorsDiff["accessibility"] {
   let result: Partial<Record<keyof AccessibilityReport, { ratio?: FieldChange<number>; level?: FieldChange<string> }>> | undefined;
   for (const key of ACCESSIBILITY_KEYS) {
     const ea = a[key];
@@ -105,14 +113,26 @@ function diffAccessibility(a: AccessibilityReport, b: AccessibilityReport): Them
   return result;
 }
 
-function diffMode(a: GeneratedThemeMode, b: GeneratedThemeMode): ThemeModeDiff {
-  const diff: ThemeModeDiff = {};
+function diffColors(a: GeneratedThemeColors, b: GeneratedThemeColors): ThemeColorsDiff {
+  const diff: ThemeColorsDiff = {};
 
   const colors = diffFlat(a.colors, b.colors, SEMANTIC_KEYS);
   if (colors) diff.colors = colors;
 
   const surfaceElevation = diffFlat(a.surfaceElevation, b.surfaceElevation, ELEVATION_KEYS);
   if (surfaceElevation) diff.surfaceElevation = surfaceElevation;
+
+  const states = diffStates(a.states, b.states);
+  if (states) diff.states = states;
+
+  const accessibility = diffAccessibility(a.accessibility, b.accessibility);
+  if (accessibility) diff.accessibility = accessibility;
+
+  return diff;
+}
+
+function diffTokens(a: GeneratedThemeTokens, b: GeneratedThemeTokens): ThemeTokensDiff {
+  const diff: ThemeTokensDiff = {};
 
   const spacing = diffFlat(a.spacing, b.spacing, SPACING_KEYS);
   if (spacing) diff.spacing = spacing;
@@ -130,16 +150,10 @@ function diffMode(a: GeneratedThemeMode, b: GeneratedThemeMode): ThemeModeDiff {
     diff.fontScale = { old: a.fontScale, new: b.fontScale };
   }
 
-  const states = diffStates(a.states, b.states);
-  if (states) diff.states = states;
-
-  const accessibility = diffAccessibility(a.accessibility, b.accessibility);
-  if (accessibility) diff.accessibility = accessibility;
-
   return diff;
 }
 
-// ─── Public API ─────────────────────��───────────────────────────────
+// ─── Public API ─────────────────────────────────────────────────────
 
 /**
  * Compare two themes and return a structured diff of all changed fields.
@@ -149,11 +163,16 @@ function diffMode(a: GeneratedThemeMode, b: GeneratedThemeMode): ThemeModeDiff {
  * const diff = diffTheme(oldTheme, newTheme);
  * if (!diff.identical) {
  *   console.log("Light primary changed:", diff.light.colors?.primary);
+ *   console.log("Spacing md changed:", diff.tokens.spacing?.md);
  * }
  */
 export function diffTheme(a: GeneratedTheme, b: GeneratedTheme): ThemeDiff {
-  const light = diffMode(a.light, b.light);
-  const dark = diffMode(a.dark, b.dark);
-  const identical = Object.keys(light).length === 0 && Object.keys(dark).length === 0;
-  return { light, dark, identical };
+  const light  = diffColors(a.light,  b.light);
+  const dark   = diffColors(a.dark,   b.dark);
+  const tokens = diffTokens(a.tokens, b.tokens);
+  const identical =
+    Object.keys(light).length === 0 &&
+    Object.keys(dark).length === 0 &&
+    Object.keys(tokens).length === 0;
+  return { light, dark, tokens, identical };
 }

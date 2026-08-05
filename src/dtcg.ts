@@ -1,4 +1,4 @@
-import type { GeneratedTheme, GeneratedThemeMode } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -31,18 +31,18 @@ const dim   = (px: number): DtcgDimensionToken => ({ $value: `${px}px`, $type: "
 
 // ─── Mode Builder ────────────────────────────────────────────────────
 
-function buildMode(mode: GeneratedThemeMode): DtcgGroup {
+function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): DtcgGroup {
   // Semantic colors (23 keys).
   // `surface` the semantic color becomes color.surface: token.
   // Surface elevations go under color.elevation.* to avoid the name clash.
   const colorGroup: DtcgGroup = {};
-  for (const [key, hex] of Object.entries(mode.colors) as [string, string][]) {
+  for (const [key, hex] of Object.entries(colors.colors) as [string, string][]) {
     colorGroup[camelToKebab(key)] = color(hex);
   }
 
   // Tonal palettes (8 × 11) → color.palette.{intent}.{step}
   const paletteGroup: DtcgGroup = {};
-  for (const [pk, palette] of Object.entries(mode.palettes)) {
+  for (const [pk, palette] of Object.entries(colors.palettes)) {
     const steps: DtcgGroup = {};
     for (const [step, hex] of Object.entries(palette as Record<string, string>)) {
       steps[step] = color(hex);
@@ -52,13 +52,13 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
 
   // Surface elevations → color.elevation.{key}
   const elevationGroup: DtcgGroup = {};
-  for (const [key, hex] of Object.entries(mode.surfaceElevation) as [string, string][]) {
+  for (const [key, hex] of Object.entries(colors.surfaceElevation) as [string, string][]) {
     elevationGroup[key] = color(hex);
   }
 
   // State colors → color.state.{intent}.{state}
   const stateGroup: DtcgGroup = {};
-  for (const [intent, states] of Object.entries(mode.states)) {
+  for (const [intent, states] of Object.entries(colors.states)) {
     const intentGroup: DtcgGroup = {};
     for (const [state, hex] of Object.entries(states as Record<string, string>)) {
       intentGroup[state] = color(hex);
@@ -68,44 +68,44 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
 
   // Spacing (7 keys)
   const spacingGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.spacing) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.spacing) as [string, number][]) {
     spacingGroup[key] = dim(val);
   }
 
   // Radius (7 keys)
   const radiusGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.radius) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.radius) as [string, number][]) {
     radiusGroup[key] = dim(val);
   }
 
   // Font sizes (7 keys, t-shirt scale)
   const fontSizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.fontSizes) as [string, number][]) {
     fontSizeGroup[key] = dim(val);
   }
-  fontSizeGroup.base = dim(mode.baseFont);
+  fontSizeGroup.base = dim(tokens.baseFont);
 
   // Line heights (unitless)
   const lineHeightGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.lineHeights) as [string, number][]) {
     lineHeightGroup[key] = { $value: val, $type: "number" } as DtcgNumberToken;
   }
 
   // Font weights
   const fontWeightGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.fontWeights) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.fontWeights) as [string, number][]) {
     fontWeightGroup[key] = { $value: val, $type: "fontWeight" } as DtcgFontWeightToken;
   }
 
   // Letter spacings (em)
   const letterSpacingGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.letterSpacings) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.letterSpacings) as [string, number][]) {
     letterSpacingGroup[key] = { $value: val === 0 ? "0" : `${val}em`, $type: "dimension" } as DtcgDimensionToken;
   }
 
   // Typography composite tokens — each token bundles fontSize, lineHeight, fontWeight, letterSpacing
   const typographyGroup: DtcgGroup = {};
-  for (const [key, style] of Object.entries(mode.typography) as [string, { fontSize: number; lineHeight: number; fontWeight: number; letterSpacing: number; fontFamily?: string }][]) {
+  for (const [key, style] of Object.entries(tokens.typography) as [string, { fontSize: number; lineHeight: number; fontWeight: number; letterSpacing: number; fontFamily?: string }][]) {
     const value: DtcgTypographyValue = {
       fontSize:      `${style.fontSize}px`,
       lineHeight:    style.lineHeight,
@@ -118,41 +118,41 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
 
   // Icon sizes (raw t-shirt scale)
   const iconSizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.iconSizes) as [string, number][]) {
     iconSizeGroup[key] = dim(val);
   }
 
   // Semantic icon aliases
   const iconGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.icons) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.icons) as [string, number][]) {
     iconGroup[key] = dim(val);
   }
 
   // Border widths
   const borderWidthGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.borderWidths) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.borderWidths) as [string, number][]) {
     borderWidthGroup[key] = dim(val);
   }
 
   // Avatar sizes
   const avatarSizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.avatarSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.avatarSizes) as [string, number][]) {
     avatarSizeGroup[key] = dim(val);
   }
 
   // Breakpoints
   const breakpointGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.breakpoints) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.breakpoints) as [string, number][]) {
     breakpointGroup[key] = dim(val);
   }
 
   const sizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.sizeMap) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
     sizeGroup[key] = dim(val);
   }
 
   const dimensionGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.dimensions) as [string, number][]) {
+  for (const [key, val] of Object.entries(tokens.dimensions) as [string, number][]) {
     dimensionGroup[key] = dim(val);
   }
 
@@ -208,7 +208,7 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
  * fs.writeFileSync("tokens.json", json);
  */
 export function generateDtcgTokens(theme: GeneratedTheme): DtcgTokensResult {
-  const light = buildMode(theme.light);
-  const dark  = buildMode(theme.dark);
+  const light = buildMode(theme.light, theme.tokens);
+  const dark  = buildMode(theme.dark,  theme.tokens);
   return { light, dark, json: JSON.stringify({ light, dark }, null, 2) };
 }

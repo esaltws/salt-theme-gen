@@ -46,34 +46,32 @@ describe("adjustTheme - identity", () => {
 
 describe("adjustTheme - numeric scales", () => {
   it("partial spacing merge keeps unset keys", () => {
-    const result = adjustTheme(theme, { light: { spacing: { md: 20 } } });
-    expect(result.light.spacing.md).toBe(20);
-    expect(result.light.spacing.xs).toBe(theme.light.spacing.xs);
-    expect(result.light.spacing.lg).toBe(theme.light.spacing.lg);
+    const result = adjustTheme(theme, { tokens: { spacing: { md: 20 } } });
+    expect(result.tokens.spacing.md).toBe(20);
+    expect(result.tokens.spacing.xs).toBe(theme.tokens.spacing.xs);
+    expect(result.tokens.spacing.lg).toBe(theme.tokens.spacing.lg);
   });
 
   it("partial radius merge keeps unset keys", () => {
-    const result = adjustTheme(theme, { dark: { radius: { pill: 100 } } });
-    expect(result.dark.radius.pill).toBe(100);
-    expect(result.dark.radius.sm).toBe(theme.dark.radius.sm);
+    const result = adjustTheme(theme, { tokens: { radius: { pill: 100 } } });
+    expect(result.tokens.radius.pill).toBe(100);
+    expect(result.tokens.radius.sm).toBe(theme.tokens.radius.sm);
   });
 
   it("partial fontSizes merge keeps unset keys", () => {
-    const result = adjustTheme(theme, { both: { fontSizes: { xl: 30 } } });
-    expect(result.light.fontSizes.xl).toBe(30);
-    expect(result.dark.fontSizes.xl).toBe(30);
-    expect(result.light.fontSizes.sm).toBe(theme.light.fontSizes.sm);
+    const result = adjustTheme(theme, { tokens: { fontSizes: { xl: 30 } } });
+    expect(result.tokens.fontSizes.xl).toBe(30);
+    expect(result.tokens.fontSizes.sm).toBe(theme.tokens.fontSizes.sm);
   });
 
   it("baseFont override is applied", () => {
-    const result = adjustTheme(theme, { light: { baseFont: 12 } });
-    expect(result.light.baseFont).toBe(12);
-    expect(result.dark.baseFont).toBe(theme.dark.baseFont);
+    const result = adjustTheme(theme, { tokens: { baseFont: 12 } });
+    expect(result.tokens.baseFont).toBe(12);
   });
 
   it("baseFont is clamped to >= 8", () => {
-    const resultLow = adjustTheme(theme, { light: { baseFont: 5 as any } });
-    expect(resultLow.light.baseFont).toBe(8);
+    const resultLow = adjustTheme(theme, { tokens: { baseFont: 5 as any } });
+    expect(resultLow.tokens.baseFont).toBe(8);
   });
 });
 
@@ -232,7 +230,7 @@ describe("adjustTheme - accessibility regeneration", () => {
 
   it("no color change does not regenerate accessibility", () => {
     const result = adjustTheme(theme, {
-      light: { spacing: { md: 20 } },
+      tokens: { spacing: { md: 20 } },
     });
     expect(result.light.accessibility).toBe(theme.light.accessibility);
   });
@@ -243,30 +241,17 @@ describe("adjustTheme - accessibility regeneration", () => {
 describe("adjustTheme - both + mode-specific merge", () => {
   it("both overrides apply to both modes", () => {
     const result = adjustTheme(theme, {
-      both: { spacing: { md: 99 } },
+      tokens: { spacing: { md: 99 } },
     });
-    expect(result.light.spacing.md).toBe(99);
-    expect(result.dark.spacing.md).toBe(99);
-  });
-
-  it("mode-specific override wins over both for same key", () => {
-    const result = adjustTheme(theme, {
-      both: { spacing: { md: 99 } },
-      light: { spacing: { md: 50 } },
-    });
-    expect(result.light.spacing.md).toBe(50);
-    expect(result.dark.spacing.md).toBe(99);
+    expect(result.tokens.spacing.md).toBe(99);
   });
 
   it("both + mode-specific combine non-overlapping keys", () => {
     const result = adjustTheme(theme, {
-      both: { spacing: { md: 99 } },
-      light: { radius: { pill: 100 } },
+      tokens: { spacing: { md: 99 }, radius: { pill: 100 } },
     });
-    expect(result.light.spacing.md).toBe(99);
-    expect(result.light.radius.pill).toBe(100);
-    expect(result.dark.spacing.md).toBe(99);
-    expect(result.dark.radius.pill).toBe(theme.dark.radius.pill);
+    expect(result.tokens.spacing.md).toBe(99);
+    expect(result.tokens.radius.pill).toBe(100);
   });
 
   it("mode-specific colors win over both colors", () => {
@@ -305,8 +290,8 @@ describe("adjustTheme - round-trip", () => {
 
   it("adjusting with all scale overrides produces valid theme", () => {
     const result = adjustTheme(theme, {
-      both: {
-        colors: { primary: "#ff0000", background: "#fafafa" },
+      both: { colors: { primary: "#ff0000", background: "#fafafa" } },
+      tokens: {
         spacing: { none: 0, xs: 2, sm: 4, md: 8, lg: 16, xl: 32, xxl: 64 },
         radius: { none: 0, sm: 2, md: 4, lg: 8, xl: 16, xxl: 24, pill: 9999 },
         fontSizes: { xs: 10, sm: 12, md: 14, lg: 18, xl: 24, xxl: 32, "3xl": 48 },
@@ -314,10 +299,10 @@ describe("adjustTheme - round-trip", () => {
       },
     });
     expect(result.light.colors.primary).toBe("#ff0000");
-    expect(result.light.spacing.md).toBe(8);
-    expect(result.light.radius.pill).toBe(9999);
-    expect(result.light.fontSizes["3xl"]).toBe(48);
-    expect(result.light.baseFont).toBe(14);
+    expect(result.tokens.spacing.md).toBe(8);
+    expect(result.tokens.radius.pill).toBe(9999);
+    expect(result.tokens.fontSizes["3xl"]).toBe(48);
+    expect(result.tokens.baseFont).toBe(14);
     expectValidHex(result.light.colors.onPrimary);
     expect(contrastRatio(result.light.colors.onPrimary, "#ff0000")).toBeGreaterThanOrEqual(4.5);
   });

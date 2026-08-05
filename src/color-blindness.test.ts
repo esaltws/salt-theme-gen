@@ -185,16 +185,16 @@ describe("simulateTheme — structure", () => {
 
   it("preserves non-color fields (spacing, radius, fontSizes)", () => {
     const sim = simulateTheme(baseTheme, "achromatopsia");
-    expect(sim.light.spacing).toEqual(baseTheme.light.spacing);
-    expect(sim.light.radius).toEqual(baseTheme.light.radius);
-    expect(sim.light.fontSizes).toEqual(baseTheme.light.fontSizes);
+    expect(sim.tokens.spacing).toEqual(baseTheme.tokens.spacing);
+    expect(sim.tokens.radius).toEqual(baseTheme.tokens.radius);
+    expect(sim.tokens.fontSizes).toEqual(baseTheme.tokens.fontSizes);
   });
 
   it("preserves iconSizes, sizeMap, dimensions", () => {
     const sim = simulateTheme(baseTheme, "tritanopia");
-    expect(sim.light.iconSizes).toEqual(baseTheme.light.iconSizes);
-    expect(sim.light.sizeMap).toEqual(baseTheme.light.sizeMap);
-    expect(sim.light.dimensions).toEqual(baseTheme.light.dimensions);
+    expect(sim.tokens.iconSizes).toEqual(baseTheme.tokens.iconSizes);
+    expect(sim.tokens.sizeMap).toEqual(baseTheme.tokens.sizeMap);
+    expect(sim.tokens.dimensions).toEqual(baseTheme.tokens.dimensions);
   });
 
   it("preserves warnings if present", () => {

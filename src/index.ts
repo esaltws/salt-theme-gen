@@ -5,7 +5,8 @@ export { generateTheme } from "./generate-theme.js";
 export type {
   GenerateThemeOptions,
   GeneratedTheme,
-  GeneratedThemeMode,
+  GeneratedThemeColors,
+  GeneratedThemeTokens,
   SemanticColors,
   StateColors,
   IntentStates,
@@ -77,9 +78,9 @@ export { deriveStateColors, deriveAllIntentStates } from "./state-colors.js";
 
 // ─── Theme Adjustment & Diffing ──────────────────────────────────────
 export { adjustTheme } from "./adjust-theme.js";
-export type { ThemeModeOverrides, ThemeOverrides } from "./adjust-theme.js";
+export type { ThemeColorOverrides, ThemeTokenOverrides, ThemeOverrides } from "./adjust-theme.js";
 export { diffTheme } from "./diff-theme.js";
-export type { FieldChange, ThemeModeDiff, ThemeDiff } from "./diff-theme.js";
+export type { FieldChange, ThemeColorsDiff, ThemeTokensDiff, ThemeModeDiff, ThemeDiff } from "./diff-theme.js";
 
 // ─── Tonal Palettes ──────────────────────────────────────────────────
 export { generateTonalPalette, generateTonalPalettes } from "./palettes.js";

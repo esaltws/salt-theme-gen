@@ -2,7 +2,7 @@ import { hexToRgb, rgbToHex, rgbToLinear, linearToRgb } from "./color-math.js";
 import { buildAccessibilityReport, buildAPCAReport } from "./on-colors.js";
 import type {
   GeneratedTheme,
-  GeneratedThemeMode,
+  GeneratedThemeColors,
   SemanticColors,
   SurfaceElevation,
   IntentStates,
@@ -165,7 +165,7 @@ function simulateStates(states: IntentStates, type: ColorBlindnessType): IntentS
   return out;
 }
 
-function simulateMode(mode: GeneratedThemeMode, type: ColorBlindnessType): GeneratedThemeMode {
+function simulateMode(mode: GeneratedThemeColors, type: ColorBlindnessType): GeneratedThemeColors {
   const colors          = simulateColors(mode.colors, type);
   const surfaceElevation = simulateSurface(mode.surfaceElevation, type);
   const palettes        = simulatePalettes(mode.palettes, type);
@@ -175,7 +175,7 @@ function simulateMode(mode: GeneratedThemeMode, type: ColorBlindnessType): Gener
   const accessibility   = buildAccessibilityReport(colors, surfaceElevation);
   const apca            = buildAPCAReport(colors, surfaceElevation);
 
-  return { ...mode, colors, palettes, surfaceElevation, states, accessibility, apca };
+  return { mode: mode.mode, colors, palettes, surfaceElevation, states, accessibility, apca };
 }
 
 /**
@@ -196,8 +196,9 @@ function simulateMode(mode: GeneratedThemeMode, type: ColorBlindnessType): Gener
  */
 export function simulateTheme(theme: GeneratedTheme, type: ColorBlindnessType): GeneratedTheme {
   return {
-    light: simulateMode(theme.light, type),
-    dark:  simulateMode(theme.dark,  type),
+    light:  simulateMode(theme.light, type),
+    dark:   simulateMode(theme.dark,  type),
+    tokens: theme.tokens,
     ...(theme.warnings !== undefined && { warnings: theme.warnings }),
   };
 }

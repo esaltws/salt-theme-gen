@@ -1,4 +1,4 @@
-import type { GeneratedTheme, GeneratedThemeMode } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -64,32 +64,32 @@ function ref(varName: string): string {
  * };
  */
 export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigResult {
-  // Static scales come from light mode (same values in both modes)
-  const mode: GeneratedThemeMode = theme.light;
+  // Colors come from light mode (same semantic structure in both modes)
+  const colorMode: GeneratedThemeColors = theme.light;
 
   // ── Colors ──────────────────────────────────────────────────────
   const colors: Record<string, string> = {};
 
   // Semantic colors (23)
-  for (const key of Object.keys(mode.colors)) {
+  for (const key of Object.keys(colorMode.colors)) {
     colors[`salt-${camelToKebab(key)}`] = ref(`${P}-color-${camelToKebab(key)}`);
   }
 
   // Tonal palettes (8 × 11)
-  for (const pk of Object.keys(mode.palettes)) {
-    const palette = mode.palettes[pk as keyof typeof mode.palettes];
+  for (const pk of Object.keys(colorMode.palettes)) {
+    const palette = colorMode.palettes[pk as keyof typeof colorMode.palettes];
     for (const step of Object.keys(palette)) {
       colors[`salt-palette-${pk}-${step}`] = ref(`${P}-palette-${pk}-${step}`);
     }
   }
 
   // Surface elevations (4)
-  for (const key of Object.keys(mode.surfaceElevation)) {
+  for (const key of Object.keys(colorMode.surfaceElevation)) {
     colors[`salt-surface-${key}`] = ref(`${P}-surface-${key}`);
   }
 
   // State colors (8 × 4)
-  for (const [intent, states] of Object.entries(mode.states)) {
+  for (const [intent, states] of Object.entries(colorMode.states)) {
     for (const state of Object.keys(states as Record<string, string>)) {
       colors[`salt-state-${intent}-${state}`] = ref(`${P}-state-${intent}-${state}`);
     }
@@ -97,19 +97,19 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
 
   // ── Spacing ─────────────────────────────────────────────────────
   const spacing: Record<string, string> = {};
-  for (const [key, val] of Object.entries(mode.spacing) as [string, number][]) {
+  for (const [key, val] of Object.entries(theme.tokens.spacing) as [string, number][]) {
     spacing[`salt-${key}`] = `${val}px`;
   }
 
   // ── Border Radius ────────────────────────────────────────────────
   const borderRadius: Record<string, string> = {};
-  for (const [key, val] of Object.entries(mode.radius) as [string, number][]) {
+  for (const [key, val] of Object.entries(theme.tokens.radius) as [string, number][]) {
     borderRadius[`salt-${key}`] = `${val}px`;
   }
 
   // ── Font Size ────────────────────────────────────────────────────
   const fontSize: Record<string, string> = {};
-  for (const [key, val] of Object.entries(mode.fontSizes) as [string, number][]) {
+  for (const [key, val] of Object.entries(theme.tokens.fontSizes) as [string, number][]) {
     fontSize[`salt-${key}`] = `${val}px`;
   }
 
