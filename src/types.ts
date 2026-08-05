@@ -1,3 +1,5 @@
+import type { SemanticIconSizes } from "./icon-utils.js";
+
 // ─── Color Representations ───────────────────────────────────────────
 
 export type RGB = { r: number; g: number; b: number }; // 0–255
@@ -153,6 +155,8 @@ export type IconSizeScale = {
   xxl: number;
   "3xl": number;
 };
+
+export type { SemanticIconSizes };
 
 export type SizeMapScale = {
   xs: number;
@@ -358,6 +362,7 @@ export type GeneratedThemeMode = {
   radius: RadiusScale;
   fontSizes: FontSizeScale;
   iconSizes: IconSizeScale;
+  icons: SemanticIconSizes;
   sizeMap: SizeMapScale;
   dimensions: DimensionScale;
   baseFont: number;
