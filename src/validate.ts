@@ -20,6 +20,10 @@ const RADIUS_KEYS = ["none", "sm", "md", "lg", "xl", "xxl", "pill"] as const;
 const FONT_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
 
 const ICON_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+const SEMANTIC_ICON_KEYS = ["inline", "compact", "control", "navigation", "feature", "hero"] as const;
+const BORDER_WIDTH_KEYS = ["none", "thin", "medium", "thick"] as const;
+const AVATAR_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl"] as const;
+const BREAKPOINT_KEYS = ["sm", "md", "lg", "xl", "xxl"] as const;
 const SIZE_MAP_KEYS  = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
 const DIMENSION_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
 
@@ -138,8 +142,14 @@ function validateMode(v: unknown, path: string): void {
   // fontSizes
   validateNumberObject(requireObject(obj.fontSizes, `${path}.fontSizes`), FONT_SIZE_KEYS, `${path}.fontSizes`);
 
-  // iconSizes, sizeMap, dimensions
+  // iconSizes, semantic icons, borderWidths, avatarSizes, breakpoints
   validateNumberObject(requireObject(obj.iconSizes, `${path}.iconSizes`), ICON_SIZE_KEYS, `${path}.iconSizes`);
+  validateNumberObject(requireObject(obj.icons, `${path}.icons`), SEMANTIC_ICON_KEYS, `${path}.icons`);
+  validateNumberObject(requireObject(obj.borderWidths, `${path}.borderWidths`), BORDER_WIDTH_KEYS, `${path}.borderWidths`);
+  validateNumberObject(requireObject(obj.avatarSizes, `${path}.avatarSizes`), AVATAR_SIZE_KEYS, `${path}.avatarSizes`);
+  validateNumberObject(requireObject(obj.breakpoints, `${path}.breakpoints`), BREAKPOINT_KEYS, `${path}.breakpoints`);
+
+  // sizeMap, dimensions
   validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
   validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
 

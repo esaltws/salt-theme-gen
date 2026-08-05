@@ -118,6 +118,18 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
   for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
     out.push(`${P}-icon-size-${key}: ${rem(val)};`);
   }
+  for (const [key, val] of Object.entries(mode.icons) as [string, number][]) {
+    out.push(`${P}-icon-${key}: ${rem(val)};`);
+  }
+  for (const [key, val] of Object.entries(mode.borderWidths) as [string, number][]) {
+    out.push(`${P}-border-width-${key}: ${val === 0 ? "0" : `${val}px`};`);
+  }
+  for (const [key, val] of Object.entries(mode.avatarSizes) as [string, number][]) {
+    out.push(`${P}-avatar-${key}: ${val}px;`);
+  }
+  for (const [key, val] of Object.entries(mode.breakpoints) as [string, number][]) {
+    out.push(`${P}-breakpoint-${key}: ${val}px;`);
+  }
   for (const [key, val] of Object.entries(mode.sizeMap) as [string, number][]) {
     out.push(`${P}-size-${key}: ${val}px;`);
   }

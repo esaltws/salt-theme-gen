@@ -116,10 +116,34 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
     typographyGroup[key] = { $type: "typography", $value: value } as DtcgTypographyToken;
   }
 
-  // Icon sizes, size map, dimensions
+  // Icon sizes (raw t-shirt scale)
   const iconSizeGroup: DtcgGroup = {};
   for (const [key, val] of Object.entries(mode.iconSizes) as [string, number][]) {
     iconSizeGroup[key] = dim(val);
+  }
+
+  // Semantic icon aliases
+  const iconGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.icons) as [string, number][]) {
+    iconGroup[key] = dim(val);
+  }
+
+  // Border widths
+  const borderWidthGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.borderWidths) as [string, number][]) {
+    borderWidthGroup[key] = dim(val);
+  }
+
+  // Avatar sizes
+  const avatarSizeGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.avatarSizes) as [string, number][]) {
+    avatarSizeGroup[key] = dim(val);
+  }
+
+  // Breakpoints
+  const breakpointGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(mode.breakpoints) as [string, number][]) {
+    breakpointGroup[key] = dim(val);
   }
 
   const sizeGroup: DtcgGroup = {};
@@ -147,6 +171,10 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
     letterSpacing: letterSpacingGroup,
     typography:   typographyGroup,
     iconSize:     iconSizeGroup,
+    icon:         iconGroup,
+    borderWidth:  borderWidthGroup,
+    avatarSize:   avatarSizeGroup,
+    breakpoint:   breakpointGroup,
     size:         sizeGroup,
     dimension:    dimensionGroup,
   };

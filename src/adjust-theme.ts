@@ -17,6 +17,11 @@ import type {
   SpacingScale,
   RadiusScale,
   FontSizeScale,
+  IconSizeScale,
+  SemanticIconSizes,
+  BorderWidthScale,
+  AvatarSizeScale,
+  BreakpointScale,
 } from "./types.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -26,6 +31,11 @@ export type ThemeModeOverrides = {
   spacing?: Partial<SpacingScale>;
   radius?: Partial<RadiusScale>;
   fontSizes?: Partial<FontSizeScale>;
+  iconSizes?: Partial<IconSizeScale>;
+  icons?: Partial<SemanticIconSizes>;
+  borderWidths?: Partial<BorderWidthScale>;
+  avatarSizes?: Partial<AvatarSizeScale>;
+  breakpoints?: Partial<BreakpointScale>;
   baseFont?: number;
   fontScale?: number;
   fontFamilySans?: string;
@@ -84,6 +94,21 @@ function mergeOverrides(
     fontSizes: base.fontSizes || specific.fontSizes
       ? { ...base.fontSizes, ...specific.fontSizes }
       : undefined,
+    iconSizes: base.iconSizes || specific.iconSizes
+      ? { ...base.iconSizes, ...specific.iconSizes }
+      : undefined,
+    icons: base.icons || specific.icons
+      ? { ...base.icons, ...specific.icons }
+      : undefined,
+    borderWidths: base.borderWidths || specific.borderWidths
+      ? { ...base.borderWidths, ...specific.borderWidths }
+      : undefined,
+    avatarSizes: base.avatarSizes || specific.avatarSizes
+      ? { ...base.avatarSizes, ...specific.avatarSizes }
+      : undefined,
+    breakpoints: base.breakpoints || specific.breakpoints
+      ? { ...base.breakpoints, ...specific.breakpoints }
+      : undefined,
     baseFont: specific.baseFont ?? base.baseFont,
     fontScale: specific.fontScale ?? base.fontScale,
     fontFamilySans: specific.fontFamilySans ?? base.fontFamilySans,
@@ -124,6 +149,21 @@ function adjustMode(
   const fontSizes = overrides.fontSizes
     ? { ...mode.fontSizes, ...overrides.fontSizes }
     : mode.fontSizes;
+  const iconSizes = overrides.iconSizes
+    ? { ...mode.iconSizes, ...overrides.iconSizes }
+    : mode.iconSizes;
+  const icons = overrides.icons
+    ? { ...mode.icons, ...overrides.icons }
+    : mode.icons;
+  const borderWidths = overrides.borderWidths
+    ? { ...mode.borderWidths, ...overrides.borderWidths }
+    : mode.borderWidths;
+  const avatarSizes = overrides.avatarSizes
+    ? { ...mode.avatarSizes, ...overrides.avatarSizes }
+    : mode.avatarSizes;
+  const breakpoints = overrides.breakpoints
+    ? { ...mode.breakpoints, ...overrides.breakpoints }
+    : mode.breakpoints;
   const baseFont = overrides.baseFont !== undefined
     ? Math.max(8, overrides.baseFont)
     : mode.baseFont;
@@ -218,7 +258,11 @@ function adjustMode(
     spacing,
     radius,
     fontSizes,
-    iconSizes: mode.iconSizes,
+    iconSizes,
+    icons,
+    borderWidths,
+    avatarSizes,
+    breakpoints,
     sizeMap: mode.sizeMap,
     dimensions: mode.dimensions,
     baseFont,

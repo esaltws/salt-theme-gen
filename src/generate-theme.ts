@@ -9,6 +9,7 @@ import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
 import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
 import { resolveFontScale, computeTypographyScale, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
+import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_BORDER_WIDTHS, DEFAULT_AVATAR_SIZES, DEFAULT_BREAKPOINTS } from "./icon-utils.js";
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
@@ -203,7 +204,12 @@ function generateModeWithOverrides(
   return {
     result: {
       mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes,
-      iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes,
+      iconSizes: DEFAULT_ICON_SIZES,
+      icons: DEFAULT_SEMANTIC_ICON_SIZES,
+      borderWidths: DEFAULT_BORDER_WIDTHS,
+      avatarSizes: DEFAULT_AVATAR_SIZES,
+      breakpoints: DEFAULT_BREAKPOINTS,
+      sizeMap: fontSizes, dimensions: fontSizes,
       baseFont, fontScale,
       fontFamilySans: fontFamily?.sans,
       fontFamilyDisplay: fontFamily?.display,
@@ -328,7 +334,11 @@ function generateMode(
     spacing,
     radius,
     fontSizes,
-    iconSizes: fontSizes,
+    iconSizes: DEFAULT_ICON_SIZES,
+    icons: DEFAULT_SEMANTIC_ICON_SIZES,
+    borderWidths: DEFAULT_BORDER_WIDTHS,
+    avatarSizes: DEFAULT_AVATAR_SIZES,
+    breakpoints: DEFAULT_BREAKPOINTS,
     sizeMap: fontSizes,
     dimensions: fontSizes,
     baseFont,

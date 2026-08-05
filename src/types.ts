@@ -1,4 +1,4 @@
-import type { SemanticIconSizes } from "./icon-utils.js";
+import type { SemanticIconSizes, BorderWidthScale, AvatarSizeScale, BreakpointScale } from "./icon-utils.js";
 
 // ─── Color Representations ───────────────────────────────────────────
 
@@ -156,7 +156,7 @@ export type IconSizeScale = {
   "3xl": number;
 };
 
-export type { SemanticIconSizes };
+export type { SemanticIconSizes, BorderWidthScale, AvatarSizeScale, BreakpointScale };
 
 export type SizeMapScale = {
   xs: number;
@@ -363,6 +363,9 @@ export type GeneratedThemeMode = {
   fontSizes: FontSizeScale;
   iconSizes: IconSizeScale;
   icons: SemanticIconSizes;
+  borderWidths: BorderWidthScale;
+  avatarSizes: AvatarSizeScale;
+  breakpoints: BreakpointScale;
   sizeMap: SizeMapScale;
   dimensions: DimensionScale;
   baseFont: number;
