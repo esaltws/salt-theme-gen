@@ -1,5 +1,5 @@
 import { hexToOklch } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeMode } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeMode, TypographyStyle } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -113,13 +113,18 @@ function dimensionDecls(mode: GeneratedThemeMode): string[] {
     out.push(`${P}-dimension-${key}: ${val}px;`);
   }
 
-  // Semantic font sizes — fluid clamp() for headings/display, rem for body/caption
-  const FLUID_FONT_KEYS = new Set(["subheading", "heading-3", "heading-2", "heading-1", "display"]);
-  for (const [key, val] of Object.entries(mode.semanticFontSizes) as [string, number][]) {
-    if (FLUID_FONT_KEYS.has(key)) {
-      out.push(`${P}-font-size-${key}: ${fluidRem(val)};`);
-    } else {
-      out.push(`${P}-font-size-${key}: ${rem(val)};`);
+  // Typography composite styles — flat CSS vars per property
+  // titleSmall, titleMedium, titleLarge, display use fluid clamp()
+  const FLUID_TYPE_KEYS = new Set(["titleSmall", "titleMedium", "titleLarge", "display"]);
+  for (const [key, style] of Object.entries(mode.typography) as [string, TypographyStyle][]) {
+    const kebab = camelToKebab(key);
+    const sizeVal = FLUID_TYPE_KEYS.has(key) ? fluidRem(style.fontSize) : rem(style.fontSize);
+    out.push(`${P}-type-${kebab}-size: ${sizeVal};`);
+    out.push(`${P}-type-${kebab}-line-height: ${style.lineHeight};`);
+    out.push(`${P}-type-${kebab}-weight: ${style.fontWeight};`);
+    out.push(`${P}-type-${kebab}-letter-spacing: ${style.letterSpacing === 0 ? "0" : `${style.letterSpacing}em`};`);
+    if (style.fontFamily) {
+      out.push(`${P}-type-${kebab}-family: ${style.fontFamily};`);
     }
   }
 

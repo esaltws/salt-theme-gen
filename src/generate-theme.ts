@@ -8,7 +8,7 @@ import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
 import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
-import { resolveFontScale, computeSemanticFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
+import { resolveFontScale, computeTypographyScale, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
@@ -203,7 +203,7 @@ function generateModeWithOverrides(
       mode, colors, palettes, surfaceElevation, spacing, radius, fontSizes,
       iconSizes: fontSizes, sizeMap: fontSizes, dimensions: fontSizes,
       baseFont, fontScale,
-      semanticFontSizes: computeSemanticFontSizes(baseFont, fontScale),
+      typography: computeTypographyScale(baseFont, fontScale),
       lineHeights: DEFAULT_LINE_HEIGHTS,
       fontWeights: DEFAULT_FONT_WEIGHTS,
       letterSpacings: DEFAULT_LETTER_SPACINGS,
@@ -327,7 +327,7 @@ function generateMode(
     dimensions: fontSizes,
     baseFont,
     fontScale,
-    semanticFontSizes: computeSemanticFontSizes(baseFont, fontScale),
+    typography: computeTypographyScale(baseFont, fontScale),
     lineHeights: DEFAULT_LINE_HEIGHTS,
     fontWeights: DEFAULT_FONT_WEIGHTS,
     letterSpacings: DEFAULT_LETTER_SPACINGS,

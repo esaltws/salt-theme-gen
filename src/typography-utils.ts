@@ -1,4 +1,4 @@
-import type { FontScaleName, SemanticFontSizes, LineHeightScale, FontWeightScale, LetterSpacingScale } from "./types.js";
+import type { FontScaleName, TypographyScale, LineHeightScale, FontWeightScale, LetterSpacingScale } from "./types.js";
 
 export const FONT_SCALE_RATIOS: Record<FontScaleName, number> = {
   "minor-second":     1.067,
@@ -37,19 +37,33 @@ export const DEFAULT_LETTER_SPACINGS: LetterSpacingScale = {
   widest:  0.1,
 };
 
-export function computeSemanticFontSizes(baseFont: number, ratio: number): SemanticFontSizes {
-  const s = (n: number) => Math.round(baseFont * Math.pow(ratio, n) * 100) / 100;
-  return {
-    caption:     s(-2),
-    "body-sm":   s(-1),
-    body:        s(0),
-    "body-lg":   s(1),
-    subheading:  s(2),
-    "heading-3": s(3),
-    "heading-2": s(4),
-    "heading-1": s(5),
-    display:     s(6),
-  };
+type TypographyDefaults = {
+  step: number;
+  lineHeight: number;
+  fontWeight: 400 | 500 | 600 | 700;
+  letterSpacing: number;
+};
+
+const TYPOGRAPHY_DEFAULTS: Record<keyof TypographyScale, TypographyDefaults> = {
+  caption:     { step: -2, lineHeight: 1.5,   fontWeight: 400, letterSpacing: 0.04  },
+  labelSmall:  { step: -1, lineHeight: 1.25,  fontWeight: 500, letterSpacing: 0.01  },
+  labelMedium: { step:  0, lineHeight: 1.25,  fontWeight: 500, letterSpacing: 0     },
+  bodySmall:   { step: -1, lineHeight: 1.5,   fontWeight: 400, letterSpacing: 0     },
+  bodyMedium:  { step:  0, lineHeight: 1.5,   fontWeight: 400, letterSpacing: 0     },
+  bodyLarge:   { step:  1, lineHeight: 1.625, fontWeight: 400, letterSpacing: 0     },
+  titleSmall:  { step:  2, lineHeight: 1.375, fontWeight: 600, letterSpacing: 0     },
+  titleMedium: { step:  3, lineHeight: 1.25,  fontWeight: 600, letterSpacing: -0.01 },
+  titleLarge:  { step:  4, lineHeight: 1.2,   fontWeight: 700, letterSpacing: -0.02 },
+  display:     { step:  5, lineHeight: 1.1,   fontWeight: 700, letterSpacing: -0.03 },
+};
+
+export function computeTypographyScale(baseFont: number, ratio: number): TypographyScale {
+  const size = (step: number) => Math.round(baseFont * Math.pow(ratio, step) * 2) / 2;
+  const out = {} as TypographyScale;
+  for (const [key, d] of Object.entries(TYPOGRAPHY_DEFAULTS) as [keyof TypographyScale, TypographyDefaults][]) {
+    out[key] = { fontSize: size(d.step), lineHeight: d.lineHeight, fontWeight: d.fontWeight, letterSpacing: d.letterSpacing };
+  }
+  return out;
 }
 
 export function resolveFontScale(scale: FontScaleName | number | undefined): number {

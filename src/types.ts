@@ -18,16 +18,27 @@ export type FontScaleName =
   | "perfect-fifth"
   | "golden-ratio";
 
-export type SemanticFontSizes = {
-  caption:     number;
-  "body-sm":   number;
-  body:        number;
-  "body-lg":   number;
-  subheading:  number;
-  "heading-3": number;
-  "heading-2": number;
-  "heading-1": number;
-  display:     number;
+export type FontWeight = 400 | 500 | 600 | 700;
+
+export type TypographyStyle = {
+  fontSize: number;      // px
+  lineHeight: number;    // unitless
+  fontWeight: FontWeight;
+  letterSpacing: number; // em (stored as a decimal: 0.04 = 0.04em)
+  fontFamily?: string;
+};
+
+export type TypographyScale = {
+  caption:     TypographyStyle;
+  labelSmall:  TypographyStyle;
+  labelMedium: TypographyStyle;
+  bodySmall:   TypographyStyle;
+  bodyMedium:  TypographyStyle;
+  bodyLarge:   TypographyStyle;
+  titleSmall:  TypographyStyle;
+  titleMedium: TypographyStyle;
+  titleLarge:  TypographyStyle;
+  display:     TypographyStyle;
 };
 
 export type LineHeightScale = {
@@ -344,7 +355,7 @@ export type GeneratedThemeMode = {
   dimensions: DimensionScale;
   baseFont: number;
   fontScale: number;
-  semanticFontSizes: SemanticFontSizes;
+  typography: TypographyScale;
   lineHeights: LineHeightScale;
   fontWeights: FontWeightScale;
   letterSpacings: LetterSpacingScale;

@@ -3,7 +3,7 @@ import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-c
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
-import { computeSemanticFontSizes } from "./typography-utils.js";
+import { computeTypographyScale } from "./typography-utils.js";
 import type {
   GeneratedTheme,
   GeneratedThemeMode,
@@ -126,9 +126,9 @@ function adjustMode(
   const fontScale = overrides.fontScale !== undefined
     ? overrides.fontScale
     : mode.fontScale;
-  const semanticFontSizes = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
-    ? computeSemanticFontSizes(baseFont, fontScale)
-    : mode.semanticFontSizes;
+  const typography = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
+    ? computeTypographyScale(baseFont, fontScale)
+    : mode.typography;
 
   // 2. Merge colors — normalize any CSS color string to hex before merging
   const colorOverrides = overrides.colors ?? {};
@@ -212,7 +212,7 @@ function adjustMode(
     dimensions: mode.dimensions,
     baseFont,
     fontScale,
-    semanticFontSizes,
+    typography,
     lineHeights: mode.lineHeights,
     fontWeights: mode.fontWeights,
     letterSpacings: mode.letterSpacings,

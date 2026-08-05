@@ -218,15 +218,25 @@ describe("generateCssVariables — token completeness", () => {
     expect(result.light).toMatch(/--salt-font-base: [\d.]+rem;/);
   });
 
-  it("includes semantic font sizes", () => {
-    for (const key of ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"]) {
-      expect(result.light, `missing --salt-font-size-${key}`).toContain(`--salt-font-size-${key}:`);
+  it("includes typography CSS vars for all 10 tokens", () => {
+    const keys = ["caption", "label-small", "label-medium", "body-small", "body-medium", "body-large", "title-small", "title-medium", "title-large", "display"];
+    for (const key of keys) {
+      expect(result.light, `missing --salt-type-${key}-size`).toContain(`--salt-type-${key}-size:`);
+      expect(result.light).toContain(`--salt-type-${key}-line-height:`);
+      expect(result.light).toContain(`--salt-type-${key}-weight:`);
+      expect(result.light).toContain(`--salt-type-${key}-letter-spacing:`);
     }
   });
 
-  it("semantic heading tokens use fluid clamp()", () => {
-    for (const key of ["subheading", "heading-3", "heading-2", "heading-1", "display"]) {
-      expect(result.light).toMatch(new RegExp(`--salt-font-size-${key}: clamp\\(`));
+  it("title and display type tokens use fluid clamp()", () => {
+    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
+      expect(result.light).toMatch(new RegExp(`--salt-type-${key}-size: clamp\\(`));
+    }
+  });
+
+  it("caption and body type tokens use rem (no clamp)", () => {
+    for (const key of ["caption", "body-small", "body-medium"]) {
+      expect(result.light).toMatch(new RegExp(`--salt-type-${key}-size: [\\d.]+rem;`));
     }
   });
 

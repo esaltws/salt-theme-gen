@@ -31,7 +31,7 @@ const BASE_COLOR_KEYS: BaseColorKey[] = [
 
 const WARNING_ACTIONS = new Set(["warn", "corrected"]);
 
-const SEMANTIC_FONT_SIZE_KEYS = ["caption", "body-sm", "body", "body-lg", "subheading", "heading-3", "heading-2", "heading-1", "display"] as const;
+const TYPOGRAPHY_SCALE_KEYS = ["caption", "labelSmall", "labelMedium", "bodySmall", "bodyMedium", "bodyLarge", "titleSmall", "titleMedium", "titleLarge", "display"] as const;
 const LINE_HEIGHT_KEYS = ["none", "tight", "snug", "normal", "relaxed", "loose"] as const;
 const FONT_WEIGHT_KEYS = ["light", "regular", "medium", "semibold", "bold", "extrabold"] as const;
 const LETTER_SPACING_KEYS = ["tight", "normal", "wide", "wider", "widest"] as const;
@@ -155,8 +155,18 @@ function validateMode(v: unknown, path: string): void {
     throw new Error(`${path}.fontScale: expected positive number, got ${JSON.stringify(fs)}`);
   }
 
-  // semanticFontSizes
-  validateNumberObject(requireObject(obj.semanticFontSizes, `${path}.semanticFontSizes`), SEMANTIC_FONT_SIZE_KEYS, `${path}.semanticFontSizes`);
+  // typography
+  const typo = requireObject(obj.typography, `${path}.typography`);
+  requireKeys(typo, TYPOGRAPHY_SCALE_KEYS, `${path}.typography`);
+  for (const key of TYPOGRAPHY_SCALE_KEYS) {
+    const style = requireObject(typo[key], `${path}.typography.${key}`);
+    requireNumber(style.fontSize,      `${path}.typography.${key}.fontSize`);
+    requireNumber(style.lineHeight,    `${path}.typography.${key}.lineHeight`);
+    requireNumber(style.letterSpacing, `${path}.typography.${key}.letterSpacing`);
+    if (![400, 500, 600, 700].includes(style.fontWeight as number)) {
+      throw new Error(`${path}.typography.${key}.fontWeight: expected 400|500|600|700, got ${JSON.stringify(style.fontWeight)}`);
+    }
+  }
 
   // lineHeights
   validateNumberObject(requireObject(obj.lineHeights, `${path}.lineHeights`), LINE_HEIGHT_KEYS, `${path}.lineHeights`);

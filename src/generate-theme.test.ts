@@ -211,19 +211,46 @@ describe("generateTheme - fontScale", () => {
   });
 });
 
-describe("generateTheme - semanticFontSizes", () => {
-  it("body size equals baseFont", () => {
-    const theme = generateTheme({ primary: "#1e90ff", baseFont: 16 });
-    expect(theme.light.semanticFontSizes.body).toBe(16);
+describe("generateTheme - typography", () => {
+  const theme = generateTheme({ primary: "#1e90ff", baseFont: 16 });
+
+  it("has all 10 typography keys", () => {
+    const keys = ["caption", "labelSmall", "labelMedium", "bodySmall", "bodyMedium", "bodyLarge", "titleSmall", "titleMedium", "titleLarge", "display"];
+    for (const key of keys) expect(theme.light.typography).toHaveProperty(key);
   });
 
-  it("display is larger than heading-1 is larger than body", () => {
-    const t = generateTheme({ primary: "#1e90ff" });
-    const s = t.light.semanticFontSizes;
-    expect(s.display).toBeGreaterThan(s["heading-1"]);
-    expect(s["heading-1"]).toBeGreaterThan(s["heading-2"]);
-    expect(s["heading-2"]).toBeGreaterThan(s.body);
-    expect(s.body).toBeGreaterThan(s.caption);
+  it("bodyMedium.fontSize equals baseFont", () => {
+    expect(theme.light.typography.bodyMedium.fontSize).toBe(16);
+  });
+
+  it("display.fontSize > titleLarge.fontSize > bodyMedium.fontSize > caption.fontSize", () => {
+    const t = theme.light.typography;
+    expect(t.display.fontSize).toBeGreaterThan(t.titleLarge.fontSize);
+    expect(t.titleLarge.fontSize).toBeGreaterThan(t.bodyMedium.fontSize);
+    expect(t.bodyMedium.fontSize).toBeGreaterThan(t.caption.fontSize);
+  });
+
+  it("each style has fontSize, lineHeight, fontWeight, letterSpacing", () => {
+    for (const style of Object.values(theme.light.typography)) {
+      expect(typeof style.fontSize).toBe("number");
+      expect(typeof style.lineHeight).toBe("number");
+      expect([400, 500, 600, 700]).toContain(style.fontWeight);
+      expect(typeof style.letterSpacing).toBe("number");
+    }
+  });
+
+  it("title and display styles have fontWeight >= 600", () => {
+    const t = theme.light.typography;
+    expect(t.titleSmall.fontWeight).toBeGreaterThanOrEqual(600);
+    expect(t.titleLarge.fontWeight).toBeGreaterThanOrEqual(600);
+    expect(t.display.fontWeight).toBeGreaterThanOrEqual(600);
+  });
+
+  it("body styles have fontWeight 400", () => {
+    const t = theme.light.typography;
+    expect(t.bodySmall.fontWeight).toBe(400);
+    expect(t.bodyMedium.fontWeight).toBe(400);
+    expect(t.bodyLarge.fontWeight).toBe(400);
   });
 });
 

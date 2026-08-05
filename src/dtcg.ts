@@ -6,7 +6,7 @@ export type DtcgColorToken      = { $value: string; $type: "color" };
 export type DtcgDimensionToken  = { $value: string; $type: "dimension" };
 export type DtcgNumberToken     = { $value: number; $type: "number" };
 export type DtcgFontWeightToken = { $value: number; $type: "fontWeight" };
-export type DtcgTypographyValue = { fontSize: string; fontWeight: string; lineHeight: string; letterSpacing: string };
+export type DtcgTypographyValue = Record<string, string | number>;
 export type DtcgTypographyToken = { $value: DtcgTypographyValue; $type: "typography" };
 export type DtcgToken  = DtcgColorToken | DtcgDimensionToken | DtcgNumberToken | DtcgFontWeightToken | DtcgTypographyToken;
 export type DtcgGroup  = { [key: string]: DtcgToken | DtcgGroup };
@@ -85,12 +85,6 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
   }
   fontSizeGroup.base = dim(mode.baseFont);
 
-  // Semantic font sizes (9 keys)
-  const semanticFontSizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(mode.semanticFontSizes) as [string, number][]) {
-    semanticFontSizeGroup[key] = dim(val);
-  }
-
   // Line heights (unitless)
   const lineHeightGroup: DtcgGroup = {};
   for (const [key, val] of Object.entries(mode.lineHeights) as [string, number][]) {
@@ -109,29 +103,17 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
     letterSpacingGroup[key] = { $value: val === 0 ? "0" : `${val}em`, $type: "dimension" } as DtcgDimensionToken;
   }
 
-  // Typography composite tokens (per W3C DTCG spec)
-  const TYPOGRAPHY_PAIRINGS: Record<string, { weight: string; lineHeight: string; letterSpacing: string }> = {
-    "caption":    { weight: "regular",   lineHeight: "normal",  letterSpacing: "wider" },
-    "body-sm":    { weight: "regular",   lineHeight: "normal",  letterSpacing: "normal" },
-    "body":       { weight: "regular",   lineHeight: "normal",  letterSpacing: "normal" },
-    "body-lg":    { weight: "regular",   lineHeight: "relaxed", letterSpacing: "normal" },
-    "subheading": { weight: "semibold",  lineHeight: "snug",    letterSpacing: "wide" },
-    "heading-3":  { weight: "semibold",  lineHeight: "tight",   letterSpacing: "normal" },
-    "heading-2":  { weight: "bold",      lineHeight: "tight",   letterSpacing: "tight" },
-    "heading-1":  { weight: "bold",      lineHeight: "tight",   letterSpacing: "tight" },
-    "display":    { weight: "extrabold", lineHeight: "none",    letterSpacing: "tight" },
-  };
+  // Typography composite tokens — each token bundles fontSize, lineHeight, fontWeight, letterSpacing
   const typographyGroup: DtcgGroup = {};
-  for (const [key, { weight, lineHeight, letterSpacing }] of Object.entries(TYPOGRAPHY_PAIRINGS)) {
-    typographyGroup[key] = {
-      $type: "typography",
-      $value: {
-        fontSize:      `{semanticFontSize.${key}}`,
-        fontWeight:    `{fontWeight.${weight}}`,
-        lineHeight:    `{lineHeight.${lineHeight}}`,
-        letterSpacing: `{letterSpacing.${letterSpacing}}`,
-      },
-    } as DtcgTypographyToken;
+  for (const [key, style] of Object.entries(mode.typography) as [string, { fontSize: number; lineHeight: number; fontWeight: number; letterSpacing: number; fontFamily?: string }][]) {
+    const value: DtcgTypographyValue = {
+      fontSize:      `${style.fontSize}px`,
+      lineHeight:    style.lineHeight,
+      fontWeight:    style.fontWeight,
+      letterSpacing: style.letterSpacing === 0 ? "0" : `${style.letterSpacing}em`,
+    };
+    if (style.fontFamily) value.fontFamily = style.fontFamily;
+    typographyGroup[key] = { $type: "typography", $value: value } as DtcgTypographyToken;
   }
 
   // Icon sizes, size map, dimensions
@@ -157,10 +139,10 @@ function buildMode(mode: GeneratedThemeMode): DtcgGroup {
       elevation: elevationGroup,
       state:     stateGroup,
     },
-    spacing:          spacingGroup,
-    radius:           radiusGroup,
-    fontSize:         fontSizeGroup,
-    semanticFontSize: semanticFontSizeGroup,
+    spacing:      spacingGroup,
+    radius:       radiusGroup,
+    fontSize:     fontSizeGroup,
+    typography:   typographyGroup,
     lineHeight:       lineHeightGroup,
     fontWeight:       fontWeightGroup,
     letterSpacing:    letterSpacingGroup,

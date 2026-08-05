@@ -177,10 +177,16 @@ describe("parseThemeJSON - baseFont validation", () => {
 // ─── new typography fields ──────────────────────────────────────────
 
 describe("parseThemeJSON - new typography fields", () => {
-  it("rejects missing semanticFontSizes", () => {
+  it("rejects missing typography", () => {
     const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
-    delete obj.light.semanticFontSizes;
-    expect(() => parseThemeJSON(obj)).toThrow("semanticFontSizes");
+    delete obj.light.typography;
+    expect(() => parseThemeJSON(obj)).toThrow("typography");
+  });
+
+  it("rejects invalid fontWeight in typography", () => {
+    const obj = JSON.parse(JSON.stringify(generateTheme({ primary: "#1e90ff" })));
+    obj.light.typography.bodyMedium.fontWeight = 350;
+    expect(() => parseThemeJSON(obj)).toThrow("fontWeight");
   });
 
   it("rejects missing lineHeights", () => {
