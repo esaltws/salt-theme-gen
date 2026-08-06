@@ -442,20 +442,6 @@ describe("parseThemeJSON - token validity warnings", () => {
     expect(hits.length).toBe(2);
   });
 
-  it("warns on sizeMap / controlSizes alias mismatch", () => {
-    const obj = validThemeObj();
-    const w = tokenWarning(obj, (o) => { o.tokens.sizeMap.md = 999; }, "alias-consistency");
-    expect(w).toBeDefined();
-    expect(w!.path).toBe("theme.tokens.sizeMap.md");
-  });
-
-  it("warns on dimensions / controlSizes alias mismatch", () => {
-    const obj = validThemeObj();
-    const w = tokenWarning(obj, (o) => { o.tokens.dimensions.lg = 777; }, "alias-consistency");
-    expect(w).toBeDefined();
-    expect(w!.path).toBe("theme.tokens.dimensions.lg");
-  });
-
   it("warns on unusually compressed typography line height", () => {
     const obj = validThemeObj();
     const w = tokenWarning(obj, (o) => { o.tokens.typography.bodyMedium.lineHeight = 0.9; }, "compressed-line-height");

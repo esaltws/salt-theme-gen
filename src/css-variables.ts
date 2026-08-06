@@ -111,7 +111,7 @@ function fluidRem(maxPx: number, baseFont: number, minViewport = 320, maxViewpor
 
 // Dimension tokens — format has no effect, never go in @supports.
 // Font sizes and icon sizes → rem (scales with user font preference, WCAG 1.4.4).
-// Spacing, radius, size map, dimensions → px (layout values, not text-relative).
+// Spacing, radius, control sizes → px (layout values, not text-relative).
 // These are mode-agnostic (from theme.tokens) and emitted only under the light selector.
 function dimensionDecls(tokens: GeneratedThemeTokens, fluid: boolean): string[] {
   const out: string[] = [];
@@ -147,14 +147,6 @@ function dimensionDecls(tokens: GeneratedThemeTokens, fluid: boolean): string[] 
   for (const [key, val] of Object.entries(tokens.breakpoints) as [string, number][]) {
     out.push(`${P}-breakpoint-${key}: ${val}px;`);
   }
-  // sizeMap and dimensions are deprecated aliases for controlSizes — emit for backward compat
-  for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
-    out.push(`${P}-size-${key}: ${val}px;`);
-  }
-  for (const [key, val] of Object.entries(tokens.dimensions) as [string, number][]) {
-    out.push(`${P}-dimension-${key}: ${val}px;`);
-  }
-
   // Typography composite styles — flat CSS vars per property
   const FLUID_TYPE_KEYS = new Set(["titleSmall", "titleMedium", "titleLarge", "display"]);
   for (const [key, style] of Object.entries(tokens.typography) as [string, TypographyStyle][]) {

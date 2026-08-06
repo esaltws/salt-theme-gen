@@ -57,10 +57,6 @@ export type ThemeTokensDiff = {
   iconSizes?:     Partial<Record<keyof IconSizeScale, FieldChange<number>>>;
   icons?:         Partial<Record<keyof SemanticIconSizes, FieldChange<number>>>;
   controlSizes?:  Partial<Record<keyof ControlSizeScale, FieldChange<number>>>;
-  /** @deprecated alias for controlSizes — present only when it diverges from controlSizes */
-  sizeMap?:       Partial<Record<keyof ControlSizeScale, FieldChange<number>>>;
-  /** @deprecated alias for controlSizes — present only when it diverges from controlSizes */
-  dimensions?:    Partial<Record<keyof ControlSizeScale, FieldChange<number>>>;
   touchTargets?:  Partial<Record<keyof TouchTargetScale, FieldChange<number>>>;
   borderWidths?:  Partial<Record<keyof BorderWidthScale, FieldChange<number>>>;
   avatarSizes?:   Partial<Record<keyof AvatarSizeScale, FieldChange<number>>>;
@@ -281,12 +277,6 @@ function diffTokens(a: GeneratedThemeTokens, b: GeneratedThemeTokens): ThemeToke
 
   const controlSizes = diffFlat(a.controlSizes, b.controlSizes, CONTROL_SIZE_KEYS);
   if (controlSizes) diff.controlSizes = controlSizes;
-
-  // Deprecated aliases — only surfaced when they diverge from controlSizes within a theme
-  const sizeMap = diffFlat(a.sizeMap, b.sizeMap, CONTROL_SIZE_KEYS);
-  if (sizeMap) diff.sizeMap = sizeMap;
-  const dimensions = diffFlat(a.dimensions, b.dimensions, CONTROL_SIZE_KEYS);
-  if (dimensions) diff.dimensions = dimensions;
 
   const touchTargets = diffFlat(a.touchTargets, b.touchTargets, TOUCH_TARGET_KEYS);
   if (touchTargets) diff.touchTargets = touchTargets;

@@ -184,8 +184,6 @@ function buildTokens(
     borderWidths: DEFAULT_BORDER_WIDTHS,
     avatarSizes: DEFAULT_AVATAR_SIZES,
     breakpoints: DEFAULT_BREAKPOINTS,
-    sizeMap: DEFAULT_CONTROL_SIZES,
-    dimensions: DEFAULT_CONTROL_SIZES,
     baseFont,
     fontScale,
     fontFamilySans: fontFamily?.sans,

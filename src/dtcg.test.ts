@@ -167,10 +167,15 @@ describe("generateDtcgTokens — dimension scales", () => {
     }
   });
 
-  it("includes iconSize, size, and dimension groups", () => {
+  it("includes iconSize, controlSize, and touchTarget groups", () => {
     expect(light).toHaveProperty("iconSize");
-    expect(light).toHaveProperty("size");
-    expect(light).toHaveProperty("dimension");
+    expect(light).toHaveProperty("controlSize");
+    expect(light).toHaveProperty("touchTarget");
+  });
+
+  it("does not include deprecated size or dimension groups", () => {
+    expect(light).not.toHaveProperty("size");
+    expect(light).not.toHaveProperty("dimension");
   });
 });
 
@@ -195,10 +200,9 @@ describe("generateDtcgTokens — controlSize group", () => {
     }
   });
 
-  it("controlSize.md value matches the deprecated size.md value", () => {
+  it("controlSize.md value is a px string", () => {
     const cs = getLeaf(light, "controlSize", "md") as DtcgToken;
-    const sz = getLeaf(light, "size",        "md") as DtcgToken;
-    expect(cs.$value).toBe(sz.$value);
+    expect(cs.$value).toMatch(/^\d+px$/);
   });
 });
 

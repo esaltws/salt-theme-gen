@@ -53,10 +53,6 @@ export type {
   BorderWidthScale,
   AvatarSizeScale,
   BreakpointScale,
-  /** @deprecated Use ControlSizeScale */
-  SizeMapScale,
-  /** @deprecated Use ControlSizeScale */
-  DimensionScale,
 } from "./types.js";
 
 // ─── Preset Data (for UI pickers, iteration) ────────────────────────
@@ -117,6 +113,11 @@ export type { TailwindThemeExtend, TailwindConfigResult } from "./tailwind.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
+export type { ParseThemeResult } from "./validate.js";
+
+// ─── React Native Utilities ───────────────────────────────────────────
+export { resolveTextStyle } from "./rn-utils.js";
+export type { RNTextStyle } from "./rn-utils.js";
 
 // ─── Color Blindness Simulation ───────────────────────────────────────
 export { simulateColorBlindness, simulateTheme } from "./color-blindness.js";

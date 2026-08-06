@@ -26,8 +26,6 @@ const TOUCH_TARGET_KEYS = ["minimum", "recommended", "comfortable"] as const;
 const BORDER_WIDTH_KEYS = ["none", "thin", "medium", "thick"] as const;
 const AVATAR_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl"] as const;
 const BREAKPOINT_KEYS = ["sm", "md", "lg", "xl", "xxl"] as const;
-const SIZE_MAP_KEYS  = CONTROL_SIZE_KEYS;
-const DIMENSION_KEYS = CONTROL_SIZE_KEYS;
 
 const BASE_COLOR_KEYS: BaseColorKey[] = [
   "primary", "secondary", "tertiary", "quaternary",
@@ -173,8 +171,6 @@ function validateTokens(v: unknown, path: string): void {
   validateNumberObject(requireObject(obj.borderWidths, `${path}.borderWidths`), BORDER_WIDTH_KEYS, `${path}.borderWidths`);
   validateNumberObject(requireObject(obj.avatarSizes, `${path}.avatarSizes`), AVATAR_SIZE_KEYS, `${path}.avatarSizes`);
   validateNumberObject(requireObject(obj.breakpoints, `${path}.breakpoints`), BREAKPOINT_KEYS, `${path}.breakpoints`);
-  validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
-  validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
 
   const bf = obj.baseFont;
   if (typeof bf !== "number" || !isFinite(bf) || bf < 8) {
@@ -264,8 +260,6 @@ function validateTokenValues(obj: Record<string, unknown>, path: string): TokenW
   noNegative(obj.borderWidths as Record<string, unknown>, `${path}.borderWidths`);
   noNegative(obj.avatarSizes  as Record<string, unknown>, `${path}.avatarSizes`);
   noNegative(obj.breakpoints  as Record<string, unknown>, `${path}.breakpoints`);
-  noNegative(obj.sizeMap      as Record<string, unknown>, `${path}.sizeMap`);
-  noNegative(obj.dimensions   as Record<string, unknown>, `${path}.dimensions`);
 
   // Typography: non-positive lineHeight, negative fontSize
   const typo = obj.typography as Record<string, Record<string, number>>;
@@ -319,21 +313,6 @@ function validateTokenValues(obj: Record<string, unknown>, path: string): TokenW
     if (fs > 0 && fs < 12) {
       w(`${path}.typography.${key}.fontSize`, "body-text-minimum-12", fs,
         `typography.${key}.fontSize (${fs}px) is below the recommended minimum of 12px for body text`);
-    }
-  }
-
-  // Alias consistency: sizeMap and dimensions are deprecated mirrors of controlSizes
-  const cs  = obj.controlSizes as Record<string, number>;
-  const sm  = obj.sizeMap      as Record<string, number>;
-  const dim = obj.dimensions   as Record<string, number>;
-  for (const key of CONTROL_SIZE_KEYS) {
-    if (sm[key] !== cs[key]) {
-      w(`${path}.sizeMap.${key}`, "alias-consistency", sm[key],
-        `sizeMap.${key} (${sm[key]}) disagrees with controlSizes.${key} (${cs[key]})`);
-    }
-    if (dim[key] !== cs[key]) {
-      w(`${path}.dimensions.${key}`, "alias-consistency", dim[key],
-        `dimensions.${key} (${dim[key]}) disagrees with controlSizes.${key} (${cs[key]})`);
     }
   }
 

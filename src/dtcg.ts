@@ -158,16 +158,6 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
     touchTargetGroup[key] = dim(val);
   }
 
-  // Deprecated generic aliases — kept for backward compatibility with existing pipelines
-  const sizeGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
-    sizeGroup[key] = dim(val);
-  }
-  const dimensionGroup: DtcgGroup = {};
-  for (const [key, val] of Object.entries(tokens.dimensions) as [string, number][]) {
-    dimensionGroup[key] = dim(val);
-  }
-
   return {
     color: {
       ...colorGroup,
@@ -189,8 +179,6 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
     breakpoint:   breakpointGroup,
     controlSize:  controlSizeGroup,
     touchTarget:  touchTargetGroup,
-    size:         sizeGroup,      // @deprecated — use controlSize
-    dimension:    dimensionGroup, // @deprecated — use controlSize
   };
 }
 

@@ -249,8 +249,6 @@ export function adjustTokens(
     spacing, radius, fontSizes, iconSizes, icons,
     controlSizes, touchTargets,
     borderWidths, avatarSizes, breakpoints,
-    sizeMap: controlSizes,
-    dimensions: controlSizes,
     baseFont, fontScale, fontFamilySans, fontFamilyDisplay,
     typography, lineHeights, fontWeights, letterSpacings,
   };

@@ -190,11 +190,9 @@ describe("simulateTheme — structure", () => {
     expect(sim.tokens.fontSizes).toEqual(baseTheme.tokens.fontSizes);
   });
 
-  it("preserves iconSizes, sizeMap, dimensions", () => {
+  it("preserves iconSizes", () => {
     const sim = simulateTheme(baseTheme, "tritanopia");
     expect(sim.tokens.iconSizes).toEqual(baseTheme.tokens.iconSizes);
-    expect(sim.tokens.sizeMap).toEqual(baseTheme.tokens.sizeMap);
-    expect(sim.tokens.dimensions).toEqual(baseTheme.tokens.dimensions);
   });
 
   it("preserves warnings if present", () => {

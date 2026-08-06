@@ -148,11 +148,6 @@ export type FontSizeScale = {
 
 export type { IconSizeScale, SemanticIconSizes, ControlSizeScale, TouchTargetScale, BorderWidthScale, AvatarSizeScale, BreakpointScale };
 
-/** @deprecated Use controlSizes */
-export type SizeMapScale = ControlSizeScale;
-/** @deprecated Use controlSizes */
-export type DimensionScale = ControlSizeScale;
-
 // ─── Semantic Colors (23 keys, matching ui-kit colors) ───────────────
 
 export type SemanticColors = {
@@ -351,10 +346,6 @@ export type GeneratedThemeTokens = {
   borderWidths:   BorderWidthScale;
   avatarSizes:    AvatarSizeScale;
   breakpoints:    BreakpointScale;
-  /** @deprecated Use controlSizes */
-  sizeMap:        ControlSizeScale;
-  /** @deprecated Use controlSizes */
-  dimensions:     ControlSizeScale;
   baseFont:       number;
   fontScale:      number;
   fontFamilySans?:    string;
