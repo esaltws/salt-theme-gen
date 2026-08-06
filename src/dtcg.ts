@@ -146,11 +146,23 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
     breakpointGroup[key] = dim(val);
   }
 
+  // Control sizes (explicit, preferred over the deprecated size/dimension aliases)
+  const controlSizeGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(tokens.controlSizes) as [string, number][]) {
+    controlSizeGroup[key] = dim(val);
+  }
+
+  // Touch targets (explicit)
+  const touchTargetGroup: DtcgGroup = {};
+  for (const [key, val] of Object.entries(tokens.touchTargets) as [string, number][]) {
+    touchTargetGroup[key] = dim(val);
+  }
+
+  // Deprecated generic aliases — kept for backward compatibility with existing pipelines
   const sizeGroup: DtcgGroup = {};
   for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
     sizeGroup[key] = dim(val);
   }
-
   const dimensionGroup: DtcgGroup = {};
   for (const [key, val] of Object.entries(tokens.dimensions) as [string, number][]) {
     dimensionGroup[key] = dim(val);
@@ -175,8 +187,10 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
     borderWidth:  borderWidthGroup,
     avatarSize:   avatarSizeGroup,
     breakpoint:   breakpointGroup,
-    size:         sizeGroup,
-    dimension:    dimensionGroup,
+    controlSize:  controlSizeGroup,
+    touchTarget:  touchTargetGroup,
+    size:         sizeGroup,      // @deprecated — use controlSize
+    dimension:    dimensionGroup, // @deprecated — use controlSize
   };
 }
 
@@ -194,10 +208,12 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
  * - `color.state.*.*`   — 8 intents × 4 interaction states
  * - `spacing.*`         — spacing scale (px)
  * - `radius.*`          — border-radius scale (px)
- * - `fontSize.*`        — type size scale + `fontSize.level` base size (px)
+ * - `fontSize.*`        — type size scale + `fontSize.base` (px)
  * - `iconSize.*`        — icon size scale (px)
- * - `size.*`            — component size scale (px)
- * - `dimension.*`       — layout dimension scale (px)
+ * - `controlSize.*`     — component control heights (xs–xl) (px)
+ * - `touchTarget.*`     — touch target sizes: minimum / recommended / comfortable (px)
+ * - `size.*`            — **deprecated** alias for `controlSize` — kept for compatibility
+ * - `dimension.*`       — **deprecated** alias for `controlSize` — kept for compatibility
  *
  * @example
  * const { light, dark, json } = generateDtcgTokens(theme);

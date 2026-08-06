@@ -174,6 +174,66 @@ describe("generateDtcgTokens — dimension scales", () => {
   });
 });
 
+// ─── controlSize group ───────────────────────────────────────────────
+
+describe("generateDtcgTokens — controlSize group", () => {
+  it("controlSize group is present at the top level", () => {
+    expect(light).toHaveProperty("controlSize");
+  });
+
+  it("controlSize.md is a dimension token with px value", () => {
+    const tok = getLeaf(light, "controlSize", "md") as DtcgToken;
+    expect(isDimToken(tok)).toBe(true);
+    expect(tok.$value).toMatch(/^\d+px$/);
+  });
+
+  it("includes all 5 control size keys (xs–xl)", () => {
+    const group = (light as DtcgGroup).controlSize as DtcgGroup;
+    for (const key of ["xs", "sm", "md", "lg", "xl"]) {
+      expect(group, `missing controlSize.${key}`).toHaveProperty(key);
+      expect(isDimToken(group[key])).toBe(true);
+    }
+  });
+
+  it("controlSize.md value matches the deprecated size.md value", () => {
+    const cs = getLeaf(light, "controlSize", "md") as DtcgToken;
+    const sz = getLeaf(light, "size",        "md") as DtcgToken;
+    expect(cs.$value).toBe(sz.$value);
+  });
+});
+
+// ─── touchTarget group ───────────────────────────────────────────────
+
+describe("generateDtcgTokens — touchTarget group", () => {
+  it("touchTarget group is present at the top level", () => {
+    expect(light).toHaveProperty("touchTarget");
+  });
+
+  it("touchTarget.minimum is a dimension token", () => {
+    const tok = getLeaf(light, "touchTarget", "minimum") as DtcgToken;
+    expect(isDimToken(tok)).toBe(true);
+    expect(tok.$value).toMatch(/^\d+px$/);
+  });
+
+  it("includes minimum, recommended, and comfortable keys", () => {
+    const group = (light as DtcgGroup).touchTarget as DtcgGroup;
+    for (const key of ["minimum", "recommended", "comfortable"]) {
+      expect(group, `missing touchTarget.${key}`).toHaveProperty(key);
+      expect(isDimToken(group[key])).toBe(true);
+    }
+  });
+
+  it("touchTarget.minimum is 24px (WCAG 2.5.8 floor)", () => {
+    const tok = getLeaf(light, "touchTarget", "minimum") as DtcgToken;
+    expect(tok.$value).toBe("24px");
+  });
+
+  it("touchTarget.recommended is 44px (Apple HIG / Material minimum)", () => {
+    const tok = getLeaf(light, "touchTarget", "recommended") as DtcgToken;
+    expect(tok.$value).toBe("44px");
+  });
+});
+
 // ─── Typography composite group ───────────────────────────────────────
 
 describe("generateDtcgTokens — typography group (TypographyScale)", () => {

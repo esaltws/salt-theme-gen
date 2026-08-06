@@ -1,6 +1,9 @@
-import type { GeneratedTheme, GeneratedThemeColors } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors, TypographyStyle } from "./types.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
+
+/** Tailwind v3 font-size tuple: [size, { lineHeight, fontWeight, letterSpacing }] */
+export type TailwindTypographyTuple = [string, { lineHeight: string; fontWeight: string; letterSpacing: string }];
 
 export type TailwindThemeExtend = {
   /**
@@ -13,8 +16,12 @@ export type TailwindThemeExtend = {
   spacing: Record<string, string>;
   /** Border-radius scale as static `px` strings. */
   borderRadius: Record<string, string>;
-  /** Font-size scale as static `px` strings. */
-  fontSize: Record<string, string>;
+  /**
+   * Font-size t-shirt scale as static `px` strings (salt-xs … salt-3xl).
+   * Semantic typography tokens (salt-body-medium, salt-title-large, etc.) are
+   * emitted as Tailwind v3 tuples: `[remSize, { lineHeight, fontWeight, letterSpacing }]`.
+   */
+  fontSize: Record<string, string | TailwindTypographyTuple>;
   /** Responsive breakpoints as static `px` strings (maps to Tailwind `screens`). */
   screens: Record<string, string>;
   /** Border-width scale as static `px` strings. */
@@ -25,8 +32,14 @@ export type TailwindThemeExtend = {
   lineHeight: Record<string, string>;
   /** Letter-spacing scale as static `em` strings. */
   letterSpacing: Record<string, string>;
-  /** Icon sizes as static `px` strings. */
+  /** Icon sizes, control sizes, avatar sizes, and touch target sizes as static `px` strings. */
   width: Record<string, string>;
+  /** Same as width — icon sizes, control sizes, avatar sizes, and touch target sizes. */
+  height: Record<string, string>;
+  /** Touch target minimum constraints as static `px` strings. */
+  minWidth: Record<string, string>;
+  /** Touch target minimum constraints as static `px` strings. */
+  minHeight: Record<string, string>;
   /** Font family aliases (sans and display). Only populated when fontFamily is configured. */
   fontFamily: Record<string, string[]>;
 };
@@ -121,9 +134,22 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
   }
 
   // ── Font Size ────────────────────────────────────────────────────
-  const fontSize: Record<string, string> = {};
+  const fontSize: Record<string, string | TailwindTypographyTuple> = {};
+  // t-shirt scale — simple px strings, consistent with the static token values
   for (const [key, val] of Object.entries(theme.tokens.fontSizes) as [string, number][]) {
     fontSize[`salt-${key}`] = `${val}px`;
+  }
+  // Semantic typography composites — Tailwind v3 tuple format [remSize, metadata]
+  for (const [key, style] of Object.entries(theme.tokens.typography) as [string, TypographyStyle][]) {
+    const remSize = style.fontSize === 0 ? "0" : `${+(style.fontSize / 16).toFixed(4)}rem`;
+    fontSize[`salt-${camelToKebab(key)}`] = [
+      remSize,
+      {
+        lineHeight:    String(style.lineHeight),
+        fontWeight:    String(style.fontWeight),
+        letterSpacing: style.letterSpacing === 0 ? "0" : `${style.letterSpacing}em`,
+      },
+    ];
   }
 
   // ── Screens (breakpoints) ────────────────────────────────────────
@@ -156,16 +182,38 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
     letterSpacing[`salt-${key}`] = val === 0 ? "0" : `${val}em`;
   }
 
-  // ── Icon / Control sizes → width utilities ────────────────────────
-  const width: Record<string, string> = {};
+  // ── Width / Height / MinWidth / MinHeight ────────────────────────
+  const width:    Record<string, string> = {};
+  const height:   Record<string, string> = {};
+  const minWidth: Record<string, string> = {};
+  const minHeight: Record<string, string> = {};
+
+  // Icon sizes (square)
   for (const [key, val] of Object.entries(theme.tokens.iconSizes) as [string, number][]) {
-    width[`salt-icon-${key}`] = `${val}px`;
+    width[`salt-icon-${key}`]  = `${val}px`;
+    height[`salt-icon-${key}`] = `${val}px`;
   }
+  // Semantic icon aliases (square)
   for (const [key, val] of Object.entries(theme.tokens.icons) as [string, number][]) {
-    width[`salt-icon-${key}`] = `${val}px`;
+    width[`salt-icon-${key}`]  = `${val}px`;
+    height[`salt-icon-${key}`] = `${val}px`;
   }
+  // Control sizes (component row height)
   for (const [key, val] of Object.entries(theme.tokens.controlSizes) as [string, number][]) {
-    width[`salt-control-${key}`] = `${val}px`;
+    width[`salt-control-${key}`]  = `${val}px`;
+    height[`salt-control-${key}`] = `${val}px`;
+  }
+  // Avatar sizes (square)
+  for (const [key, val] of Object.entries(theme.tokens.avatarSizes) as [string, number][]) {
+    width[`salt-avatar-${key}`]  = `${val}px`;
+    height[`salt-avatar-${key}`] = `${val}px`;
+  }
+  // Touch targets → exact w/h AND min-w/min-h (semantic: these are minimums)
+  for (const [key, val] of Object.entries(theme.tokens.touchTargets) as [string, number][]) {
+    width[`salt-touch-target-${key}`]    = `${val}px`;
+    height[`salt-touch-target-${key}`]   = `${val}px`;
+    minWidth[`salt-touch-target-${key}`] = `${val}px`;
+    minHeight[`salt-touch-target-${key}`] = `${val}px`;
   }
 
   // ── Font Family ──────────────────────────────────────────────────
@@ -180,7 +228,7 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
   const extend: TailwindThemeExtend = {
     colors, spacing, borderRadius, fontSize,
     screens, borderWidth, fontWeight, lineHeight, letterSpacing,
-    width, fontFamily,
+    width, height, minWidth, minHeight, fontFamily,
   };
   return { extend, json: JSON.stringify(extend, null, 2) };
 }

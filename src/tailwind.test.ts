@@ -115,14 +115,146 @@ describe("generateTailwindConfig — borderRadius", () => {
 // ─── Font size ────────────────────────────────────────────────────────
 
 describe("generateTailwindConfig — fontSize", () => {
-  it("font-size values are static px strings with salt- prefix", () => {
+  it("t-shirt scale values are static px strings with salt- prefix", () => {
     expect(extend.fontSize["salt-md"]).toMatch(/^\d+px$/);
   });
 
-  it("includes all 7 font-size keys", () => {
+  it("includes all 7 t-shirt font-size keys", () => {
     for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
       expect(extend.fontSize, `missing salt-${key}`).toHaveProperty(`salt-${key}`);
     }
+  });
+});
+
+// ─── Typography tuples ────────────────────────────────────────────────
+
+describe("generateTailwindConfig — typography tuples in fontSize", () => {
+  it("salt-body-medium is a Tailwind tuple (array)", () => {
+    const entry = extend.fontSize["salt-body-medium"];
+    expect(Array.isArray(entry)).toBe(true);
+  });
+
+  it("tuple[0] is a rem string", () => {
+    const entry = extend.fontSize["salt-body-medium"] as [string, object];
+    expect(entry[0]).toMatch(/^[\d.]+rem$/);
+  });
+
+  it("tuple[1] has lineHeight, fontWeight, letterSpacing", () => {
+    const entry = extend.fontSize["salt-body-medium"] as [string, Record<string, string>];
+    expect(entry[1]).toHaveProperty("lineHeight");
+    expect(entry[1]).toHaveProperty("fontWeight");
+    expect(entry[1]).toHaveProperty("letterSpacing");
+  });
+
+  it("lineHeight in tuple is a numeric string", () => {
+    const entry = extend.fontSize["salt-body-medium"] as [string, Record<string, string>];
+    expect(parseFloat(entry[1].lineHeight)).toBeGreaterThan(0);
+  });
+
+  it("letterSpacing is '0' for body-medium (zero tracking)", () => {
+    const entry = extend.fontSize["salt-body-medium"] as [string, Record<string, string>];
+    expect(entry[1].letterSpacing).toBe("0");
+  });
+
+  it("includes all 10 semantic typography keys", () => {
+    const expected = [
+      "salt-caption", "salt-label-small", "salt-label-medium",
+      "salt-body-small", "salt-body-medium", "salt-body-large",
+      "salt-title-small", "salt-title-medium", "salt-title-large",
+      "salt-display",
+    ];
+    for (const key of expected) {
+      expect(extend.fontSize, `missing ${key}`).toHaveProperty(key);
+      expect(Array.isArray(extend.fontSize[key])).toBe(true);
+    }
+  });
+
+  it("salt-display has fontWeight '700'", () => {
+    const entry = extend.fontSize["salt-display"] as [string, Record<string, string>];
+    expect(entry[1].fontWeight).toBe("700");
+  });
+
+  it("rem size of salt-body-medium equals fontSize / 16", () => {
+    const bodyMd = theme.tokens.typography.bodyMedium;
+    const expectedRem = `${+(bodyMd.fontSize / 16).toFixed(4)}rem`;
+    const entry = extend.fontSize["salt-body-medium"] as [string, Record<string, string>];
+    expect(entry[0]).toBe(expectedRem);
+  });
+});
+
+// ─── Width / Height ───────────────────────────────────────────────────
+
+describe("generateTailwindConfig — width and height", () => {
+  it("width and height both have salt-control-md", () => {
+    expect(extend.width["salt-control-md"]).toMatch(/^\d+px$/);
+    expect(extend.height["salt-control-md"]).toBe(extend.width["salt-control-md"]);
+  });
+
+  it("all control size keys appear in both width and height", () => {
+    for (const key of ["xs", "sm", "md", "lg", "xl"]) {
+      expect(extend.width,  `width missing salt-control-${key}`).toHaveProperty(`salt-control-${key}`);
+      expect(extend.height, `height missing salt-control-${key}`).toHaveProperty(`salt-control-${key}`);
+    }
+  });
+
+  it("avatar sizes appear in width and height", () => {
+    for (const key of ["xs", "sm", "md", "lg", "xl", "xxl"]) {
+      expect(extend.width,  `width missing salt-avatar-${key}`).toHaveProperty(`salt-avatar-${key}`);
+      expect(extend.height, `height missing salt-avatar-${key}`).toHaveProperty(`salt-avatar-${key}`);
+    }
+  });
+
+  it("avatar sizes are equal in width and height (square)", () => {
+    for (const key of ["xs", "sm", "md", "lg", "xl", "xxl"]) {
+      expect(extend.width[`salt-avatar-${key}`]).toBe(extend.height[`salt-avatar-${key}`]);
+    }
+  });
+
+  it("icon sizes appear in both width and height", () => {
+    for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
+      expect(extend.width,  `width missing salt-icon-${key}`).toHaveProperty(`salt-icon-${key}`);
+      expect(extend.height, `height missing salt-icon-${key}`).toHaveProperty(`salt-icon-${key}`);
+    }
+  });
+
+  it("touch target sizes appear in width and height", () => {
+    for (const key of ["minimum", "recommended", "comfortable"]) {
+      expect(extend.width,  `width missing salt-touch-target-${key}`).toHaveProperty(`salt-touch-target-${key}`);
+      expect(extend.height, `height missing salt-touch-target-${key}`).toHaveProperty(`salt-touch-target-${key}`);
+    }
+  });
+});
+
+// ─── MinWidth / MinHeight ─────────────────────────────────────────────
+
+describe("generateTailwindConfig — minWidth and minHeight", () => {
+  it("touch target keys appear in minWidth", () => {
+    for (const key of ["minimum", "recommended", "comfortable"]) {
+      expect(extend.minWidth, `minWidth missing salt-touch-target-${key}`).toHaveProperty(`salt-touch-target-${key}`);
+    }
+  });
+
+  it("touch target keys appear in minHeight", () => {
+    for (const key of ["minimum", "recommended", "comfortable"]) {
+      expect(extend.minHeight, `minHeight missing salt-touch-target-${key}`).toHaveProperty(`salt-touch-target-${key}`);
+    }
+  });
+
+  it("touch target minWidth values match the width values", () => {
+    for (const key of ["minimum", "recommended", "comfortable"]) {
+      expect(extend.minWidth[`salt-touch-target-${key}`])
+        .toBe(extend.width[`salt-touch-target-${key}`]);
+    }
+  });
+
+  it("salt-touch-target-minimum is 24px", () => {
+    expect(extend.minWidth["salt-touch-target-minimum"]).toBe("24px");
+    expect(extend.minHeight["salt-touch-target-minimum"]).toBe("24px");
+  });
+
+  it("salt-touch-target-recommended is 44px", () => {
+    expect(extend.minWidth["salt-touch-target-recommended"]).toBe("44px");
+    expect(extend.minHeight["salt-touch-target-recommended"]).toBe("44px");
   });
 });
 
