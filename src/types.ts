@@ -464,6 +464,20 @@ export type ThemeOverrides = {
   tokens?: ThemeTokenOverrides;
 };
 
+// ─── Token Validation ────────────────────────────────────────────────
+
+export type TokenWarning = {
+  /** Dotted path to the field that triggered this diagnostic (e.g. "theme.tokens.spacing.xs") */
+  path: string;
+  /** Machine-readable rule name (e.g. "no-negative", "ascending-breakpoints") */
+  rule: string;
+  /** The actual value that triggered the diagnostic */
+  value: unknown;
+  severity: "warning" | "error";
+  /** Human-readable explanation */
+  message: string;
+};
+
 // ─── Nature Preset Data ──────────────────────────────────────────────
 
 export type NaturePresetData = {

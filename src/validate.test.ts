@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { parseThemeJSON } from "./validate";
 import { generateTheme } from "./generate-theme";
+import type { TokenWarning } from "./types";
 
 // Helper: produce a valid theme as a plain object (simulates JSON round-trip)
 function validThemeObj() {
@@ -11,17 +12,22 @@ function validThemeObj() {
 
 describe("parseThemeJSON - valid input", () => {
   it("accepts a valid generated theme", () => {
-    const theme = parseThemeJSON(validThemeObj());
+    const { theme } = parseThemeJSON(validThemeObj());
     expect(theme).toHaveProperty("light");
     expect(theme).toHaveProperty("dark");
     expect(theme.light.mode).toBe("light");
     expect(theme.dark.mode).toBe("dark");
   });
 
-  it("returns the same shape as generateTheme", () => {
+  it("returns the same theme shape as generateTheme", () => {
     const original = validThemeObj();
-    const parsed = parseThemeJSON(original);
-    expect(parsed).toEqual(original);
+    const { theme } = parseThemeJSON(original);
+    expect(theme).toEqual(original);
+  });
+
+  it("returns empty tokenWarnings for a clean generated theme", () => {
+    const { tokenWarnings } = parseThemeJSON(validThemeObj());
+    expect(tokenWarnings).toEqual([]);
   });
 
   it("works with all 20 presets", () => {
@@ -281,5 +287,218 @@ describe("parseThemeJSON - error paths", () => {
     } catch (e: any) {
       expect(e.message).toContain("theme.light.accessibility.dangerOnBackground.ratio");
     }
+  });
+});
+
+// ─── token validity — errors ─────────────────────────────────────────
+
+function tokenError(obj: ReturnType<typeof validThemeObj>, mutate: (o: any) => void): TokenWarning | undefined {
+  mutate(obj);
+  const { tokenWarnings } = parseThemeJSON(obj);
+  return tokenWarnings.find((w) => w.severity === "error");
+}
+
+describe("parseThemeJSON - token validity errors", () => {
+  it("flags negative spacing value", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.spacing.xs = -4; });
+    expect(w).toBeDefined();
+    expect(w!.rule).toBe("no-negative");
+    expect(w!.path).toBe("theme.tokens.spacing.xs");
+    expect(w!.severity).toBe("error");
+  });
+
+  it("flags negative radius value", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.radius.md = -1; });
+    expect(w?.rule).toBe("no-negative");
+  });
+
+  it("flags negative fontSizes value", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.fontSizes.sm = -5; });
+    expect(w?.rule).toBe("no-negative");
+    expect(w?.path).toContain("fontSizes.sm");
+  });
+
+  it("flags negative control size", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.controlSizes.md = -10; });
+    expect(w?.rule).toBe("no-negative");
+  });
+
+  it("flags negative touch target value", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.touchTargets.recommended = -5; });
+    expect(w?.rule).toBe("no-negative");
+  });
+
+  it("flags negative breakpoint value", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.breakpoints.md = -100; });
+    expect(w?.rule).toBe("no-negative");
+  });
+
+  it("flags non-positive typography lineHeight (zero)", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.typography.bodyMedium.lineHeight = 0; });
+    expect(w?.rule).toBe("positive-line-height");
+    expect(w?.path).toBe("theme.tokens.typography.bodyMedium.lineHeight");
+  });
+
+  it("flags non-positive typography lineHeight (negative)", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.typography.display.lineHeight = -0.5; });
+    expect(w?.rule).toBe("positive-line-height");
+  });
+
+  it("flags negative typography fontSize", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.typography.caption.fontSize = -8; });
+    expect(w?.rule).toBe("no-negative");
+    expect(w?.path).toContain("caption.fontSize");
+  });
+
+  it("flags descending breakpoints (md < sm)", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.breakpoints.md = 100; }); // sm is 480
+    expect(w?.rule).toBe("ascending-breakpoints");
+    expect(w?.path).toBe("theme.tokens.breakpoints.md");
+  });
+
+  it("flags equal adjacent breakpoints (md === sm)", () => {
+    const obj = validThemeObj();
+    const sm = obj.tokens.breakpoints.sm;
+    const w = tokenError(obj, (o) => { o.tokens.breakpoints.md = sm; });
+    expect(w?.rule).toBe("ascending-breakpoints");
+  });
+
+  it("flags fontScale = 1 (flat modular ratio)", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.fontScale = 1; });
+    expect(w?.rule).toBe("valid-font-scale");
+    expect(w?.path).toBe("theme.tokens.fontScale");
+  });
+
+  it("flags fontScale = 0.8 (inverted ratio)", () => {
+    const obj = validThemeObj();
+    const w = tokenError(obj, (o) => { o.tokens.fontScale = 0.8; });
+    expect(w?.rule).toBe("valid-font-scale");
+  });
+
+  it("includes the offending value in the report", () => {
+    const obj = validThemeObj();
+    obj.tokens.spacing.xs = -4;
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const entry = tokenWarnings.find((w) => w.path === "theme.tokens.spacing.xs");
+    expect(entry?.value).toBe(-4);
+    expect(typeof entry?.message).toBe("string");
+  });
+});
+
+// ─── token validity — warnings ───────────────────────────────────────
+
+function tokenWarning(obj: ReturnType<typeof validThemeObj>, mutate: (o: any) => void, rule: string): TokenWarning | undefined {
+  mutate(obj);
+  const { tokenWarnings } = parseThemeJSON(obj);
+  return tokenWarnings.find((w) => w.severity === "warning" && w.rule === rule);
+}
+
+describe("parseThemeJSON - token validity warnings", () => {
+  it("warns when touch target minimum < 24", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.touchTargets.minimum = 20; }, "touch-target-minimum-24");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.touchTargets.minimum");
+    expect(w!.value).toBe(20);
+  });
+
+  it("warns when touch target recommended < 24 (below absolute floor)", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.touchTargets.recommended = 20; }, "touch-target-minimum-24");
+    expect(w).toBeDefined();
+  });
+
+  it("warns when touch target recommended < 44", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.touchTargets.recommended = 32; }, "touch-target-recommended-44");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.touchTargets.recommended");
+  });
+
+  it("warns when body text fontSize < 12", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.typography.bodyMedium.fontSize = 9; }, "body-text-minimum-12");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.typography.bodyMedium.fontSize");
+  });
+
+  it("warns for bodySmall and bodyLarge too", () => {
+    const obj = validThemeObj();
+    obj.tokens.typography.bodySmall.fontSize = 8;
+    obj.tokens.typography.bodyLarge.fontSize = 10;
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const hits = tokenWarnings.filter((w) => w.rule === "body-text-minimum-12");
+    expect(hits.length).toBe(2);
+  });
+
+  it("warns on sizeMap / controlSizes alias mismatch", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.sizeMap.md = 999; }, "alias-consistency");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.sizeMap.md");
+  });
+
+  it("warns on dimensions / controlSizes alias mismatch", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.dimensions.lg = 777; }, "alias-consistency");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.dimensions.lg");
+  });
+
+  it("warns on unusually compressed typography line height", () => {
+    const obj = validThemeObj();
+    const w = tokenWarning(obj, (o) => { o.tokens.typography.bodyMedium.lineHeight = 0.9; }, "compressed-line-height");
+    expect(w).toBeDefined();
+    expect(w!.path).toBe("theme.tokens.typography.bodyMedium.lineHeight");
+  });
+
+  it("does not warn on caption compressed line height (caption is not prose)", () => {
+    const obj = validThemeObj();
+    obj.tokens.typography.caption.lineHeight = 0.9;
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const hit = tokenWarnings.find((w) => w.rule === "compressed-line-height" && w.path.includes("caption"));
+    expect(hit).toBeUndefined();
+  });
+
+  it("warns on descending spacing scale", () => {
+    const obj = validThemeObj();
+    // xs=4, sm=8, md=2 — md < sm is descending
+    obj.tokens.spacing.md = 2;
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const hit = tokenWarnings.find((w) => w.rule === "ascending-scale" && w.path.includes("spacing.md"));
+    expect(hit).toBeDefined();
+    expect(hit!.severity).toBe("warning");
+  });
+
+  it("warns on descending radius scale", () => {
+    const obj = validThemeObj();
+    obj.tokens.radius.lg = 1; // smaller than md
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const hit = tokenWarnings.find((w) => w.rule === "ascending-scale" && w.path.includes("radius.lg"));
+    expect(hit).toBeDefined();
+  });
+
+  it("warns on descending fontSizes scale", () => {
+    const obj = validThemeObj();
+    obj.tokens.fontSizes.xl = 4; // smaller than lg
+    const { tokenWarnings } = parseThemeJSON(obj);
+    const hit = tokenWarnings.find((w) => w.rule === "ascending-scale" && w.path.includes("fontSizes.xl"));
+    expect(hit).toBeDefined();
+  });
+
+  it("clean theme produces no warnings", () => {
+    const { tokenWarnings } = parseThemeJSON(validThemeObj());
+    expect(tokenWarnings.filter((w) => w.severity === "warning")).toHaveLength(0);
   });
 });

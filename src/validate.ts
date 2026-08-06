@@ -1,5 +1,5 @@
 import { parseColor } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, BaseColorKey } from "./types.js";
+import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, BaseColorKey, TokenWarning } from "./types.js";
 
 const HSL_RE = /^hsla?\(\s*-?[\d.]+[\s,][\s\S]*?\)/i;
 
@@ -58,7 +58,7 @@ const ACCESSIBILITY_KEYS = [
   "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
 ] as const;
 
-// ─── Helpers ────────────────────────────────────────────────────────
+// ─── Shape Helpers ──────────────────────────────────────────────────
 
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -113,15 +113,12 @@ function validateNumberObject(obj: Record<string, unknown>, keys: readonly strin
 function validateMode(v: unknown, path: string): void {
   const obj = requireObject(v, path);
 
-  // mode
   if (obj.mode !== "light" && obj.mode !== "dark") {
     throw new Error(`${path}.mode: expected "light" or "dark", got ${JSON.stringify(obj.mode)}`);
   }
 
-  // colors
   validateColorObject(requireObject(obj.colors, `${path}.colors`), SEMANTIC_COLOR_KEYS, `${path}.colors`);
 
-  // palettes
   const palettes = requireObject(obj.palettes, `${path}.palettes`);
   requireKeys(palettes, TONAL_PALETTE_KEYS, `${path}.palettes`);
   for (const key of TONAL_PALETTE_KEYS) {
@@ -132,17 +129,14 @@ function validateMode(v: unknown, path: string): void {
     );
   }
 
-  // surfaceElevation
   validateColorObject(requireObject(obj.surfaceElevation, `${path}.surfaceElevation`), SURFACE_ELEVATION_KEYS, `${path}.surfaceElevation`);
 
-  // states
   const states = requireObject(obj.states, `${path}.states`);
   requireKeys(states, INTENT_KEYS, `${path}.states`);
   for (const intent of INTENT_KEYS) {
     validateColorObject(requireObject(states[intent], `${path}.states.${intent}`), STATE_KEYS, `${path}.states.${intent}`);
   }
 
-  // accessibility (WCAG)
   const acc = requireObject(obj.accessibility, `${path}.accessibility`);
   requireKeys(acc, ACCESSIBILITY_KEYS, `${path}.accessibility`);
   for (const key of ACCESSIBILITY_KEYS) {
@@ -153,7 +147,6 @@ function validateMode(v: unknown, path: string): void {
     }
   }
 
-  // apca
   const apca = requireObject(obj.apca, `${path}.apca`);
   requireKeys(apca, ACCESSIBILITY_KEYS, `${path}.apca`);
   for (const key of ACCESSIBILITY_KEYS) {
@@ -165,21 +158,14 @@ function validateMode(v: unknown, path: string): void {
   }
 }
 
-// ─── Tokens Validator ───────────────────────────────────────────────
+// ─── Tokens Shape Validator ─────────────────────────────────────────
 
 function validateTokens(v: unknown, path: string): void {
   const obj = requireObject(v, path);
 
-  // spacing
   validateNumberObject(requireObject(obj.spacing, `${path}.spacing`), SPACING_KEYS, `${path}.spacing`);
-
-  // radius
   validateNumberObject(requireObject(obj.radius, `${path}.radius`), RADIUS_KEYS, `${path}.radius`);
-
-  // fontSizes
   validateNumberObject(requireObject(obj.fontSizes, `${path}.fontSizes`), FONT_SIZE_KEYS, `${path}.fontSizes`);
-
-  // iconSizes, semantic icons, borderWidths, avatarSizes, breakpoints
   validateNumberObject(requireObject(obj.iconSizes, `${path}.iconSizes`), ICON_SIZE_KEYS, `${path}.iconSizes`);
   validateNumberObject(requireObject(obj.icons, `${path}.icons`), SEMANTIC_ICON_KEYS, `${path}.icons`);
   validateNumberObject(requireObject(obj.controlSizes, `${path}.controlSizes`), CONTROL_SIZE_KEYS, `${path}.controlSizes`);
@@ -187,24 +173,19 @@ function validateTokens(v: unknown, path: string): void {
   validateNumberObject(requireObject(obj.borderWidths, `${path}.borderWidths`), BORDER_WIDTH_KEYS, `${path}.borderWidths`);
   validateNumberObject(requireObject(obj.avatarSizes, `${path}.avatarSizes`), AVATAR_SIZE_KEYS, `${path}.avatarSizes`);
   validateNumberObject(requireObject(obj.breakpoints, `${path}.breakpoints`), BREAKPOINT_KEYS, `${path}.breakpoints`);
-
-  // sizeMap, dimensions (deprecated aliases for controlSizes — same shape)
   validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
   validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
 
-  // baseFont
   const bf = obj.baseFont;
   if (typeof bf !== "number" || !isFinite(bf) || bf < 8) {
     throw new Error(`${path}.baseFont: expected number >= 8, got ${JSON.stringify(bf)}`);
   }
 
-  // fontScale
   const fs = obj.fontScale;
   if (typeof fs !== "number" || !isFinite(fs) || fs <= 0) {
     throw new Error(`${path}.fontScale: expected positive number, got ${JSON.stringify(fs)}`);
   }
 
-  // fontFamilySans / fontFamilyDisplay (optional strings)
   if (obj.fontFamilySans !== undefined && typeof obj.fontFamilySans !== "string") {
     throw new Error(`${path}.fontFamilySans: expected string, got ${JSON.stringify(obj.fontFamilySans)}`);
   }
@@ -212,7 +193,6 @@ function validateTokens(v: unknown, path: string): void {
     throw new Error(`${path}.fontFamilyDisplay: expected string, got ${JSON.stringify(obj.fontFamilyDisplay)}`);
   }
 
-  // typography
   const typo = requireObject(obj.typography, `${path}.typography`);
   requireKeys(typo, TYPOGRAPHY_SCALE_KEYS, `${path}.typography`);
   for (const key of TYPOGRAPHY_SCALE_KEYS) {
@@ -225,13 +205,8 @@ function validateTokens(v: unknown, path: string): void {
     }
   }
 
-  // lineHeights
   validateNumberObject(requireObject(obj.lineHeights, `${path}.lineHeights`), LINE_HEIGHT_KEYS, `${path}.lineHeights`);
-
-  // fontWeights
   validateNumberObject(requireObject(obj.fontWeights, `${path}.fontWeights`), FONT_WEIGHT_KEYS, `${path}.fontWeights`);
-
-  // letterSpacings
   validateNumberObject(requireObject(obj.letterSpacings, `${path}.letterSpacings`), LETTER_SPACING_KEYS, `${path}.letterSpacings`);
 }
 
@@ -255,17 +230,168 @@ function validateThemeWarning(v: unknown, path: string): void {
   requireColor(obj.finalValue, `${path}.finalValue`);
 }
 
+// ─── Token Value Validator ──────────────────────────────────────────
+// Runs after shape validation; shape is already proven correct so all casts are safe.
+
+function validateTokenValues(obj: Record<string, unknown>, path: string): TokenWarning[] {
+  const result: TokenWarning[] = [];
+
+  const e = (p: string, rule: string, value: unknown, message: string): void => {
+    result.push({ path: p, rule, value, severity: "error", message });
+  };
+  const w = (p: string, rule: string, value: unknown, message: string): void => {
+    result.push({ path: p, rule, value, severity: "warning", message });
+  };
+
+  // ── Errors ─────────────────────────────────────────────────────────
+
+  // Negative values across all numeric pixel scales
+  const noNegative = (scale: Record<string, unknown>, scalePath: string): void => {
+    for (const [key, val] of Object.entries(scale)) {
+      if (typeof val === "number" && val < 0) {
+        e(`${scalePath}.${key}`, "no-negative", val,
+          `${scalePath}.${key} must not be negative (got ${val})`);
+      }
+    }
+  };
+  noNegative(obj.spacing     as Record<string, unknown>, `${path}.spacing`);
+  noNegative(obj.radius      as Record<string, unknown>, `${path}.radius`);
+  noNegative(obj.fontSizes   as Record<string, unknown>, `${path}.fontSizes`);
+  noNegative(obj.iconSizes   as Record<string, unknown>, `${path}.iconSizes`);
+  noNegative(obj.icons       as Record<string, unknown>, `${path}.icons`);
+  noNegative(obj.controlSizes as Record<string, unknown>, `${path}.controlSizes`);
+  noNegative(obj.touchTargets as Record<string, unknown>, `${path}.touchTargets`);
+  noNegative(obj.borderWidths as Record<string, unknown>, `${path}.borderWidths`);
+  noNegative(obj.avatarSizes  as Record<string, unknown>, `${path}.avatarSizes`);
+  noNegative(obj.breakpoints  as Record<string, unknown>, `${path}.breakpoints`);
+  noNegative(obj.sizeMap      as Record<string, unknown>, `${path}.sizeMap`);
+  noNegative(obj.dimensions   as Record<string, unknown>, `${path}.dimensions`);
+
+  // Typography: non-positive lineHeight, negative fontSize
+  const typo = obj.typography as Record<string, Record<string, number>>;
+  for (const key of TYPOGRAPHY_SCALE_KEYS) {
+    const { fontSize: fs, lineHeight: lh } = typo[key];
+    if (lh <= 0) {
+      e(`${path}.typography.${key}.lineHeight`, "positive-line-height", lh,
+        `typography.${key}.lineHeight must be > 0 (got ${lh})`);
+    }
+    if (fs < 0) {
+      e(`${path}.typography.${key}.fontSize`, "no-negative", fs,
+        `typography.${key}.fontSize must not be negative (got ${fs})`);
+    }
+  }
+
+  // Descending breakpoints — must be strictly ascending
+  const bp = obj.breakpoints as Record<string, number>;
+  for (let i = 0; i < BREAKPOINT_KEYS.length - 1; i++) {
+    const k1 = BREAKPOINT_KEYS[i], k2 = BREAKPOINT_KEYS[i + 1];
+    if (bp[k1] >= bp[k2]) {
+      e(`${path}.breakpoints.${k2}`, "ascending-breakpoints", bp[k2],
+        `breakpoints must be strictly ascending: ${k1} (${bp[k1]}) must be < ${k2} (${bp[k2]})`);
+    }
+  }
+
+  // Invalid modular ratio — fontScale must be > 1 (shape check already ensures > 0)
+  const fontScale = obj.fontScale as number;
+  if (fontScale <= 1) {
+    e(`${path}.fontScale`, "valid-font-scale", fontScale,
+      `fontScale must be > 1 for a proper modular scale — a ratio of ${fontScale} produces a flat or inverted size progression`);
+  }
+
+  // ── Warnings ────────────────────────────────────────────────────────
+
+  // Touch targets: WCAG 2.5.8 absolute floor is 24px; Apple HIG / Material recommended is 44px
+  const tt = obj.touchTargets as Record<string, number>;
+  for (const key of TOUCH_TARGET_KEYS) {
+    if (tt[key] < 24) {
+      w(`${path}.touchTargets.${key}`, "touch-target-minimum-24", tt[key],
+        `touchTargets.${key} (${tt[key]}px) is below the WCAG 2.5.8 absolute minimum of 24px`);
+    }
+  }
+  if (tt.recommended < 44) {
+    w(`${path}.touchTargets.recommended`, "touch-target-recommended-44", tt.recommended,
+      `touchTargets.recommended (${tt.recommended}px) is below the Apple HIG / Material minimum of 44px`);
+  }
+
+  // Body text minimum legibility
+  for (const key of ["bodySmall", "bodyMedium", "bodyLarge"] as const) {
+    const fs = typo[key].fontSize;
+    if (fs > 0 && fs < 12) {
+      w(`${path}.typography.${key}.fontSize`, "body-text-minimum-12", fs,
+        `typography.${key}.fontSize (${fs}px) is below the recommended minimum of 12px for body text`);
+    }
+  }
+
+  // Alias consistency: sizeMap and dimensions are deprecated mirrors of controlSizes
+  const cs  = obj.controlSizes as Record<string, number>;
+  const sm  = obj.sizeMap      as Record<string, number>;
+  const dim = obj.dimensions   as Record<string, number>;
+  for (const key of CONTROL_SIZE_KEYS) {
+    if (sm[key] !== cs[key]) {
+      w(`${path}.sizeMap.${key}`, "alias-consistency", sm[key],
+        `sizeMap.${key} (${sm[key]}) disagrees with controlSizes.${key} (${cs[key]})`);
+    }
+    if (dim[key] !== cs[key]) {
+      w(`${path}.dimensions.${key}`, "alias-consistency", dim[key],
+        `dimensions.${key} (${dim[key]}) disagrees with controlSizes.${key} (${cs[key]})`);
+    }
+  }
+
+  // Unusually compressed typography (body, title, display styles)
+  for (const key of ["bodySmall", "bodyMedium", "bodyLarge", "titleSmall", "titleMedium", "titleLarge", "display"] as const) {
+    const lh = typo[key].lineHeight;
+    if (lh > 0 && lh < 1.1) {
+      w(`${path}.typography.${key}.lineHeight`, "compressed-line-height", lh,
+        `typography.${key}.lineHeight (${lh}) is unusually compressed — body and title text generally needs ≥ 1.1`);
+    }
+  }
+
+  // Descending visual scales (spacing, radius, fontSizes should all be ascending)
+  const checkAscending = (scale: Record<string, number>, scalePath: string, order: readonly string[]): void => {
+    for (let i = 0; i < order.length - 1; i++) {
+      const a = scale[order[i]], b = scale[order[i + 1]];
+      if (a > b) {
+        w(`${scalePath}.${order[i + 1]}`, "ascending-scale", b,
+          `${scalePath}.${order[i]} (${a}) > ${scalePath}.${order[i + 1]} (${b}) — scale is not ascending`);
+      }
+    }
+  };
+  checkAscending(obj.spacing   as Record<string, number>, `${path}.spacing`,   ["none", "xs", "sm", "md", "lg", "xl", "xxl"]);
+  checkAscending(obj.radius    as Record<string, number>, `${path}.radius`,    ["none", "sm", "md", "lg", "xl", "xxl"]);
+  checkAscending(obj.fontSizes as Record<string, number>, `${path}.fontSizes`, ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]);
+
+  return result;
+}
+
 // ─── Public API ─────────────────────────────────────────────────────
+
+export type ParseThemeResult = {
+  theme: GeneratedTheme;
+  /**
+   * Semantic token diagnostics. `severity: "error"` entries identify values
+   * that are structurally invalid (negative sizes, descending breakpoints, etc.).
+   * `severity: "warning"` entries identify non-recommended but permissible values.
+   * Shape errors (wrong types, missing fields) are still thrown as exceptions.
+   */
+  tokenWarnings: TokenWarning[];
+};
 
 /**
  * Parse and validate a JSON-deserialized object as a GeneratedTheme.
- * Throws a descriptive error if the shape doesn't match.
+ *
+ * - **Shape errors** (wrong types, missing fields, non-finite numbers) throw.
+ * - **Token validity** (negative sizes, bad ratios, descending breakpoints, etc.)
+ *   are returned as `tokenWarnings` with `severity: "error"`.
+ * - **Non-recommended values** (small touch targets, body text < 12px, etc.)
+ *   are returned as `tokenWarnings` with `severity: "warning"`.
  *
  * @example
  * const raw = JSON.parse(await AsyncStorage.getItem("theme"));
- * const theme = parseThemeJSON(raw); // throws if corrupted
+ * const { theme, tokenWarnings } = parseThemeJSON(raw);
+ * const errors = tokenWarnings.filter(w => w.severity === "error");
+ * if (errors.length) throw new Error(errors.map(e => e.message).join("\n"));
  */
-export function parseThemeJSON(value: unknown): GeneratedTheme {
+export function parseThemeJSON(value: unknown): ParseThemeResult {
   const obj = requireObject(value, "theme");
   requireKeys(obj, ["light", "dark", "tokens"], "theme");
   validateMode(obj.light, "theme.light");
@@ -283,7 +409,6 @@ export function parseThemeJSON(value: unknown): GeneratedTheme {
     throw new Error(`theme.dark.mode: expected "dark", got ${JSON.stringify(dark.mode)}`);
   }
 
-  // warnings — optional, validate shape if present
   if ("warnings" in obj && obj.warnings !== undefined) {
     if (!Array.isArray(obj.warnings)) {
       throw new Error(`theme.warnings: expected array, got ${typeof obj.warnings}`);
@@ -293,5 +418,15 @@ export function parseThemeJSON(value: unknown): GeneratedTheme {
     }
   }
 
-  return { light, dark, tokens, ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }) };
+  const theme: GeneratedTheme = {
+    light, dark, tokens,
+    ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }),
+  };
+
+  const tokenWarnings = validateTokenValues(
+    obj.tokens as Record<string, unknown>,
+    "theme.tokens"
+  );
+
+  return { theme, tokenWarnings };
 }
