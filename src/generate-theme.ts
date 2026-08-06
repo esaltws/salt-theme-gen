@@ -8,7 +8,7 @@ import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
 import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
-import { resolveFontScale, computeTypographyScale, computeModularFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
+import { resolveFontScale, computeTypographyScale, computeModularFontSizes, lookupFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
 import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_CONTROL_SIZES, DEFAULT_TOUCH_TARGETS, DEFAULT_BORDER_WIDTHS, DEFAULT_AVATAR_SIZES, DEFAULT_BREAKPOINTS } from "./icon-utils.js";
 import type {
   GenerateThemeOptions,
@@ -267,10 +267,12 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   const baseFont  = Math.max(8, options.baseFont ?? 16);
   const fontScale = resolveFontScale(options.fontScale);
   const fontFamily = options.fontFamily;
-  // fontSizes: modular (computed from baseFont+fontScale) when fontScale is explicit; otherwise preset/override
+  // fontSizes: modular when fontScale explicit; lookup table when only baseFont given; otherwise preset
   const fontSize = options.fontScale !== undefined
     ? computeModularFontSizes(baseFont, fontScale)
-    : resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
+    : options.baseFont !== undefined
+      ? lookupFontSizes(baseFont)
+      : resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
 
   // 3. Fast path — no user color overrides
   const hasColorOverrides =

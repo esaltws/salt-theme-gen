@@ -3,7 +3,7 @@ import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-c
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
-import { computeTypographyScale, computeModularFontSizes } from "./typography-utils.js";
+import { computeTypographyScale, computeModularFontSizes, lookupFontSizes } from "./typography-utils.js";
 import type {
   GeneratedTheme,
   GeneratedThemeColors,
@@ -265,18 +265,18 @@ function adjustTokens(
     ? overrides.fontFamilyDisplay
     : tokens.fontFamilyDisplay;
 
-  // fontSizes: explicit override always wins; modular recompute only when baseFont/fontScale
-  // is changed without an explicit fontSizes override (standard → modular switch).
-  const modularTrigger = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
-    && overrides.fontSizes === undefined;
+  // fontSizes: explicit override wins; fontScale → modular; baseFont alone → lookup table
+  const noFontSizesOverride = overrides.fontSizes === undefined;
   const fontSizes = overrides.fontSizes
     ? { ...tokens.fontSizes, ...overrides.fontSizes }
-    : modularTrigger
+    : noFontSizesOverride && overrides.fontScale !== undefined
       ? computeModularFontSizes(baseFont, fontScale)
-      : tokens.fontSizes;
+      : noFontSizesOverride && overrides.baseFont !== undefined
+        ? lookupFontSizes(baseFont)
+        : tokens.fontSizes;
 
   // typography: recompute from fontSizes when fontSizes changed; then deep-merge any style overrides
-  const fontSizesChanged = modularTrigger || overrides.fontSizes !== undefined;
+  const fontSizesChanged = (noFontSizesOverride && (overrides.fontScale !== undefined || overrides.baseFont !== undefined)) || overrides.fontSizes !== undefined;
   const fontFamilyChanged = overrides.fontFamilySans !== undefined || overrides.fontFamilyDisplay !== undefined;
   let typography: TypographyScale = (fontSizesChanged || fontFamilyChanged)
     ? computeTypographyScale(fontSizes, { sans: fontFamilySans, display: fontFamilyDisplay })
