@@ -122,6 +122,12 @@ function dimensionDecls(tokens: GeneratedThemeTokens): string[] {
   for (const [key, val] of Object.entries(tokens.icons) as [string, number][]) {
     out.push(`${P}-icon-${key}: ${rem(val)};`);
   }
+  for (const [key, val] of Object.entries(tokens.controlSizes) as [string, number][]) {
+    out.push(`${P}-control-${key}: ${val}px;`);
+  }
+  for (const [key, val] of Object.entries(tokens.touchTargets) as [string, number][]) {
+    out.push(`${P}-touch-target-${key}: ${val}px;`);
+  }
   for (const [key, val] of Object.entries(tokens.borderWidths) as [string, number][]) {
     out.push(`${P}-border-width-${key}: ${val === 0 ? "0" : `${val}px`};`);
   }
@@ -131,6 +137,7 @@ function dimensionDecls(tokens: GeneratedThemeTokens): string[] {
   for (const [key, val] of Object.entries(tokens.breakpoints) as [string, number][]) {
     out.push(`${P}-breakpoint-${key}: ${val}px;`);
   }
+  // sizeMap and dimensions are deprecated aliases for controlSizes — emit for backward compat
   for (const [key, val] of Object.entries(tokens.sizeMap) as [string, number][]) {
     out.push(`${P}-size-${key}: ${val}px;`);
   }

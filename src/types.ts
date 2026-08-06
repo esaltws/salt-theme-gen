@@ -1,4 +1,4 @@
-import type { SemanticIconSizes, BorderWidthScale, AvatarSizeScale, BreakpointScale } from "./icon-utils.js";
+import type { IconSizeScale, SemanticIconSizes, ControlSizeScale, TouchTargetScale, BorderWidthScale, AvatarSizeScale, BreakpointScale } from "./icon-utils.js";
 
 // ─── Color Representations ───────────────────────────────────────────
 
@@ -146,37 +146,12 @@ export type FontSizeScale = {
   "3xl": number;
 };
 
-export type IconSizeScale = {
-  xs: number;
-  sm: number;
-  md: number;
-  lg: number;
-  xl: number;
-  xxl: number;
-  "3xl": number;
-};
+export type { IconSizeScale, SemanticIconSizes, ControlSizeScale, TouchTargetScale, BorderWidthScale, AvatarSizeScale, BreakpointScale };
 
-export type { SemanticIconSizes, BorderWidthScale, AvatarSizeScale, BreakpointScale };
-
-export type SizeMapScale = {
-  xs: number;
-  sm: number;
-  md: number;
-  lg: number;
-  xl: number;
-  xxl: number;
-  "3xl": number;
-};
-
-export type DimensionScale = {
-  xs: number;
-  sm: number;
-  md: number;
-  lg: number;
-  xl: number;
-  xxl: number;
-  "3xl": number;
-};
+/** @deprecated Use controlSizes */
+export type SizeMapScale = ControlSizeScale;
+/** @deprecated Use controlSizes */
+export type DimensionScale = ControlSizeScale;
 
 // ─── Semantic Colors (23 keys, matching ui-kit colors) ───────────────
 
@@ -371,11 +346,15 @@ export type GeneratedThemeTokens = {
   fontSizes:      FontSizeScale;
   iconSizes:      IconSizeScale;
   icons:          SemanticIconSizes;
+  controlSizes:   ControlSizeScale;
+  touchTargets:   TouchTargetScale;
   borderWidths:   BorderWidthScale;
   avatarSizes:    AvatarSizeScale;
   breakpoints:    BreakpointScale;
-  sizeMap:        SizeMapScale;
-  dimensions:     DimensionScale;
+  /** @deprecated Use controlSizes */
+  sizeMap:        ControlSizeScale;
+  /** @deprecated Use controlSizes */
+  dimensions:     ControlSizeScale;
   baseFont:       number;
   fontScale:      number;
   fontFamilySans?:    string;

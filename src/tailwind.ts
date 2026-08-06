@@ -15,13 +15,26 @@ export type TailwindThemeExtend = {
   borderRadius: Record<string, string>;
   /** Font-size scale as static `px` strings. */
   fontSize: Record<string, string>;
+  /** Responsive breakpoints as static `px` strings (maps to Tailwind `screens`). */
+  screens: Record<string, string>;
+  /** Border-width scale as static `px` strings. */
+  borderWidth: Record<string, string>;
+  /** Font-weight scale as static numeric strings. */
+  fontWeight: Record<string, string>;
+  /** Line-height scale as static unitless strings. */
+  lineHeight: Record<string, string>;
+  /** Letter-spacing scale as static `em` strings. */
+  letterSpacing: Record<string, string>;
+  /** Icon sizes as static `px` strings. */
+  width: Record<string, string>;
+  /** Font family aliases (sans and display). Only populated when fontFamily is configured. */
+  fontFamily: Record<string, string[]>;
 };
 
 export type TailwindConfigResult = {
   /**
    * Ready to spread into `tailwind.config.js` → `theme.extend`.
-   * Color values are CSS var() references; spacing/radius/fontSize are
-   * static pixel strings (mode-independent).
+   * Color values are CSS var() references; all other values are static strings.
    */
   extend: TailwindThemeExtend;
   /** JSON string of `extend` — useful for writing to a config file. */
@@ -49,8 +62,8 @@ function ref(varName: string): string {
  * to inject the matching `--salt-*` custom properties so that Tailwind's dark
  * mode switching works automatically via the CSS variable values.
  *
- * Spacing, border-radius, and font-size are static `px` strings (they are
- * mode-independent in the salt theme system).
+ * All other values (spacing, radius, fontSizes, breakpoints, etc.) are static
+ * strings (mode-independent in the salt theme system).
  *
  * @example
  * // tailwind.config.js
@@ -70,7 +83,7 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
   // ── Colors ──────────────────────────────────────────────────────
   const colors: Record<string, string> = {};
 
-  // Semantic colors (23)
+  // Semantic colors
   for (const key of Object.keys(colorMode.colors)) {
     colors[`salt-${camelToKebab(key)}`] = ref(`${P}-color-${camelToKebab(key)}`);
   }
@@ -83,7 +96,7 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
     }
   }
 
-  // Surface elevations (4)
+  // Surface elevations
   for (const key of Object.keys(colorMode.surfaceElevation)) {
     colors[`salt-surface-${key}`] = ref(`${P}-surface-${key}`);
   }
@@ -113,6 +126,61 @@ export function generateTailwindConfig(theme: GeneratedTheme): TailwindConfigRes
     fontSize[`salt-${key}`] = `${val}px`;
   }
 
-  const extend: TailwindThemeExtend = { colors, spacing, borderRadius, fontSize };
+  // ── Screens (breakpoints) ────────────────────────────────────────
+  const screens: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.breakpoints) as [string, number][]) {
+    screens[`salt-${key}`] = `${val}px`;
+  }
+
+  // ── Border Width ─────────────────────────────────────────────────
+  const borderWidth: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.borderWidths) as [string, number][]) {
+    borderWidth[`salt-${key}`] = `${val}px`;
+  }
+
+  // ── Font Weight ──────────────────────────────────────────────────
+  const fontWeight: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.fontWeights) as [string, number][]) {
+    fontWeight[`salt-${key}`] = String(val);
+  }
+
+  // ── Line Height ──────────────────────────────────────────────────
+  const lineHeight: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.lineHeights) as [string, number][]) {
+    lineHeight[`salt-${key}`] = String(val);
+  }
+
+  // ── Letter Spacing ───────────────────────────────────────────────
+  const letterSpacing: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.letterSpacings) as [string, number][]) {
+    letterSpacing[`salt-${key}`] = val === 0 ? "0" : `${val}em`;
+  }
+
+  // ── Icon / Control sizes → width utilities ────────────────────────
+  const width: Record<string, string> = {};
+  for (const [key, val] of Object.entries(theme.tokens.iconSizes) as [string, number][]) {
+    width[`salt-icon-${key}`] = `${val}px`;
+  }
+  for (const [key, val] of Object.entries(theme.tokens.icons) as [string, number][]) {
+    width[`salt-icon-${key}`] = `${val}px`;
+  }
+  for (const [key, val] of Object.entries(theme.tokens.controlSizes) as [string, number][]) {
+    width[`salt-control-${key}`] = `${val}px`;
+  }
+
+  // ── Font Family ──────────────────────────────────────────────────
+  const fontFamily: Record<string, string[]> = {};
+  if (theme.tokens.fontFamilySans) {
+    fontFamily["salt-sans"] = [theme.tokens.fontFamilySans, "sans-serif"];
+  }
+  if (theme.tokens.fontFamilyDisplay) {
+    fontFamily["salt-display"] = [theme.tokens.fontFamilyDisplay, "serif"];
+  }
+
+  const extend: TailwindThemeExtend = {
+    colors, spacing, borderRadius, fontSize,
+    screens, borderWidth, fontWeight, lineHeight, letterSpacing,
+    width, fontFamily,
+  };
   return { extend, json: JSON.stringify(extend, null, 2) };
 }

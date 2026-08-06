@@ -28,7 +28,6 @@ export type {
   RGB,
   Oklab,
   OKLCH,
-  // FontLevel,
   BaseColorKey,
   BaseColorOverride,
   GenerateThemeColors,
@@ -37,6 +36,27 @@ export type {
   TonalPalette,
   TonalPaletteKey,
   TonalPalettes,
+  // Typography
+  FontWeight,
+  FontScaleName,
+  FontFamilyOptions,
+  TypographyStyle,
+  TypographyScale,
+  LineHeightScale,
+  FontWeightScale,
+  LetterSpacingScale,
+  // Scales
+  IconSizeScale,
+  SemanticIconSizes,
+  ControlSizeScale,
+  TouchTargetScale,
+  BorderWidthScale,
+  AvatarSizeScale,
+  BreakpointScale,
+  /** @deprecated Use ControlSizeScale */
+  SizeMapScale,
+  /** @deprecated Use ControlSizeScale */
+  DimensionScale,
 } from "./types.js";
 
 // ─── Preset Data (for UI pickers, iteration) ────────────────────────
@@ -101,3 +121,25 @@ export { parseThemeJSON } from "./validate.js";
 // ─── Color Blindness Simulation ───────────────────────────────────────
 export { simulateColorBlindness, simulateTheme } from "./color-blindness.js";
 export type { ColorBlindnessType } from "./color-blindness.js";
+
+// ─── Typography Utilities & Constants (for advanced consumers) ────────
+export {
+  FONT_SCALE_RATIOS,
+  DEFAULT_LINE_HEIGHTS,
+  DEFAULT_FONT_WEIGHTS,
+  DEFAULT_LETTER_SPACINGS,
+  computeTypographyScale,
+  computeModularFontSizes,
+  resolveFontScale,
+} from "./typography-utils.js";
+
+// ─── Size Constants (for advanced consumers) ──────────────────────────
+export {
+  DEFAULT_ICON_SIZES,
+  DEFAULT_SEMANTIC_ICON_SIZES,
+  DEFAULT_CONTROL_SIZES,
+  DEFAULT_TOUCH_TARGETS,
+  DEFAULT_BORDER_WIDTHS,
+  DEFAULT_AVATAR_SIZES,
+  DEFAULT_BREAKPOINTS,
+} from "./icon-utils.js";

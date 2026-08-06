@@ -3,7 +3,7 @@ import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-c
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
-import { computeTypographyScale } from "./typography-utils.js";
+import { computeTypographyScale, computeModularFontSizes } from "./typography-utils.js";
 import type {
   GeneratedTheme,
   GeneratedThemeColors,
@@ -20,9 +20,16 @@ import type {
   FontSizeScale,
   IconSizeScale,
   SemanticIconSizes,
+  ControlSizeScale,
+  TouchTargetScale,
   BorderWidthScale,
   AvatarSizeScale,
   BreakpointScale,
+  TypographyScale,
+  TypographyStyle,
+  LineHeightScale,
+  FontWeightScale,
+  LetterSpacingScale,
 } from "./types.js";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -39,9 +46,16 @@ export type ThemeTokenOverrides = {
   fontSizes?: Partial<FontSizeScale>;
   iconSizes?: Partial<IconSizeScale>;
   icons?: Partial<SemanticIconSizes>;
+  controlSizes?: Partial<ControlSizeScale>;
+  touchTargets?: Partial<TouchTargetScale>;
   borderWidths?: Partial<BorderWidthScale>;
   avatarSizes?: Partial<AvatarSizeScale>;
   breakpoints?: Partial<BreakpointScale>;
+  /** Deep-merge individual typography styles. Each key is optional; each property within is optional. */
+  typography?: { [K in keyof TypographyScale]?: Partial<TypographyStyle> };
+  lineHeights?: Partial<LineHeightScale>;
+  fontWeights?: Partial<FontWeightScale>;
+  letterSpacings?: Partial<LetterSpacingScale>;
   baseFont?: number;
   fontScale?: number;
   fontFamilySans?: string;
@@ -207,15 +221,18 @@ function adjustTokens(
   const radius = overrides.radius
     ? { ...tokens.radius, ...overrides.radius }
     : tokens.radius;
-  const fontSizes = overrides.fontSizes
-    ? { ...tokens.fontSizes, ...overrides.fontSizes }
-    : tokens.fontSizes;
   const iconSizes = overrides.iconSizes
     ? { ...tokens.iconSizes, ...overrides.iconSizes }
     : tokens.iconSizes;
   const icons = overrides.icons
     ? { ...tokens.icons, ...overrides.icons }
     : tokens.icons;
+  const controlSizes = overrides.controlSizes
+    ? { ...tokens.controlSizes, ...overrides.controlSizes }
+    : tokens.controlSizes;
+  const touchTargets = overrides.touchTargets
+    ? { ...tokens.touchTargets, ...overrides.touchTargets }
+    : tokens.touchTargets;
   const borderWidths = overrides.borderWidths
     ? { ...tokens.borderWidths, ...overrides.borderWidths }
     : tokens.borderWidths;
@@ -225,6 +242,16 @@ function adjustTokens(
   const breakpoints = overrides.breakpoints
     ? { ...tokens.breakpoints, ...overrides.breakpoints }
     : tokens.breakpoints;
+  const lineHeights = overrides.lineHeights
+    ? { ...tokens.lineHeights, ...overrides.lineHeights }
+    : tokens.lineHeights;
+  const fontWeights = overrides.fontWeights
+    ? { ...tokens.fontWeights, ...overrides.fontWeights }
+    : tokens.fontWeights;
+  const letterSpacings = overrides.letterSpacings
+    ? { ...tokens.letterSpacings, ...overrides.letterSpacings }
+    : tokens.letterSpacings;
+
   const baseFont = overrides.baseFont !== undefined
     ? Math.max(8, overrides.baseFont)
     : tokens.baseFont;
@@ -238,22 +265,39 @@ function adjustTokens(
     ? overrides.fontFamilyDisplay
     : tokens.fontFamilyDisplay;
 
-  const fontChanged =
-    overrides.baseFont !== undefined || overrides.fontScale !== undefined ||
-    overrides.fontFamilySans !== undefined || overrides.fontFamilyDisplay !== undefined;
-  const typography = fontChanged
-    ? computeTypographyScale(baseFont, fontScale, { sans: fontFamilySans, display: fontFamilyDisplay })
+  // fontSizes: explicit override always wins; modular recompute only when baseFont/fontScale
+  // is changed without an explicit fontSizes override (standard → modular switch).
+  const modularTrigger = (overrides.baseFont !== undefined || overrides.fontScale !== undefined)
+    && overrides.fontSizes === undefined;
+  const fontSizes = overrides.fontSizes
+    ? { ...tokens.fontSizes, ...overrides.fontSizes }
+    : modularTrigger
+      ? computeModularFontSizes(baseFont, fontScale)
+      : tokens.fontSizes;
+
+  // typography: recompute from fontSizes when fontSizes changed; then deep-merge any style overrides
+  const fontSizesChanged = modularTrigger || overrides.fontSizes !== undefined;
+  const fontFamilyChanged = overrides.fontFamilySans !== undefined || overrides.fontFamilyDisplay !== undefined;
+  let typography: TypographyScale = (fontSizesChanged || fontFamilyChanged)
+    ? computeTypographyScale(fontSizes, { sans: fontFamilySans, display: fontFamilyDisplay })
     : tokens.typography;
 
+  if (overrides.typography) {
+    const merged = { ...typography };
+    for (const [key, patch] of Object.entries(overrides.typography) as [keyof TypographyScale, Partial<TypographyStyle>][]) {
+      merged[key] = { ...merged[key], ...patch };
+    }
+    typography = merged;
+  }
+
   return {
-    spacing, radius, fontSizes, iconSizes, icons, borderWidths, avatarSizes, breakpoints,
-    sizeMap: tokens.sizeMap,
-    dimensions: tokens.dimensions,
+    spacing, radius, fontSizes, iconSizes, icons,
+    controlSizes, touchTargets,
+    borderWidths, avatarSizes, breakpoints,
+    sizeMap: controlSizes,
+    dimensions: controlSizes,
     baseFont, fontScale, fontFamilySans, fontFamilyDisplay,
-    typography,
-    lineHeights: tokens.lineHeights,
-    fontWeights: tokens.fontWeights,
-    letterSpacings: tokens.letterSpacings,
+    typography, lineHeights, fontWeights, letterSpacings,
   };
 }
 
@@ -278,6 +322,12 @@ function adjustTokens(
  * const adjusted = adjustTheme(theme, {
  *   tokens: { spacing: { md: 20, lg: 28 } }
  * });
+ *
+ * @example
+ * // Override a single typography style
+ * const adjusted = adjustTheme(theme, {
+ *   tokens: { typography: { bodyMedium: { lineHeight: 1.6 } } }
+ * });
  */
 export function adjustTheme(
   theme: GeneratedTheme,
@@ -290,5 +340,6 @@ export function adjustTheme(
     light:  lightColorOverrides ? adjustColors(theme.light,  lightColorOverrides) : theme.light,
     dark:   darkColorOverrides  ? adjustColors(theme.dark,   darkColorOverrides)  : theme.dark,
     tokens: overrides.tokens    ? adjustTokens(theme.tokens, overrides.tokens)    : theme.tokens,
+    ...(theme.warnings !== undefined && { warnings: theme.warnings }),
   };
 }

@@ -21,11 +21,13 @@ const FONT_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
 
 const ICON_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
 const SEMANTIC_ICON_KEYS = ["inline", "compact", "control", "navigation", "feature", "hero"] as const;
+const CONTROL_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl"] as const;
+const TOUCH_TARGET_KEYS = ["minimum", "recommended", "comfortable"] as const;
 const BORDER_WIDTH_KEYS = ["none", "thin", "medium", "thick"] as const;
 const AVATAR_SIZE_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl"] as const;
 const BREAKPOINT_KEYS = ["sm", "md", "lg", "xl", "xxl"] as const;
-const SIZE_MAP_KEYS  = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
-const DIMENSION_KEYS = ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"] as const;
+const SIZE_MAP_KEYS  = CONTROL_SIZE_KEYS;
+const DIMENSION_KEYS = CONTROL_SIZE_KEYS;
 
 const BASE_COLOR_KEYS: BaseColorKey[] = [
   "primary", "secondary", "tertiary", "quaternary",
@@ -180,11 +182,13 @@ function validateTokens(v: unknown, path: string): void {
   // iconSizes, semantic icons, borderWidths, avatarSizes, breakpoints
   validateNumberObject(requireObject(obj.iconSizes, `${path}.iconSizes`), ICON_SIZE_KEYS, `${path}.iconSizes`);
   validateNumberObject(requireObject(obj.icons, `${path}.icons`), SEMANTIC_ICON_KEYS, `${path}.icons`);
+  validateNumberObject(requireObject(obj.controlSizes, `${path}.controlSizes`), CONTROL_SIZE_KEYS, `${path}.controlSizes`);
+  validateNumberObject(requireObject(obj.touchTargets, `${path}.touchTargets`), TOUCH_TARGET_KEYS, `${path}.touchTargets`);
   validateNumberObject(requireObject(obj.borderWidths, `${path}.borderWidths`), BORDER_WIDTH_KEYS, `${path}.borderWidths`);
   validateNumberObject(requireObject(obj.avatarSizes, `${path}.avatarSizes`), AVATAR_SIZE_KEYS, `${path}.avatarSizes`);
   validateNumberObject(requireObject(obj.breakpoints, `${path}.breakpoints`), BREAKPOINT_KEYS, `${path}.breakpoints`);
 
-  // sizeMap, dimensions
+  // sizeMap, dimensions (deprecated aliases for controlSizes — same shape)
   validateNumberObject(requireObject(obj.sizeMap, `${path}.sizeMap`), SIZE_MAP_KEYS, `${path}.sizeMap`);
   validateNumberObject(requireObject(obj.dimensions, `${path}.dimensions`), DIMENSION_KEYS, `${path}.dimensions`);
 

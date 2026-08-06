@@ -8,8 +8,8 @@ import { RADIUS_PRESETS } from "./presets/radius-presets.js";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets.js";
 import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
-import { resolveFontScale, computeTypographyScale, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
-import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_BORDER_WIDTHS, DEFAULT_AVATAR_SIZES, DEFAULT_BREAKPOINTS } from "./icon-utils.js";
+import { resolveFontScale, computeTypographyScale, computeModularFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
+import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_CONTROL_SIZES, DEFAULT_TOUCH_TARGETS, DEFAULT_BORDER_WIDTHS, DEFAULT_AVATAR_SIZES, DEFAULT_BREAKPOINTS } from "./icon-utils.js";
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
@@ -178,16 +178,18 @@ function buildTokens(
     fontSizes,
     iconSizes: DEFAULT_ICON_SIZES,
     icons: DEFAULT_SEMANTIC_ICON_SIZES,
+    controlSizes: DEFAULT_CONTROL_SIZES,
+    touchTargets: DEFAULT_TOUCH_TARGETS,
     borderWidths: DEFAULT_BORDER_WIDTHS,
     avatarSizes: DEFAULT_AVATAR_SIZES,
     breakpoints: DEFAULT_BREAKPOINTS,
-    sizeMap: fontSizes,
-    dimensions: fontSizes,
+    sizeMap: DEFAULT_CONTROL_SIZES,
+    dimensions: DEFAULT_CONTROL_SIZES,
     baseFont,
     fontScale,
     fontFamilySans: fontFamily?.sans,
     fontFamilyDisplay: fontFamily?.display,
-    typography: computeTypographyScale(baseFont, fontScale, fontFamily),
+    typography: computeTypographyScale(fontSizes, fontFamily),
     lineHeights: DEFAULT_LINE_HEIGHTS,
     fontWeights: DEFAULT_FONT_WEIGHTS,
     letterSpacings: DEFAULT_LETTER_SPACINGS,
@@ -260,11 +262,14 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
 
   // 2. Resolve scales
   const spacing = resolveScale<SpacingPreset, SpacingScale>(options.spacing, SPACING_PRESETS, "default");
-  const fontSize = resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
   const radius = resolveScale<RadiusPreset, RadiusScale>(options.radius, RADIUS_PRESETS, "default");
   const baseFont  = Math.max(8, options.baseFont ?? 16);
   const fontScale = resolveFontScale(options.fontScale);
   const fontFamily = options.fontFamily;
+  // fontSizes: modular (computed from baseFont+fontScale) when fontScale is explicit; otherwise preset/override
+  const fontSize = options.fontScale !== undefined
+    ? computeModularFontSizes(baseFont, fontScale)
+    : resolveScale<FontSizePreset, FontSizeScale>(options.fontSize, FONT_SIZE_PRESETS, "default");
 
   // 3. Fast path — no user color overrides
   const hasColorOverrides =

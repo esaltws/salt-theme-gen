@@ -258,12 +258,16 @@ describe("generateCssVariables — token completeness", () => {
     }
   });
 
-  it("includes icon-size in rem; size and dimension in px", () => {
+  it("includes icon-size in rem; control/size/dimension in px", () => {
     for (const key of ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]) {
       expect(result.light).toMatch(new RegExp(`--salt-icon-size-${key}: [\\d.]+rem;`));
+    }
+    for (const key of ["xs", "sm", "md", "lg", "xl"]) {
+      expect(result.light).toContain(`--salt-control-${key}:`);
       expect(result.light).toContain(`--salt-size-${key}:`);
       expect(result.light).toContain(`--salt-dimension-${key}:`);
     }
+    expect(result.light).toContain("--salt-touch-target-recommended:");
   });
 
   it("light and dark outputs differ", () => {

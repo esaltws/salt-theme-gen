@@ -1,6 +1,16 @@
 // ─── Icon Size Scale ─────────────────────────────────────────────────
 
-export const DEFAULT_ICON_SIZES = {
+export type IconSizeScale = {
+  xs:    number;
+  sm:    number;
+  md:    number;
+  lg:    number;
+  xl:    number;
+  xxl:   number;
+  "3xl": number;
+};
+
+export const DEFAULT_ICON_SIZES: IconSizeScale = {
   xs:    12,
   sm:    16,
   md:    20,
@@ -26,6 +36,38 @@ export const DEFAULT_SEMANTIC_ICON_SIZES: SemanticIconSizes = {
   navigation: 24,
   feature:    32,
   hero:       48,
+};
+
+// ─── Control Size Scale ──────────────────────────────────────────────
+
+export type ControlSizeScale = {
+  xs: number; // 24 — compact icon buttons, small chips
+  sm: number; // 32 — small buttons, compact inputs
+  md: number; // 40 — default button, input, list item
+  lg: number; // 48 — large button, prominent action
+  xl: number; // 56 — hero button, FAB
+};
+
+export const DEFAULT_CONTROL_SIZES: ControlSizeScale = {
+  xs: 24,
+  sm: 32,
+  md: 40,
+  lg: 48,
+  xl: 56,
+};
+
+// ─── Touch Target Scale ──────────────────────────────────────────────
+
+export type TouchTargetScale = {
+  minimum:     number; // 24 — absolute floor (WCAG 2.5.8)
+  recommended: number; // 44 — Apple HIG / Material minimum
+  comfortable: number; // 48 — comfortable for most users
+};
+
+export const DEFAULT_TOUCH_TARGETS: TouchTargetScale = {
+  minimum:     24,
+  recommended: 44,
+  comfortable: 48,
 };
 
 // ─── Border Width Scale ──────────────────────────────────────────────
