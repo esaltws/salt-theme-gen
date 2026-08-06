@@ -1,20 +1,22 @@
 import { describe, it, expect } from "vitest";
 import { deriveOnColor, autoCorrectContrast, buildAccessibilityReport } from "./on-colors";
-import { contrastRatio, hexToOklch } from "./color-math";
+import { contrastRatio, relativeLuminance, hexToOklch } from "./color-math";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly";
 import { expectValidHex } from "./test-helpers";
 
 // ─── deriveOnColor ──────────────────────────────────────────────────
 
 describe("deriveOnColor", () => {
-  it("dark background returns white or near-white", () => {
+  it("dark background returns a light on-color meeting WCAG AA", () => {
     const on = deriveOnColor("#000000");
-    expect(on).toBe("#ffffff");
+    expect(contrastRatio(on, "#000000")).toBeGreaterThanOrEqual(4.5);
+    expect(relativeLuminance(on)).toBeGreaterThan(0.1);
   });
 
-  it("light background returns dark text", () => {
+  it("light background returns a dark on-color meeting WCAG AA", () => {
     const on = deriveOnColor("#ffffff");
-    expect(on).toBe("#0f172a");
+    expect(contrastRatio(on, "#ffffff")).toBeGreaterThanOrEqual(4.5);
+    expect(relativeLuminance(on)).toBeLessThan(0.5);
   });
 
   it("result always meets WCAG AA against input background", () => {

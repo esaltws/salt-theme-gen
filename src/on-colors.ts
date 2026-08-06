@@ -6,24 +6,33 @@ import {
   oklchToHex,
   clampOklch,
 } from "./color-math.js";
+
+// Inverse sRGB gamma: linear [0,1] → gray hex.
+// roundUp=true → ceil the channel (makes color lighter, safe for dark-bg case).
+// roundUp=false → floor the channel (makes color darker, safe for light-bg case).
+function linearToGrayHex(L: number, roundUp: boolean): string {
+  const s = L <= 0.0031308 ? L * 12.92 : 1.055 * Math.pow(L, 1 / 2.4) - 0.055;
+  const raw = Math.max(0, Math.min(1, s)) * 255;
+  const c = (roundUp ? Math.ceil(raw) : Math.floor(raw)).toString(16).padStart(2, "0");
+  return `#${c}${c}${c}`;
+}
 import type { SemanticColors, SurfaceElevation, AccessibilityReport, ContrastEntry, APCAReport, APCAEntry, APCALevel } from "./types.js";
 
 /**
  * Derive the "on" color for a given background.
- * Uses luminance to pick white or dark, then auto-corrects for WCAG AA.
+ * Closed-form inversion of the WCAG contrast equation — no iteration needed.
+ * Guarantees exactly 4.5:1 contrast. Result is an achromatic gray.
+ *
+ * L_c ≤ 0.175 (dark bg) → L_o = 4.5·L_c + 0.175  (lighten to pass)
+ * L_c  > 0.175 (light bg) → L_o = L_c/4.5 − 0.0̄38̄  (darken to pass)
  */
 export function deriveOnColor(backgroundHex: string): string {
-  const lum = relativeLuminance(backgroundHex);
-  // Pick initial candidate
-  const candidate = lum > 0.5 ? "#0f172a" : "#ffffff";
-
-  // Verify WCAG AA
-  if (contrastRatio(candidate, backgroundHex) >= 4.5) {
-    return candidate;
-  }
-
-  // Auto-correct if needed
-  return autoCorrectContrast(candidate, backgroundHex, 4.5);
+  const L_c = relativeLuminance(backgroundHex);
+  const darkBg = L_c <= 0.175;
+  const L_o = darkBg
+    ? 4.5 * L_c + 0.175
+    : L_c / 4.5 - 0.0388888889;
+  return linearToGrayHex(Math.max(0, Math.min(1, L_o)), darkBg);
 }
 
 /**
