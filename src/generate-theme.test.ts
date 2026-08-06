@@ -561,3 +561,42 @@ describe("generateTheme - full-mode bypass", () => {
     expect(darkBgL).toBeLessThan(lightBgL);
   });
 });
+
+// ─── preservePrimary option ──────────────────────────────────────────
+
+describe("generateTheme — preservePrimary", () => {
+  it("default (false) normalizes lightness away from input", () => {
+    const theme = generateTheme({ primary: "#0057b7" });
+    expect(theme.light.colors.primary).not.toBe("#0057b7");
+  });
+
+  it("preservePrimary: true keeps the exact input hex when it passes WCAG", () => {
+    const theme = generateTheme({ primary: "#0057b7", preservePrimary: true });
+    // #0057b7 is a mid-dark blue — passes 4.5:1 on a near-white background
+    expect(theme.light.colors.primary).toBe("#0057b7");
+  });
+
+  it("preservePrimary: true — WCAG correction still runs on a near-white input", () => {
+    const theme = generateTheme({ primary: "#e8f4ff", preservePrimary: true });
+    // very light blue fails 4.5:1 on light background → autoCorrectContrast darkens it
+    expect(theme.light.colors.primary).not.toBe("#e8f4ff");
+    expect(contrastRatio(theme.light.colors.primary, theme.light.colors.background)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("preservePrimary: true preserves hue", () => {
+    const theme = generateTheme({ primary: "#0057b7", preservePrimary: true });
+    const inH = hexToOklch("#0057b7").H;
+    const outH = hexToOklch(theme.light.colors.primary).H;
+    expect(Math.abs(outH - inH)).toBeLessThan(2);
+  });
+
+  it("preservePrimary: true preserves hue in dark mode (WCAG may still lighten a dark input)", () => {
+    const theme = generateTheme({ primary: "#0057b7", preservePrimary: true });
+    // Dark background is L≈0.15 — a dark blue fails 4.5:1 so WCAG lightens it.
+    // The guarantee is hue preservation, not exact hex equality.
+    const inH = hexToOklch("#0057b7").H;
+    const outH = hexToOklch(theme.dark.colors.primary).H;
+    expect(Math.abs(outH - inH)).toBeLessThan(2);
+    expect(contrastRatio(theme.dark.colors.primary, theme.dark.colors.background)).toBeGreaterThanOrEqual(4.5);
+  });
+});

@@ -202,6 +202,7 @@ function generateModeWithOverrides(
   harmony: DeriveColorsOptions["harmony"],
   userOverrides: BaseColorOverride,
   overrideFlag: boolean,
+  preservePrimary?: boolean,
 ): { result: GeneratedThemeColors; warnings: ThemeWarning[] } {
   let derived: SemanticColors;
 
@@ -213,7 +214,7 @@ function generateModeWithOverrides(
     }
     derived = base as unknown as SemanticColors;
   } else {
-    derived = deriveColors(primaryHex, mode, { harmony });
+    derived = deriveColors(primaryHex, mode, { harmony, preservePrimary });
   }
 
   const { colors, warnings } = applyUserOverridesWithWCAG(derived, userOverrides, overrideFlag, mode);
@@ -280,8 +281,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
 
   if (!hasColorOverrides) {
     const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
-    const light = generateMode("light", primaryHex, { harmony: options.harmony });
-    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony });
+    const light = generateMode("light", primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
+    const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
     return { light, dark, tokens };
   }
 
@@ -307,10 +308,10 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
 
   const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
   const { result: light, warnings: lightWarns } = generateModeWithOverrides(
-    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag
+    "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, options.preservePrimary
   );
   const { result: dark, warnings: darkWarns } = generateModeWithOverrides(
-    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag
+    "dark", darkPrimary, options.harmony, darkOverrides, overrideFlag, options.preservePrimary
   );
 
   const allWarnings = [...lightWarns, ...darkWarns];

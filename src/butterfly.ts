@@ -96,6 +96,8 @@ export type DeriveColorsOptions = {
   secondary?: string;
   tertiary?: string;
   quaternary?: string;
+  /** When true, the input primary hex bypasses lightness normalization. WCAG correction still runs. */
+  preservePrimary?: boolean;
 };
 
 const LIGHT_RULES: Record<string, DerivationRule> = {
@@ -179,6 +181,12 @@ export function deriveColors(
   const base: Record<string, string> = {};
   for (const [key, rule] of Object.entries(rules)) {
     base[key] = oklchToHex(applyRule(rule, primary));
+  }
+
+  // Bypass lightness normalization when caller wants exact input primary.
+  // autoCorrectContrast still runs below to maintain WCAG safety.
+  if (opts.preservePrimary) {
+    base.primary = primaryHex;
   }
 
   // When a non-analogous harmony is active, re-derive accent hues

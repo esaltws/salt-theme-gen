@@ -389,6 +389,13 @@ export type GenerateThemeOptions = {
   /** Color harmony strategy (default: "analogous") */
   harmony?: ColorHarmony;
   /**
+   * When true, the input primary hex is used as-is instead of normalizing its
+   * lightness to ~0.55 (light) / ~0.72 (dark). Hue, chroma, and lightness from
+   * the input are all preserved. WCAG auto-correction still runs — the color may
+   * shift slightly if it fails 4.5:1 contrast against the background.
+   */
+  preservePrimary?: boolean;
+  /**
    * Provide any subset of the 13 base semantic colors per mode.
    * Missing colors are auto-derived from the primary seed.
    */
