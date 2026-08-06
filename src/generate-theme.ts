@@ -1,4 +1,5 @@
 import { parseColor, oklchToHex, contrastRatio } from "./color-math.js";
+import { adjustTokens } from "./adjust-theme.js";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { buildAccessibilityReport, buildAPCAReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
@@ -285,7 +286,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     options.quaternary !== undefined;
 
   if (!hasColorOverrides) {
-    const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+    const rawTokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+    const tokens = options.tokens ? adjustTokens(rawTokens, options.tokens) : rawTokens;
     const light = generateMode("light", primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
     const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
     return { light, dark, tokens };
@@ -311,7 +313,8 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     darkPrimary = darkOverrides.primary;
   }
 
-  const tokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+  const rawTokens = buildTokens(spacing, radius, fontSize, baseFont, fontScale, fontFamily);
+  const tokens = options.tokens ? adjustTokens(rawTokens, options.tokens) : rawTokens;
   const { result: light, warnings: lightWarns } = generateModeWithOverrides(
     "light", lightPrimary, options.harmony, lightOverrides, overrideFlag, options.preservePrimary
   );

@@ -645,3 +645,52 @@ describe("generateTheme — preservePrimary", () => {
     expect(contrastRatio(theme.dark.colors.primary, theme.dark.colors.background)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+// ─── tokens option ───────────────────────────────────────────────────
+
+describe("generateTheme — tokens option", () => {
+  it("applies spacing override inline", () => {
+    const theme = generateTheme({ primary: "#6750a4", tokens: { spacing: { md: 20 } } });
+    expect(theme.tokens.spacing.md).toBe(20);
+    expect(theme.tokens.spacing.xs).toBe(generateTheme({ primary: "#6750a4" }).tokens.spacing.xs);
+  });
+
+  it("applies radius override inline", () => {
+    const theme = generateTheme({ primary: "#6750a4", tokens: { radius: { pill: 100 } } });
+    expect(theme.tokens.radius.pill).toBe(100);
+    expect(theme.tokens.radius.sm).toBe(generateTheme({ primary: "#6750a4" }).tokens.radius.sm);
+  });
+
+  it("applies iconSizes override inline", () => {
+    const theme = generateTheme({ primary: "#6750a4", tokens: { iconSizes: { md: 22 } } });
+    expect(theme.tokens.iconSizes.md).toBe(22);
+  });
+
+  it("tokens option is equivalent to adjustTheme(..., { tokens: ... })", () => {
+    const base = generateTheme({ primary: "#6750a4" });
+    const viaAdjust = adjustTheme(base, { tokens: { spacing: { md: 20 }, radius: { pill: 100 } } });
+    const viaOption = generateTheme({ primary: "#6750a4", tokens: { spacing: { md: 20 }, radius: { pill: 100 } } });
+    expect(viaOption.tokens.spacing.md).toBe(viaAdjust.tokens.spacing.md);
+    expect(viaOption.tokens.radius.pill).toBe(viaAdjust.tokens.radius.pill);
+    expect(viaOption.tokens.spacing.xs).toBe(viaAdjust.tokens.spacing.xs);
+  });
+
+  it("tokens.baseFont is validated and clamped", () => {
+    const theme = generateTheme({ primary: "#6750a4", tokens: { baseFont: 10 } });
+    expect(theme.tokens.baseFont).toBe(10);
+  });
+
+  it("tokens.baseFont NaN throws RangeError", () => {
+    expect(() => generateTheme({ primary: "#6750a4", tokens: { baseFont: NaN as any } })).toThrow(RangeError);
+  });
+
+  it("tokens option works alongside color overrides", () => {
+    const theme = generateTheme({
+      primary: "#6750a4",
+      colors: { both: { danger: "#cc0000" } },
+      tokens: { spacing: { md: 24 } },
+    });
+    expect(theme.tokens.spacing.md).toBe(24);
+    expect(theme.light.colors.danger).toBe("#cc0000");
+  });
+});

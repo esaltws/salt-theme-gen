@@ -10,66 +10,18 @@ import type {
   GeneratedThemeTokens,
   SemanticColors,
   IntentStates,
-  StateColors,
   SurfaceElevation,
   AccessibilityReport,
   APCAReport,
   TonalPalettes,
-  SpacingScale,
-  RadiusScale,
-  FontSizeScale,
-  IconSizeScale,
-  SemanticIconSizes,
-  ControlSizeScale,
-  TouchTargetScale,
-  BorderWidthScale,
-  AvatarSizeScale,
-  BreakpointScale,
   TypographyScale,
   TypographyStyle,
-  LineHeightScale,
-  FontWeightScale,
-  LetterSpacingScale,
+  ThemeColorOverrides,
+  ThemeTokenOverrides,
+  ThemeOverrides,
 } from "./types.js";
 
-// ─── Types ──────────────────────────────────────────────────────────
-
-export type ThemeColorOverrides = {
-  colors?: Partial<SemanticColors>;
-  states?: Partial<Record<keyof IntentStates, Partial<StateColors>>>;
-  surfaceElevation?: Partial<SurfaceElevation>;
-};
-
-export type ThemeTokenOverrides = {
-  spacing?: Partial<SpacingScale>;
-  radius?: Partial<RadiusScale>;
-  fontSizes?: Partial<FontSizeScale>;
-  iconSizes?: Partial<IconSizeScale>;
-  icons?: Partial<SemanticIconSizes>;
-  controlSizes?: Partial<ControlSizeScale>;
-  touchTargets?: Partial<TouchTargetScale>;
-  borderWidths?: Partial<BorderWidthScale>;
-  avatarSizes?: Partial<AvatarSizeScale>;
-  breakpoints?: Partial<BreakpointScale>;
-  /** Deep-merge individual typography styles. Each key is optional; each property within is optional. */
-  typography?: { [K in keyof TypographyScale]?: Partial<TypographyStyle> };
-  lineHeights?: Partial<LineHeightScale>;
-  fontWeights?: Partial<FontWeightScale>;
-  letterSpacings?: Partial<LetterSpacingScale>;
-  baseFont?: number;
-  fontScale?: number;
-  fontFamilySans?: string;
-  fontFamilyDisplay?: string;
-};
-
-export type ThemeOverrides = {
-  light?: ThemeColorOverrides;
-  dark?: ThemeColorOverrides;
-  /** Applied to both modes first; mode-specific color overrides win per-key. */
-  both?: ThemeColorOverrides;
-  /** Non-color token overrides — mode-agnostic, stored in theme.tokens. */
-  tokens?: ThemeTokenOverrides;
-};
+export type { ThemeColorOverrides, ThemeTokenOverrides, ThemeOverrides };
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -211,7 +163,7 @@ function adjustColors(
   };
 }
 
-function adjustTokens(
+export function adjustTokens(
   tokens: GeneratedThemeTokens,
   overrides: ThemeTokenOverrides
 ): GeneratedThemeTokens {

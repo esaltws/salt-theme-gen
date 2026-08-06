@@ -418,6 +418,50 @@ export type GenerateThemeOptions = {
   fontScale?: FontScaleName | number;
   /** Font families applied to typography tokens. Not loaded — bring your own @font-face. */
   fontFamily?: FontFamilyOptions;
+  /**
+   * Token overrides applied after generation. Equivalent to calling
+   * `adjustTheme(theme, { tokens: ... })` but in a single call.
+   */
+  tokens?: ThemeTokenOverrides;
+};
+
+// ─── Adjust-theme Types ──────────────────────────────────────────────
+
+export type ThemeColorOverrides = {
+  colors?: Partial<SemanticColors>;
+  states?: Partial<Record<keyof IntentStates, Partial<StateColors>>>;
+  surfaceElevation?: Partial<SurfaceElevation>;
+};
+
+export type ThemeTokenOverrides = {
+  spacing?: Partial<SpacingScale>;
+  radius?: Partial<RadiusScale>;
+  fontSizes?: Partial<FontSizeScale>;
+  iconSizes?: Partial<IconSizeScale>;
+  icons?: Partial<SemanticIconSizes>;
+  controlSizes?: Partial<ControlSizeScale>;
+  touchTargets?: Partial<TouchTargetScale>;
+  borderWidths?: Partial<BorderWidthScale>;
+  avatarSizes?: Partial<AvatarSizeScale>;
+  breakpoints?: Partial<BreakpointScale>;
+  /** Deep-merge individual typography styles. Each key is optional; each property within is optional. */
+  typography?: { [K in keyof TypographyScale]?: Partial<TypographyStyle> };
+  lineHeights?: Partial<LineHeightScale>;
+  fontWeights?: Partial<FontWeightScale>;
+  letterSpacings?: Partial<LetterSpacingScale>;
+  baseFont?: number;
+  fontScale?: number;
+  fontFamilySans?: string;
+  fontFamilyDisplay?: string;
+};
+
+export type ThemeOverrides = {
+  light?: ThemeColorOverrides;
+  dark?: ThemeColorOverrides;
+  /** Applied to both modes first; mode-specific color overrides win per-key. */
+  both?: ThemeColorOverrides;
+  /** Non-color token overrides — mode-agnostic, stored in theme.tokens. */
+  tokens?: ThemeTokenOverrides;
 };
 
 // ─── Nature Preset Data ──────────────────────────────────────────────
