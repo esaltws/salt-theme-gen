@@ -228,15 +228,10 @@ describe("generateCssVariables — token completeness", () => {
     }
   });
 
-  it("title and display type tokens use fluid clamp()", () => {
-    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
-      expect(result.light).toMatch(new RegExp(`--salt-type-${key}-size: clamp\\(`));
-    }
-  });
-
-  it("caption and body type tokens use rem (no clamp)", () => {
-    for (const key of ["caption", "body-small", "body-medium"]) {
+  it("all type tokens use static rem by default (no clamp)", () => {
+    for (const key of ["caption", "body-small", "body-medium", "title-small", "title-medium", "title-large", "display"]) {
       expect(result.light).toMatch(new RegExp(`--salt-type-${key}-size: [\\d.]+rem;`));
+      expect(result.light).not.toContain(`--salt-type-${key}-size: clamp(`);
     }
   });
 
@@ -287,5 +282,71 @@ describe("generateCssVariables — preset round-trip", () => {
       expect(css, `${preset}: undefined value`).not.toMatch(/: undefined;/);
       expect(css.length, `${preset}: trivially short`).toBeGreaterThan(5000);
     }
+  });
+});
+
+// ─── fluidTypography option ───────────────────────────────────────────
+
+describe("generateCssVariables — fluidTypography", () => {
+  const fluidResult = generateCssVariables(theme, { fluidTypography: true });
+  const staticResult = generateCssVariables(theme);
+
+  it("default (false) emits static rem for title and display", () => {
+    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
+      expect(staticResult.light).toMatch(new RegExp(`--salt-type-${key}-size: [\\d.]+rem;`));
+      expect(staticResult.light).not.toContain(`--salt-type-${key}-size: clamp(`);
+    }
+  });
+
+  it("fluidTypography: true emits clamp() for title and display", () => {
+    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
+      expect(fluidResult.light).toMatch(new RegExp(`--salt-type-${key}-size: clamp\\(`));
+    }
+  });
+
+  it("fluidTypography: true leaves caption and body styles as static rem", () => {
+    for (const key of ["caption", "label-small", "label-medium", "body-small", "body-medium", "body-large"]) {
+      expect(fluidResult.light).toMatch(new RegExp(`--salt-type-${key}-size: [\\d.]+rem;`));
+      expect(fluidResult.light).not.toContain(`--salt-type-${key}-size: clamp(`);
+    }
+  });
+
+  it("clamp minimum is floored at baseFont — titleSmall min >= baseFont rem", () => {
+    // titleSmall fontSize (with default major-third scale from 16px) is ~20px
+    // 65% of 20px = 13px, which is below baseFont (16px) — floor must kick in
+    const line = fluidResult.light.split("\n").find((l) => l.includes("--salt-type-title-small-size:"))!;
+    expect(line).toBeDefined();
+    const match = line.match(/clamp\(([\d.]+rem)/);
+    expect(match).toBeTruthy();
+    const minRem = parseFloat(match![1]);
+    const baseFontRem = theme.tokens.baseFont / 16;
+    // min of clamp must be >= baseFont in rem
+    expect(minRem).toBeGreaterThanOrEqual(baseFontRem - 0.001);
+  });
+
+  it("clamp values are valid CSS — no NaN, no undefined", () => {
+    expect(fluidResult.light).not.toContain("NaN");
+    expect(fluidResult.light).not.toContain("undefined");
+    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
+      expect(fluidResult.light).toMatch(
+        new RegExp(`--salt-type-${key}-size: clamp\\([\\d.]+rem, -?[\\d.]+vw [+-] -?[\\d.]+px, [\\d.]+rem\\)`)
+      );
+    }
+  });
+
+  it("clamp max equals static rem value — fluid and static agree at large viewport", () => {
+    for (const key of ["title-small", "title-medium", "title-large", "display"]) {
+      const staticLine = staticResult.light.split("\n").find((l) => l.includes(`--salt-type-${key}-size:`))!;
+      const fluidLine  = fluidResult.light.split("\n").find((l) => l.includes(`--salt-type-${key}-size:`))!;
+      const staticRem = staticLine.match(/([\d.]+rem)/)?.[1];
+      const fluidMax  = fluidLine.match(/clamp\([\s\S]+?, [\s\S]+?, ([\d.]+rem)\)/)?.[1];
+      expect(staticRem).toBe(fluidMax);
+    }
+  });
+
+  it("fluidTypography: true is consistent when combined with format: both", () => {
+    const r = generateCssVariables(theme, { fluidTypography: true, format: "both" });
+    expect(r.css).toMatch(/--salt-type-title-small-size: clamp\(/);
+    expect(r.css).not.toContain("NaN");
   });
 });

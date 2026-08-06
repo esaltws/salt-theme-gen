@@ -9,6 +9,15 @@ export type CssVariablesOptions = {
   format?: CssFormat;
   lightSelector?: string;
   darkSelector?: string;
+  /**
+   * When true, titleSmall / titleMedium / titleLarge / display font-size vars
+   * are emitted as viewport-responsive `clamp()` values instead of static rem.
+   * The minimum is floored at `baseFont` so headings never shrink below body text.
+   *
+   * Default: **false** — static rem output keeps the theme deterministic across
+   * CSS, JS, DTCG, Tailwind, and React Native outputs.
+   */
+  fluidTypography?: boolean;
 };
 
 export type CssVariablesResult = {
@@ -91,11 +100,12 @@ function rem(val: number): string {
   return val === 0 ? "0" : `${+(val / 16).toFixed(4)}rem`;
 }
 
-// Fluid clamp from 65% of maxPx (at 320px viewport) to maxPx (at 1280px viewport)
-function fluidRem(maxPx: number): string {
-  const minPx = maxPx * 0.65;
-  const slope = (maxPx - minPx) / 960;
-  const intercept = minPx - slope * 320;
+// Fluid clamp: scales from minViewport (320px) to maxViewport (1280px).
+// minPx is floored at baseFont so headings never shrink below the body text size.
+function fluidRem(maxPx: number, baseFont: number, minViewport = 320, maxViewport = 1280): string {
+  const minPx = Math.max(maxPx * 0.65, baseFont);
+  const slope = (maxPx - minPx) / (maxViewport - minViewport);
+  const intercept = minPx - slope * minViewport;
   return `clamp(${rem(minPx)}, ${(slope * 100).toFixed(4)}vw + ${intercept.toFixed(4)}px, ${rem(maxPx)})`;
 }
 
@@ -103,7 +113,7 @@ function fluidRem(maxPx: number): string {
 // Font sizes and icon sizes → rem (scales with user font preference, WCAG 1.4.4).
 // Spacing, radius, size map, dimensions → px (layout values, not text-relative).
 // These are mode-agnostic (from theme.tokens) and emitted only under the light selector.
-function dimensionDecls(tokens: GeneratedThemeTokens): string[] {
+function dimensionDecls(tokens: GeneratedThemeTokens, fluid: boolean): string[] {
   const out: string[] = [];
 
   for (const [key, val] of Object.entries(tokens.spacing) as [string, number][]) {
@@ -146,11 +156,12 @@ function dimensionDecls(tokens: GeneratedThemeTokens): string[] {
   }
 
   // Typography composite styles — flat CSS vars per property
-  // titleSmall, titleMedium, titleLarge, display use fluid clamp()
   const FLUID_TYPE_KEYS = new Set(["titleSmall", "titleMedium", "titleLarge", "display"]);
   for (const [key, style] of Object.entries(tokens.typography) as [string, TypographyStyle][]) {
     const kebab = camelToKebab(key);
-    const sizeVal = FLUID_TYPE_KEYS.has(key) ? fluidRem(style.fontSize) : rem(style.fontSize);
+    const sizeVal = fluid && FLUID_TYPE_KEYS.has(key)
+      ? fluidRem(style.fontSize, tokens.baseFont)
+      : rem(style.fontSize);
     const globalFamilyVar = SANS_TYPE_KEYS.has(key) ? `${P}-font-family-sans` : `${P}-font-family-display`;
     out.push(`${P}-type-${kebab}-size: ${sizeVal};`);
     out.push(`${P}-type-${kebab}-line-height: ${style.lineHeight};`);
@@ -237,16 +248,17 @@ export function generateCssVariables(
   theme: GeneratedTheme,
   options?: CssVariablesOptions
 ): CssVariablesResult {
-  const format       = options?.format        ?? "hex";
-  const lightSel     = options?.lightSelector ?? ":root";
-  const darkSel      = options?.darkSelector  ?? "[data-theme='dark']";
+  const format       = options?.format          ?? "hex";
+  const lightSel     = options?.lightSelector   ?? ":root";
+  const darkSel      = options?.darkSelector    ?? "[data-theme='dark']";
+  const fluid        = options?.fluidTypography ?? false;
   const baseFormat   = format === "both" ? "hex" : format;
 
   const lightColors    = colorDecls(theme.light,  baseFormat);
   const lightExtras    = extraColorDecls(theme.light,  baseFormat);
   const darkColors     = colorDecls(theme.dark,   baseFormat);
   const darkExtras     = extraColorDecls(theme.dark,   baseFormat);
-  const tokenDecls     = dimensionDecls(theme.tokens);
+  const tokenDecls     = dimensionDecls(theme.tokens, fluid);
 
   // Light selector: all color vars + all mode-agnostic token vars
   const lightAll = [...lightColors, ...lightExtras, ...tokenDecls];
