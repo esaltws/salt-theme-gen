@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateTheme } from "./generate-theme";
+import { adjustTheme } from "./adjust-theme";
 import { contrastRatio, hexToOklch } from "./color-math";
 import { SPACING_PRESETS } from "./presets/spacing-presets";
 import { RADIUS_PRESETS } from "./presets/radius-presets";
@@ -191,6 +192,18 @@ describe("generateTheme - baseFont", () => {
   it("clamps below minimum to 8", () => {
     const theme = generateTheme({ baseFont: 5 });
     expect(theme.tokens.baseFont).toBe(8);
+  });
+
+  it("baseFont alone drives fontSizes via lookup table (consistent with adjustTheme)", () => {
+    // Regression: generateTheme and adjustTheme must agree on fontSizes when only baseFont differs.
+    const generated = generateTheme({ baseFont: 18 });
+    const base = generateTheme({ primary: "#1e90ff" });
+    const adjusted = adjustTheme(base, { tokens: { baseFont: 18 } });
+
+    expect(generated.tokens.fontSizes.md).toBe(18);
+    expect(adjusted.tokens.fontSizes.md).toBe(18);
+    expect(generated.tokens.fontSizes.md).toBe(adjusted.tokens.fontSizes.md);
+    expect(generated.tokens.typography.bodyMedium.fontSize).toBe(adjusted.tokens.typography.bodyMedium.fontSize);
   });
 });
 
