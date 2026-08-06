@@ -194,6 +194,38 @@ describe("generateTheme - baseFont", () => {
     expect(theme.tokens.baseFont).toBe(8);
   });
 
+  it("baseFont NaN throws RangeError", () => {
+    expect(() => generateTheme({ baseFont: NaN })).toThrow(RangeError);
+  });
+
+  it("baseFont Infinity throws RangeError", () => {
+    expect(() => generateTheme({ baseFont: Infinity })).toThrow(RangeError);
+  });
+
+  it("fontScale 0 throws RangeError", () => {
+    expect(() => generateTheme({ fontScale: 0 })).toThrow(RangeError);
+  });
+
+  it("fontScale -1.2 throws RangeError", () => {
+    expect(() => generateTheme({ fontScale: -1.2 })).toThrow(RangeError);
+  });
+
+  it("fontScale NaN throws RangeError", () => {
+    expect(() => generateTheme({ fontScale: NaN })).toThrow(RangeError);
+  });
+
+  it("fontScale Infinity throws RangeError", () => {
+    expect(() => generateTheme({ fontScale: Infinity })).toThrow(RangeError);
+  });
+
+  it("fontScale > 2 throws RangeError", () => {
+    expect(() => generateTheme({ fontScale: 3 })).toThrow(RangeError);
+  });
+
+  it("fontScale exactly 2 is valid", () => {
+    expect(() => generateTheme({ fontScale: 2 })).not.toThrow();
+  });
+
   it("baseFont alone drives fontSizes via lookup table (consistent with adjustTheme)", () => {
     // Regression: generateTheme and adjustTheme must agree on fontSizes when only baseFont differs.
     const generated = generateTheme({ baseFont: 18 });

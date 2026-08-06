@@ -128,8 +128,22 @@ export function computeModularFontSizes(baseFont: number, ratio: number): FontSi
   };
 }
 
+/**
+ * Validate a numeric fontScale ratio. Throws RangeError for values that
+ * produce broken or degenerate font scales (≤ 1 collapses the scale;
+ * > 2 produces jumps too large to be usable).
+ */
+export function assertFontScale(value: number): number {
+  if (!Number.isFinite(value) || value <= 1 || value > 2) {
+    throw new RangeError(
+      "fontScale must be a finite number greater than 1 and no greater than 2.",
+    );
+  }
+  return value;
+}
+
 export function resolveFontScale(scale: FontScaleName | number | undefined): number {
   if (scale === undefined) return FONT_SCALE_RATIOS["major-third"];
-  if (typeof scale === "number") return scale;
+  if (typeof scale === "number") return assertFontScale(scale);
   return FONT_SCALE_RATIOS[scale] ?? FONT_SCALE_RATIOS["major-third"];
 }

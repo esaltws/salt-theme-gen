@@ -264,6 +264,9 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   // 2. Resolve scales
   const spacing = resolveScale<SpacingPreset, SpacingScale>(options.spacing, SPACING_PRESETS, "default");
   const radius = resolveScale<RadiusPreset, RadiusScale>(options.radius, RADIUS_PRESETS, "default");
+  if (options.baseFont !== undefined && !Number.isFinite(options.baseFont)) {
+    throw new RangeError("baseFont must be a finite number.");
+  }
   const baseFont  = Math.max(8, options.baseFont ?? 16);
   const fontScale = resolveFontScale(options.fontScale);
   const fontFamily = options.fontFamily;

@@ -73,6 +73,38 @@ describe("adjustTheme - numeric scales", () => {
     const resultLow = adjustTheme(theme, { tokens: { baseFont: 5 as any } });
     expect(resultLow.tokens.baseFont).toBe(8);
   });
+
+  it("baseFont NaN throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { baseFont: NaN as any } })).toThrow(RangeError);
+  });
+
+  it("baseFont Infinity throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { baseFont: Infinity as any } })).toThrow(RangeError);
+  });
+
+  it("fontScale 0 throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: 0 } })).toThrow(RangeError);
+  });
+
+  it("fontScale -1.2 throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: -1.2 } })).toThrow(RangeError);
+  });
+
+  it("fontScale NaN throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: NaN } })).toThrow(RangeError);
+  });
+
+  it("fontScale Infinity throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: Infinity } })).toThrow(RangeError);
+  });
+
+  it("fontScale > 2 throws RangeError", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: 3 } })).toThrow(RangeError);
+  });
+
+  it("fontScale exactly 2 is valid", () => {
+    expect(() => adjustTheme(theme, { tokens: { fontScale: 2 } })).not.toThrow();
+  });
 });
 
 // ─── Color overrides + on-color re-derivation ──────────────────────

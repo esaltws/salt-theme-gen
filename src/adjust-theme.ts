@@ -3,7 +3,7 @@ import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-c
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { generateTonalPalettes } from "./palettes.js";
-import { computeTypographyScale, computeModularFontSizes, lookupFontSizes } from "./typography-utils.js";
+import { computeTypographyScale, computeModularFontSizes, lookupFontSizes, assertFontScale } from "./typography-utils.js";
 import type {
   GeneratedTheme,
   GeneratedThemeColors,
@@ -252,11 +252,14 @@ function adjustTokens(
     ? { ...tokens.letterSpacings, ...overrides.letterSpacings }
     : tokens.letterSpacings;
 
+  if (overrides.baseFont !== undefined && !Number.isFinite(overrides.baseFont)) {
+    throw new RangeError("baseFont must be a finite number.");
+  }
   const baseFont = overrides.baseFont !== undefined
     ? Math.max(8, overrides.baseFont)
     : tokens.baseFont;
   const fontScale = overrides.fontScale !== undefined
-    ? overrides.fontScale
+    ? assertFontScale(overrides.fontScale)
     : tokens.fontScale;
   const fontFamilySans = overrides.fontFamilySans !== undefined
     ? overrides.fontFamilySans
