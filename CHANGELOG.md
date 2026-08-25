@@ -43,6 +43,8 @@ The fluid minimum is floored at `baseFont` so headings never shrink below body t
 
 ### New
 
+- **`schemaVersion: "2.0"`** — every `GeneratedTheme` is now stamped with a schema version. `parseThemeJSON` rejects missing or mismatched versions with a descriptive error. `SCHEMA_VERSION` and `SchemaVersion` are exported for consumers. `diffTheme` surfaces version mismatches in the diff result.
+
 - **`resolveTextStyle(style)`** — converts `TypographyStyle` to React Native `StyleSheet` values: absolute `lineHeight` (px), absolute `letterSpacing` (px), string `fontWeight`. Eliminates silent layout bugs from spreading raw typography tokens into `<Text>`.
 
 - **`generateTheme({ tokens: {...} })`** — generation-time token overrides. Equivalent to `adjustTheme(generateTheme(...), { tokens: ... })` in a single call.
@@ -60,7 +62,7 @@ The fluid minimum is floored at `baseFont` so headings never shrink below body t
 ### Migration from 1.x
 
 | v1.x | v2.0 |
-|---|---|
+| --- | --- |
 | `const theme = parseThemeJSON(raw)` | `const { theme } = parseThemeJSON(raw)` |
 | `theme.tokens.sizeMap` | `theme.tokens.controlSizes` |
 | `theme.tokens.dimensions` | `theme.tokens.controlSizes` |
