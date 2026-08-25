@@ -372,6 +372,12 @@ export type ParseThemeResult = {
  */
 export function parseThemeJSON(value: unknown): ParseThemeResult {
   const obj = requireObject(value, "theme");
+  if (!("schemaVersion" in obj)) {
+    throw new Error('theme.schemaVersion: missing — this may be a pre-2.0 theme. Regenerate with salt-theme-gen v2.0.0.');
+  }
+  if (obj.schemaVersion !== "2.0") {
+    throw new Error(`theme.schemaVersion: expected "2.0", got ${JSON.stringify(obj.schemaVersion)}`);
+  }
   requireKeys(obj, ["light", "dark", "tokens"], "theme");
   validateMode(obj.light, "theme.light");
   validateMode(obj.dark, "theme.dark");
@@ -398,6 +404,7 @@ export function parseThemeJSON(value: unknown): ParseThemeResult {
   }
 
   const theme: GeneratedTheme = {
+    schemaVersion: "2.0",
     light, dark, tokens,
     ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }),
   };

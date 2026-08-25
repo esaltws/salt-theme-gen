@@ -71,6 +71,7 @@ export type ThemeTokensDiff = {
 };
 
 export type ThemeDiff = {
+  schemaVersion?: FieldChange<string>;
   light:    ThemeColorsDiff;
   dark:     ThemeColorsDiff;
   tokens:   ThemeTokensDiff;
@@ -333,16 +334,22 @@ export function diffTheme(a: GeneratedTheme, b: GeneratedTheme): ThemeDiff {
   const dark   = diffColors(a.dark,   b.dark);
   const tokens = diffTokens(a.tokens, b.tokens);
 
+  const schemaVersion: FieldChange<string> | undefined =
+    a.schemaVersion !== b.schemaVersion
+      ? { old: a.schemaVersion, new: b.schemaVersion }
+      : undefined;
+
   const aWarnings = JSON.stringify(a.warnings ?? null);
   const bWarnings = JSON.stringify(b.warnings ?? null);
   const warnings: FieldChange<ThemeWarning[] | undefined> | undefined =
     aWarnings !== bWarnings ? { old: a.warnings, new: b.warnings } : undefined;
 
   const identical =
+    schemaVersion === undefined &&
     Object.keys(light).length === 0 &&
     Object.keys(dark).length === 0 &&
     Object.keys(tokens).length === 0 &&
     warnings === undefined;
 
-  return { light, dark, tokens, ...(warnings && { warnings }), identical };
+  return { ...(schemaVersion && { schemaVersion }), light, dark, tokens, ...(warnings && { warnings }), identical };
 }

@@ -290,6 +290,7 @@ export function adjustTheme(
   const darkColorOverrides  = mergeColorOverrides(overrides.both, overrides.dark);
 
   return {
+    schemaVersion: theme.schemaVersion,
     light:  lightColorOverrides ? adjustColors(theme.light,  lightColorOverrides) : theme.light,
     dark:   darkColorOverrides  ? adjustColors(theme.dark,   darkColorOverrides)  : theme.dark,
     tokens: overrides.tokens    ? adjustTokens(theme.tokens, overrides.tokens)    : theme.tokens,

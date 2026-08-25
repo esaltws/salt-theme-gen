@@ -196,6 +196,7 @@ function simulateMode(mode: GeneratedThemeColors, type: ColorBlindnessType): Gen
  */
 export function simulateTheme(theme: GeneratedTheme, type: ColorBlindnessType): GeneratedTheme {
   return {
+    schemaVersion: theme.schemaVersion,
     light:  simulateMode(theme.light, type),
     dark:   simulateMode(theme.dark,  type),
     tokens: theme.tokens,

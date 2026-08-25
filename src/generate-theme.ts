@@ -11,6 +11,7 @@ import { NATURE_PRESETS } from "./presets/nature-presets.js";
 import type { DeriveColorsOptions } from "./butterfly.js";
 import { resolveFontScale, computeTypographyScale, computeModularFontSizes, lookupFontSizes, DEFAULT_LINE_HEIGHTS, DEFAULT_FONT_WEIGHTS, DEFAULT_LETTER_SPACINGS } from "./typography-utils.js";
 import { DEFAULT_ICON_SIZES, DEFAULT_SEMANTIC_ICON_SIZES, DEFAULT_CONTROL_SIZES, DEFAULT_TOUCH_TARGETS, DEFAULT_BORDER_WIDTHS, DEFAULT_AVATAR_SIZES, DEFAULT_BREAKPOINTS } from "./icon-utils.js";
+import { SCHEMA_VERSION } from "./types.js";
 import type {
   GenerateThemeOptions,
   GeneratedTheme,
@@ -288,7 +289,7 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
     const tokens = options.tokens ? adjustTokens(rawTokens, options.tokens) : rawTokens;
     const light = generateMode("light", primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
     const dark  = generateMode("dark",  primaryHex, { harmony: options.harmony, preservePrimary: options.preservePrimary });
-    return { light, dark, tokens };
+    return { schemaVersion: SCHEMA_VERSION, light, dark, tokens };
   }
 
   // 4. New path — resolve per-mode overrides
@@ -321,7 +322,7 @@ export function generateTheme(options: GenerateThemeOptions = {}): GeneratedThem
   );
 
   const allWarnings = [...lightWarns, ...darkWarns];
-  return { light, dark, tokens, ...(allWarnings.length > 0 && { warnings: allWarnings }) };
+  return { schemaVersion: SCHEMA_VERSION, light, dark, tokens, ...(allWarnings.length > 0 && { warnings: allWarnings }) };
 }
 
 // ─── Fast-path mode generator (color-only) ───────────────────────────

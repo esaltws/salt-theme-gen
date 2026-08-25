@@ -60,7 +60,25 @@ describe("parseThemeJSON - root errors", () => {
   });
 
   it("rejects empty object", () => {
-    expect(() => parseThemeJSON({})).toThrow('missing required key "light"');
+    expect(() => parseThemeJSON({})).toThrow("theme.schemaVersion: missing");
+  });
+
+  it("rejects theme with missing schemaVersion", () => {
+    const obj = validThemeObj();
+    delete obj.schemaVersion;
+    expect(() => parseThemeJSON(obj)).toThrow("theme.schemaVersion: missing");
+  });
+
+  it("rejects theme with wrong schemaVersion", () => {
+    const obj = validThemeObj();
+    obj.schemaVersion = "1.3";
+    expect(() => parseThemeJSON(obj)).toThrow('expected "2.0"');
+  });
+
+  it("accepts theme with correct schemaVersion", () => {
+    const obj = validThemeObj();
+    expect(obj.schemaVersion).toBe("2.0");
+    expect(() => parseThemeJSON(obj)).not.toThrow();
   });
 
   it("rejects object missing dark", () => {

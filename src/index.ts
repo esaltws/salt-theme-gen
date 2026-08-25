@@ -1,6 +1,10 @@
 // ─── Main Function ───────────────────────────────────────────────────
 export { generateTheme } from "./generate-theme.js";
 
+// ─── Schema ───────────────────────────────────────────────────────────
+export { SCHEMA_VERSION } from "./types.js";
+export type { SchemaVersion } from "./types.js";
+
 // ─── Types ───────────────────────────────────────────────────────────
 export type {
   GenerateThemeOptions,

@@ -356,7 +356,11 @@ export type GeneratedThemeTokens = {
   letterSpacings: LetterSpacingScale;
 };
 
+export const SCHEMA_VERSION = "2.0" as const;
+export type SchemaVersion = typeof SCHEMA_VERSION;
+
 export type GeneratedTheme = {
+  schemaVersion: SchemaVersion;
   light:   GeneratedThemeColors;
   dark:    GeneratedThemeColors;
   tokens:  GeneratedThemeTokens;
