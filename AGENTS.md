@@ -76,6 +76,7 @@ npm run build         # Compile to dist/ (CJS + ESM)
 
 ```ts
 type GeneratedTheme = {
+  schemaVersion: SchemaVersion;     // "2.0" — stamped by generateTheme, validated by parseThemeJSON
   light:    GeneratedThemeColors;   // per-mode color data
   dark:     GeneratedThemeColors;   // same structure, different values
   tokens:   GeneratedThemeTokens;   // mode-agnostic: spacing, typography, sizes, …
@@ -137,6 +138,7 @@ type GeneratedThemeTokens = {
 - `controlSizes` is canonical — `sizeMap` and `dimensions` were deleted in v2.0.0.
 - `generateCssVariables` `fluidTypography` defaults to `false` — opt in explicitly.
 - `parseThemeJSON` returns `{ theme, tokenWarnings }` — not a bare `GeneratedTheme`.
+- `schemaVersion: "2.0"` is stamped on every `GeneratedTheme` by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`. `parseThemeJSON` validates it first — missing or wrong version throws before any other check. `SCHEMA_VERSION` constant and `SchemaVersion` type are exported from `index.ts`.
 
 ---
 
@@ -186,6 +188,7 @@ type GeneratedThemeTokens = {
 
 ### New
 
+- `schemaVersion: "2.0"` field on `GeneratedTheme`; `SCHEMA_VERSION` constant and `SchemaVersion` type exported; `diffTheme` surfaces version mismatches as `FieldChange<string>`
 - `resolveTextStyle(style: TypographyStyle): RNTextStyle` — React Native typography helper
 - `generateTheme({ tokens: {...} })` — generation-time token overrides
 - `TokenWarning` / `ParseThemeResult` types

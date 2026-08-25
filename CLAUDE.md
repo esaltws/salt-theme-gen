@@ -7,10 +7,10 @@
 ## Project identity
 
 - **Package**: `salt-theme-gen` v2.0.0
-- **npm**: https://www.npmjs.com/package/salt-theme-gen
+- **npm**: [npmjs.com/package/salt-theme-gen](https://www.npmjs.com/package/salt-theme-gen)
 - **Author**: Hasan Sarwer (hasanmathju@gmail.com)
-- **Repo**: https://github.com/esaltws/salt-theme-gen
-- **Docs site**: https://learn.esalt.net/salt-theme-gen (Astro, lives at `e:/salt_theme_gen_tutorial`)
+- **Repo**: [github.com/esaltws/salt-theme-gen](https://github.com/esaltws/salt-theme-gen)
+- **Docs site**: [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen) (Astro, lives at `e:/salt_theme_gen_tutorial`)
 
 One function call turns a single hex color into a complete light + dark design system: 23 semantic colors, 88 tonal palette steps, 32 interactive states, 4 surface elevations, typography, spacing, radius, CSS variables, Tailwind config, DTCG tokens, React Native styles, WCAG and APCA reports, and color blindness simulation.
 
@@ -27,13 +27,13 @@ npm run typecheck     # tsc --noEmit (no emit, strict)
 npm run build         # CJS + ESM dual output to dist/
 ```
 
-Run `npm test` after any change. All 2087+ tests must pass before committing.
+Run `npm test` after any change. All 2107+ tests must pass before committing.
 
 ---
 
 ## Architecture
 
-```
+```text
 src/
 ├── index.ts              # Public API — re-exports only, no logic
 ├── types.ts              # All TypeScript types — no runtime code
@@ -62,7 +62,7 @@ src/
 
 ### Data flow
 
-```
+```text
 generateTheme(options)
   → resolvePrimary()           hex seed
   → resolveScale()             spacing / radius / fontSize (preset or custom)
@@ -75,7 +75,7 @@ generateTheme(options)
       → deriveAllIntentStates() 32 state colors
       → buildAccessibilityReport() WCAG contrast report
       → buildAPCAReport()       APCA contrast report
-  → { light, dark, tokens }
+  → { schemaVersion, light, dark, tokens }
 ```
 
 ---
@@ -84,6 +84,7 @@ generateTheme(options)
 
 ```ts
 {
+  schemaVersion: "2.0";          // stamped by generateTheme, validated by parseThemeJSON
   light:  GeneratedThemeColors;  // per-mode: colors, palettes, states, elevation, reports
   dark:   GeneratedThemeColors;  // same structure, different values
   tokens: GeneratedThemeTokens;  // mode-agnostic: spacing, radius, typography, sizes, ...
@@ -101,6 +102,7 @@ generateTheme(options)
 
 ## Key invariants
 
+- **`schemaVersion: "2.0"` is stamped on every `GeneratedTheme`** — set by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`, validated by `parseThemeJSON`. Missing or mismatched versions throw before any other validation. `SCHEMA_VERSION` and `SchemaVersion` are exported from `index.ts`.
 - **All colors in the theme are hex strings** — `#rrggbb` (lowercase, 6-digit). Never oklch strings in the output; those are used only inside `color-math.ts` computations.
 - **`TypographyStyle.lineHeight` is a unitless ratio** (1.5, 1.1) — NOT px. Multiply by `fontSize` to get px.
 - **`TypographyStyle.letterSpacing` is an em decimal** (0.04 = 0.04em) — NOT px. Multiply by `fontSize` to get px.
@@ -117,7 +119,7 @@ generateTheme(options)
 ## CSS variable naming
 
 | Token type | Pattern | Example |
-|---|---|---|
+| --- | --- | --- |
 | Semantic color | `--salt-color-{key}` | `--salt-color-on-primary` |
 | Tonal palette | `--salt-palette-{intent}-{step}` | `--salt-palette-primary-500` |
 | Surface elevation | `--salt-surface-{key}` | `--salt-surface-card` |
@@ -156,16 +158,16 @@ All tokens prefixed `salt-`. Colors are CSS `var()` refs (require `generateCssVa
 Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no global setup. Each file is self-contained.
 
 | File | What it covers |
-|---|---|
-| `generate-theme.test.ts` | Core generation, presets, harmony, overrides, token option |
-| `adjust-theme.test.ts` | adjustTheme() color + token overrides |
-| `diff-theme.test.ts` | diffTheme() structured comparison |
-| `validate.test.ts` | parseThemeJSON() shape errors + TokenWarning diagnostics |
+| --- | --- |
+| `generate-theme.test.ts` | Core generation, presets, harmony, overrides, token option, schemaVersion |
+| `adjust-theme.test.ts` | adjustTheme() color + token overrides, schemaVersion preservation |
+| `diff-theme.test.ts` | diffTheme() structured comparison, schemaVersion diff |
+| `validate.test.ts` | parseThemeJSON() shape errors + TokenWarning diagnostics, schemaVersion validation |
 | `rn-utils.test.ts` | resolveTextStyle() — RN value conversion |
 | `css-variables.test.ts` | CSS output: format, selectors, fluid typography |
 | `tailwind.test.ts` | Tailwind extend object: colors, spacing, typography tuples |
 | `dtcg.test.ts` | DTCG token tree: colors, palettes, controlSize, touchTarget |
-| `color-blindness.test.ts` | simulateTheme(), simulateColorBlindness() |
+| `color-blindness.test.ts` | simulateTheme(), simulateColorBlindness(), schemaVersion preservation |
 | `color-math.test.ts` | OKLCH math, WCAG/APCA, hex utilities |
 | `butterfly.test.ts` | Butterfly Rule color derivation |
 | `on-colors.test.ts` | on-color derivation, auto-correction |
@@ -196,4 +198,4 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 4. `--salt-size-*` and `--salt-dimension-*` CSS variables removed.
 5. DTCG `size.*` and `dimension.*` groups removed.
 
-New in v2.0.0: `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight.
+New in v2.0.0: `schemaVersion: "2.0"` + `SCHEMA_VERSION`, `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight.
