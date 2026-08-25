@@ -2,7 +2,7 @@
 
 **One color. 380+ design tokens. Light + dark. Accessible by default.**
 
-Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, font sizes, CSS custom properties, Tailwind config, DTCG tokens, WCAG and APCA contrast reports, and color blindness simulation. All from a single function call.
+Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, typography, CSS custom properties, Tailwind config, DTCG tokens, React Native styles, WCAG and APCA contrast reports, and color blindness simulation. All from a single function call.
 
 ```ts
 const theme = generateTheme({ primary: '#0E9D8E' });
@@ -18,8 +18,6 @@ Works in React Native, React, Next.js, Vue, Svelte, Angular, Node, Bun, Deno —
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
 
 **Full documentation → [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen)**
-
-> Formerly `react-native-salt-theme-gen`. If you're upgrading, just change your import — the API is identical.
 
 ---
 
@@ -47,9 +45,15 @@ const theme = generateTheme({ preset: 'ocean' });
 - **32 state colors** — hover, pressed, focused, disabled for all 8 intents
 - **4 surface elevation levels** — card, elevated, modal, popover
 - **88 tonal palette steps** — 11-step scales for all 8 intent colors
-- **Spacing, radius, font size scales** — 7 steps each
 - **WCAG accessibility report** — 25 pre-computed contrast checks
 - **APCA contrast report** — 25 perceptual contrast checks
+
+`theme.tokens` contains mode-agnostic design tokens:
+
+- **Spacing, radius, font size scales** — 7 steps each
+- **Typography scale** — 10 semantic styles (caption → display) with fontSize, lineHeight, fontWeight, letterSpacing
+- **Control sizes, avatar sizes, icon sizes, touch targets** — ready for layout
+- **Line heights, font weights, letter spacings** — full scales
 
 ---
 
@@ -73,13 +77,15 @@ const { css } = generateCssVariables(theme, { format: 'both' });
   --salt-state-primary-hover: #0068c4;
   --salt-spacing-md: 12px;
   --salt-radius-pill: 9999px;
+  --salt-type-body-medium-size: 1rem;
+  --salt-type-body-medium-line-height: 1.5;
   /* ... 380+ tokens */
 }
 [data-theme='dark'] { --salt-color-primary: #459af9; /* ... */ }
 @supports (color: oklch(0 0 0)) { /* oklch values for modern browsers */ }
 ```
 
-Options: `format` (`'hex'` | `'oklch'` | `'both'`), `lightSelector`, `darkSelector`.
+Options: `format` (`'hex'` | `'oklch'` | `'both'`), `lightSelector`, `darkSelector`, `fluidTypography` (default `false` — set `true` for viewport-responsive `clamp()` on title/display sizes).
 
 ---
 
@@ -93,10 +99,42 @@ const { extend } = generateTailwindConfig(theme);
 ```
 
 ```html
-<!-- All tokens as utility classes -->
-<button class="bg-salt-primary text-salt-on-primary rounded-salt-md px-salt-lg">
+<!-- Color, spacing, radius, typography utilities -->
+<button class="bg-salt-primary text-salt-on-primary rounded-salt-md px-salt-lg h-salt-control-md">
   Save
 </button>
+<p class="text-salt-body-medium">Body text with bundled line-height and font-weight.</p>
+```
+
+Tailwind tokens include: semantic colors (CSS `var()` refs), tonal palettes, state colors, spacing, border radius, font sizes, semantic typography tuples (`[remSize, { lineHeight, fontWeight, letterSpacing }]`), width + height + minWidth + minHeight for controls, avatars, icons, and touch targets.
+
+---
+
+## React Native
+
+```ts
+import { resolveTextStyle } from 'salt-theme-gen';
+
+const bodyStyle = resolveTextStyle(theme.tokens.typography.bodyMedium);
+// {
+//   fontSize: 16,
+//   lineHeight: 24,       // absolute px  (16 × 1.5) — NOT the unitless ratio
+//   fontWeight: '400',    // string        — not the number 400
+//   letterSpacing: 0,     // absolute px  — not an em decimal
+// }
+```
+
+`TypographyStyle` stores `lineHeight` as a unitless ratio and `letterSpacing` as an em decimal. Spreading a raw token into `<Text style={...}>` produces incorrect layout in React Native. `resolveTextStyle` converts both to absolute pixel values and `fontWeight` to a string.
+
+```tsx
+import { StyleSheet } from 'react-native';
+import { resolveTextStyle } from 'salt-theme-gen';
+
+const styles = StyleSheet.create({
+  body:    resolveTextStyle(theme.tokens.typography.bodyMedium),
+  caption: resolveTextStyle(theme.tokens.typography.caption),
+  display: resolveTextStyle(theme.tokens.typography.display),
+});
 ```
 
 ---
@@ -123,6 +161,8 @@ import { generateDtcgTokens } from 'salt-theme-gen';
 
 const { json } = generateDtcgTokens(theme);
 // W3C Design Tokens format — works with Style Dictionary 4, Token Studio, Theo
+// Groups: color.*, spacing.*, radius.*, fontSize.*, controlSize.*, touchTarget.*,
+//         typography.*, lineHeight.*, fontWeight.*, letterSpacing.*
 ```
 
 ---
@@ -195,10 +235,17 @@ generateTheme({ primary: '#1e90ff', harmony: 'complementary' });
 ```ts
 import { adjustTheme, diffTheme } from 'salt-theme-gen';
 
-// Fine-tune without losing the system
+// Fine-tune colors per mode, or override tokens
 const tweaked = adjustTheme(theme, {
-  light: { colors: { primary: '#0052cc' } },
-  both: { spacing: { md: 14 } },
+  light:  { colors: { primary: '#0052cc' } },
+  dark:   { colors: { primary: '#4d9fff' } },
+  tokens: { spacing: { md: 14 }, controlSizes: { md: 40 } },
+});
+
+// Inline token overrides at generation time (same result as adjustTheme)
+const theme2 = generateTheme({
+  primary: '#0E9D8E',
+  tokens:  { spacing: { md: 14 } },
 });
 
 // Compare two themes
@@ -214,9 +261,16 @@ console.log(diff.light.colors?.primary); // { old: '#0077dc', new: '#0052cc' }
 import { parseThemeJSON } from 'salt-theme-gen';
 
 // Safely parse from AsyncStorage, API response, or localStorage
-const theme = parseThemeJSON(JSON.parse(stored));
-// Throws with descriptive path on invalid input:
+const { theme, tokenWarnings } = parseThemeJSON(JSON.parse(stored));
+
+// Shape errors throw with descriptive paths:
 // "theme.dark.states.warning.disabled: expected hex color string"
+
+// Value diagnostics are collected, not thrown:
+const errors   = tokenWarnings.filter(w => w.severity === 'error');
+const warnings = tokenWarnings.filter(w => w.severity === 'warning');
+// errors:   negative sizes, descending breakpoints, fontScale ≤ 1 …
+// warnings: touch targets below 24px, body text below 12px, compressed line-height …
 ```
 
 ---
@@ -231,14 +285,15 @@ const theme = parseThemeJSON(JSON.parse(stored));
 | `generateCssVariables` | CSS custom properties (hex / oklch / both) |
 | `generateTailwindConfig` | Tailwind `theme.extend` object |
 | `generateDtcgTokens` | W3C Design Tokens (DTCG) export |
+| `resolveTextStyle` | Convert `TypographyStyle` to React Native `StyleSheet` values |
 | `generateTonalPalette` | 11-step tonal scale for any color |
 | `generateTonalPalettes` | All 8 tonal palettes from a theme |
 | `simulateTheme` | Full theme color blindness simulation |
 | `simulateColorBlindness` | Single color color blindness simulation |
-| `adjustTheme` | Post-generation token overrides |
+| `adjustTheme` | Post-generation color and token overrides |
 | `diffTheme` | Structured comparison of two themes |
 | `parseThemeJSON` | Runtime validation for deserialized themes |
-| `deriveColors` | 21 semantic colors from a primary |
+| `deriveColors` | 23 semantic colors from a primary |
 | `deriveSurfaceElevation` | 4 elevation levels |
 | `resolveHarmonyAccents` | Hue offsets for harmony strategies |
 | `deriveOnColor` | WCAG AA foreground for a background |
@@ -246,9 +301,11 @@ const theme = parseThemeJSON(JSON.parse(stored));
 | `buildAPCAReport` | APCA report from color set |
 | `deriveStateColors` | hover/pressed/focused/disabled for one color |
 | `deriveAllIntentStates` | States for all 8 intents |
+| `computeTypographyScale` | Build a 10-style typography scale from font sizes |
+| `computeModularFontSizes` | Modular font size scale from base + ratio |
 | `apcaContrast` | Signed APCA Lc value |
 | `meetsAPCA` | Boolean APCA threshold check |
-| `parseColor` | HEX / RGB / CSS name → normalized hex |
+| `parseColor` | HEX / RGB / oklch() / CSS name → normalized hex |
 | `hexToOklch` · `oklchToHex` | OKLCH ↔ hex |
 | `hexToRgb` · `rgbToHex` | RGB ↔ hex |
 | `relativeLuminance` · `contrastRatio` | WCAG math |
@@ -260,11 +317,11 @@ const theme = parseThemeJSON(JSON.parse(stored));
 
 ### Types
 
-`GeneratedTheme` · `GeneratedThemeMode` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `TailwindThemeExtend` · `TailwindConfigResult` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `ThemeOverrides` · `ThemeModeOverrides` · `ThemeDiff` · `ThemeModeDiff` · `FieldChange<T>` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
+`GeneratedTheme` · `GeneratedThemeColors` · `GeneratedThemeTokens` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `TypographyStyle` · `TypographyScale` · `LineHeightScale` · `FontWeightScale` · `LetterSpacingScale` · `FontWeight` · `FontScaleName` · `FontFamilyOptions` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `TailwindThemeExtend` · `TailwindConfigResult` · `TailwindTypographyTuple` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `RNTextStyle` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `IconSizeScale` · `SemanticIconSizes` · `ControlSizeScale` · `TouchTargetScale` · `BorderWidthScale` · `AvatarSizeScale` · `BreakpointScale` · `ThemeOverrides` · `ThemeColorOverrides` · `ThemeTokenOverrides` · `ThemeDiff` · `ThemeColorsDiff` · `ThemeTokensDiff` · `ThemeModeDiff` · `FieldChange<T>` · `TokenWarning` · `ParseThemeResult` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
 
 ### Constants
 
-`NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS`
+`NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS` · `DEFAULT_ICON_SIZES` · `DEFAULT_SEMANTIC_ICON_SIZES` · `DEFAULT_CONTROL_SIZES` · `DEFAULT_TOUCH_TARGETS` · `DEFAULT_BORDER_WIDTHS` · `DEFAULT_AVATAR_SIZES` · `DEFAULT_BREAKPOINTS` · `FONT_SCALE_RATIOS` · `DEFAULT_LINE_HEIGHTS` · `DEFAULT_FONT_WEIGHTS` · `DEFAULT_LETTER_SPACINGS`
 
 ---
 
