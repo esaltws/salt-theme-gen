@@ -255,6 +255,38 @@ console.log(diff.light.colors?.primary); // { old: '#0077dc', new: '#0052cc' }
 
 ---
 
+## Schema Version
+
+Every generated theme carries a `schemaVersion` field so you can detect format mismatches before they cause silent bugs:
+
+```ts
+import { generateTheme, SCHEMA_VERSION } from 'salt-theme-gen';
+
+const theme = generateTheme({ primary: '#0E9D8E' });
+console.log(theme.schemaVersion); // "2.0"
+console.log(SCHEMA_VERSION);      // "2.0"
+```
+
+`parseThemeJSON` validates it automatically — missing or wrong versions throw before any other check runs:
+
+```ts
+// Pre-2.0 theme (no schemaVersion) → throws:
+// "theme.schemaVersion: missing — this may be a pre-2.0 theme.
+//  Regenerate with salt-theme-gen v2.0.0."
+
+// Wrong version → throws:
+// "theme.schemaVersion: expected "2.0", got "1.3""
+```
+
+`diffTheme` surfaces version mismatches in the diff result:
+
+```ts
+const diff = diffTheme(themeA, themeB);
+diff.schemaVersion; // { old: "2.0", new: "3.0" } | undefined
+```
+
+---
+
 ## Validation
 
 ```ts
@@ -317,11 +349,11 @@ const warnings = tokenWarnings.filter(w => w.severity === 'warning');
 
 ### Types
 
-`GeneratedTheme` · `GeneratedThemeColors` · `GeneratedThemeTokens` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `TypographyStyle` · `TypographyScale` · `LineHeightScale` · `FontWeightScale` · `LetterSpacingScale` · `FontWeight` · `FontScaleName` · `FontFamilyOptions` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `TailwindThemeExtend` · `TailwindConfigResult` · `TailwindTypographyTuple` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `RNTextStyle` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `IconSizeScale` · `SemanticIconSizes` · `ControlSizeScale` · `TouchTargetScale` · `BorderWidthScale` · `AvatarSizeScale` · `BreakpointScale` · `ThemeOverrides` · `ThemeColorOverrides` · `ThemeTokenOverrides` · `ThemeDiff` · `ThemeColorsDiff` · `ThemeTokensDiff` · `ThemeModeDiff` · `FieldChange<T>` · `TokenWarning` · `ParseThemeResult` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
+`GeneratedTheme` · `GeneratedThemeColors` · `GeneratedThemeTokens` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `TypographyStyle` · `TypographyScale` · `LineHeightScale` · `FontWeightScale` · `LetterSpacingScale` · `FontWeight` · `FontScaleName` · `FontFamilyOptions` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `TailwindThemeExtend` · `TailwindConfigResult` · `TailwindTypographyTuple` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `RNTextStyle` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `IconSizeScale` · `SemanticIconSizes` · `ControlSizeScale` · `TouchTargetScale` · `BorderWidthScale` · `AvatarSizeScale` · `BreakpointScale` · `ThemeOverrides` · `ThemeColorOverrides` · `ThemeTokenOverrides` · `ThemeDiff` · `ThemeColorsDiff` · `ThemeTokensDiff` · `ThemeModeDiff` · `FieldChange<T>` · `TokenWarning` · `ParseThemeResult` · `SchemaVersion` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
 
 ### Constants
 
-`NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS` · `DEFAULT_ICON_SIZES` · `DEFAULT_SEMANTIC_ICON_SIZES` · `DEFAULT_CONTROL_SIZES` · `DEFAULT_TOUCH_TARGETS` · `DEFAULT_BORDER_WIDTHS` · `DEFAULT_AVATAR_SIZES` · `DEFAULT_BREAKPOINTS` · `FONT_SCALE_RATIOS` · `DEFAULT_LINE_HEIGHTS` · `DEFAULT_FONT_WEIGHTS` · `DEFAULT_LETTER_SPACINGS`
+`SCHEMA_VERSION` · `NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS` · `DEFAULT_ICON_SIZES` · `DEFAULT_SEMANTIC_ICON_SIZES` · `DEFAULT_CONTROL_SIZES` · `DEFAULT_TOUCH_TARGETS` · `DEFAULT_BORDER_WIDTHS` · `DEFAULT_AVATAR_SIZES` · `DEFAULT_BREAKPOINTS` · `FONT_SCALE_RATIOS` · `DEFAULT_LINE_HEIGHTS` · `DEFAULT_FONT_WEIGHTS` · `DEFAULT_LETTER_SPACINGS`
 
 ---
 
