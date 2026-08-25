@@ -304,3 +304,21 @@ describe("simulateTheme — preset round-trip", () => {
     }
   });
 });
+
+// ─── schemaVersion ────────────────────────────────────────────────────
+
+describe("simulateTheme — schemaVersion", () => {
+  const baseTheme = generateTheme({ primary: "#1e90ff" });
+
+  it("preserves schemaVersion for every simulation type", () => {
+    for (const type of ALL_TYPES) {
+      const sim = simulateTheme(baseTheme, type);
+      expect(sim.schemaVersion, `${type} schemaVersion`).toBe(baseTheme.schemaVersion);
+    }
+  });
+
+  it("preserves schemaVersion value '2.0'", () => {
+    const sim = simulateTheme(baseTheme, "deuteranopia");
+    expect(sim.schemaVersion).toBe("2.0");
+  });
+});

@@ -391,3 +391,30 @@ describe("adjustTheme - oklch color input", () => {
     expect(result.light.accessibility.primaryOnBackground.level).not.toBe("fail");
   });
 });
+
+// ─── schemaVersion ────────────────────────────────────────────────────
+
+describe("adjustTheme — schemaVersion", () => {
+  it("preserves schemaVersion after color override", () => {
+    const result = adjustTheme(theme, { light: { colors: { primary: "#cc0000" } } });
+    expect(result.schemaVersion).toBe(theme.schemaVersion);
+  });
+
+  it("preserves schemaVersion after token override", () => {
+    const result = adjustTheme(theme, { tokens: { spacing: { md: 20 } } });
+    expect(result.schemaVersion).toBe(theme.schemaVersion);
+  });
+
+  it("preserves schemaVersion after no-op adjust", () => {
+    const result = adjustTheme(theme, {});
+    expect(result.schemaVersion).toBe("2.0");
+  });
+
+  it("preserves schemaVersion after both color and token overrides", () => {
+    const result = adjustTheme(theme, {
+      both: { colors: { danger: "#e00" } },
+      tokens: { radius: { md: 8 } },
+    });
+    expect(result.schemaVersion).toBe("2.0");
+  });
+});

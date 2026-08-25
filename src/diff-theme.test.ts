@@ -223,3 +223,41 @@ describe("diffTheme - round-trip with adjustTheme", () => {
     expect(diff.light.colors?.primary).toBeDefined();
   });
 });
+
+// ─── schemaVersion ────────────────────────────────────────────────────
+
+describe("diffTheme — schemaVersion", () => {
+  it("identical themes have no schemaVersion diff", () => {
+    const diff = diffTheme(theme, theme);
+    expect(diff.schemaVersion).toBeUndefined();
+  });
+
+  it("schemaVersion absent from diff when both themes share same version", () => {
+    const other = generateTheme({ preset: "ocean" });
+    const diff = diffTheme(theme, other);
+    expect(diff.schemaVersion).toBeUndefined();
+  });
+
+  it("schemaVersion present in diff when versions differ", () => {
+    const a = generateTheme({ primary: "#1e90ff" });
+    const b = { ...a, schemaVersion: "3.0" as any };
+    const diff = diffTheme(a, b);
+    expect(diff.schemaVersion).toBeDefined();
+    expect(diff.schemaVersion?.old).toBe("2.0");
+    expect(diff.schemaVersion?.new).toBe("3.0");
+  });
+
+  it("differing schemaVersion makes identical false", () => {
+    const a = generateTheme({ primary: "#1e90ff" });
+    const b = { ...a, schemaVersion: "3.0" as any };
+    const diff = diffTheme(a, b);
+    expect(diff.identical).toBe(false);
+  });
+
+  it("same schemaVersion does not affect identical result", () => {
+    const a = generateTheme({ primary: "#1e90ff" });
+    const b = generateTheme({ primary: "#1e90ff" });
+    const diff = diffTheme(a, b);
+    expect(diff.schemaVersion).toBeUndefined();
+  });
+});

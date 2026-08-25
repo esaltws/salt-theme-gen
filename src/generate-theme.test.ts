@@ -3,6 +3,7 @@ import { generateTheme } from "./generate-theme";
 import { adjustTheme } from "./adjust-theme";
 import { contrastRatio, hexToOklch } from "./color-math";
 import { SPACING_PRESETS } from "./presets/spacing-presets";
+import { SCHEMA_VERSION } from "./types";
 import { RADIUS_PRESETS } from "./presets/radius-presets";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets";
 import { NATURE_PRESETS } from "./presets/nature-presets";
@@ -692,5 +693,37 @@ describe("generateTheme — tokens option", () => {
     });
     expect(theme.tokens.spacing.md).toBe(24);
     expect(theme.light.colors.danger).toBe("#cc0000");
+  });
+});
+
+// ─── schemaVersion ────────────────────────────────────────────────────
+
+describe("generateTheme — schemaVersion", () => {
+  it("stamps schemaVersion on default theme", () => {
+    const theme = generateTheme();
+    expect(theme.schemaVersion).toBe(SCHEMA_VERSION);
+  });
+
+  it("stamps schemaVersion when using a preset", () => {
+    const theme = generateTheme({ preset: "ocean" });
+    expect(theme.schemaVersion).toBe("2.0");
+  });
+
+  it("stamps schemaVersion on the fast path (no color overrides)", () => {
+    const theme = generateTheme({ primary: "#1e90ff" });
+    expect(theme.schemaVersion).toBe("2.0");
+  });
+
+  it("stamps schemaVersion on the color-override path", () => {
+    const theme = generateTheme({ colors: { both: { primary: "#cc0000" } } });
+    expect(theme.schemaVersion).toBe("2.0");
+  });
+
+  it("schemaVersion is a string", () => {
+    expect(typeof generateTheme().schemaVersion).toBe("string");
+  });
+
+  it("SCHEMA_VERSION constant matches the stamped value", () => {
+    expect(generateTheme().schemaVersion).toBe(SCHEMA_VERSION);
   });
 });
