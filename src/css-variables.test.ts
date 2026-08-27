@@ -353,3 +353,48 @@ describe("generateCssVariables — fluidTypography", () => {
     expect(r.css).not.toContain("NaN");
   });
 });
+
+// ─── prefix option ───────────────────────────────────────────────────
+
+describe('generateCssVariables — prefix option', () => {
+  it('defaults to --salt- prefix when no prefix provided', () => {
+    const result = generateCssVariables(theme);
+    expect(result.light).toMatch(/--salt-color-primary:/);
+    expect(result.light).not.toMatch(/--web-color-primary:/);
+  });
+
+  it('uses custom prefix for all CSS custom properties', () => {
+    const result = generateCssVariables(theme, { prefix: 'web' });
+    expect(result.light).toMatch(/--web-color-primary:/);
+    expect(result.light).toMatch(/--web-spacing-md:/);
+    expect(result.light).toMatch(/--web-font-size-md:/);
+    expect(result.light).not.toMatch(/--salt-/);
+    expect(result.dark).not.toMatch(/--salt-/);
+  });
+
+  it('uses custom prefix in the full css string', () => {
+    const result = generateCssVariables(theme, { prefix: 'web' });
+    expect(result.css).toMatch(/--web-color-primary:/);
+    expect(result.css).not.toMatch(/--salt-/);
+  });
+
+  it('uses custom prefix in typography classes', () => {
+    const result = generateCssVariables(theme, { prefix: 'web' });
+    expect(result.classes).toContain('.web-caption {');
+    expect(result.classes).toContain('.web-body-medium {');
+    expect(result.classes).not.toContain('.salt-');
+  });
+
+  it('uses custom prefix in @supports block when format is both', () => {
+    const result = generateCssVariables(theme, { prefix: 'web', format: 'both' });
+    expect(result.css).toMatch(/--web-color-primary: oklch\(/);
+    expect(result.css).not.toMatch(/--salt-/);
+  });
+
+  it('custom prefix works with palette and state vars', () => {
+    const result = generateCssVariables(theme, { prefix: 'acme' });
+    expect(result.light).toMatch(/--acme-palette-/);
+    expect(result.light).toMatch(/--acme-state-/);
+    expect(result.light).toMatch(/--acme-surface-/);
+  });
+});

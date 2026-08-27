@@ -17,7 +17,7 @@ Works in React Native, React, Next.js, Vue, Svelte, Angular, Node, Bun, Deno —
 [![license](https://img.shields.io/npm/l/salt-theme-gen)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
 
-**Full documentation → [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen)**
+**Full documentation → [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen/)**
 
 ---
 
@@ -376,7 +376,7 @@ export default function App() {
 
 ---
 
-**Full guides, integration examples, and API reference → [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen)**
+**Full guides, integration examples, and API reference → [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen/)**
 
 ## License
 
