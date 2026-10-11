@@ -124,6 +124,8 @@ export { generateFigmaVariables } from "./figma.js";
 export type { FigmaRGBA, FigmaColorValue, FigmaFloatValue, FigmaStringValue, FigmaVariableValue, FigmaVariable, FigmaVariableMode, FigmaVariableCollection, FigmaVariablesPayload, FigmaVariablesOptions, FigmaVariablesResult } from "./figma.js";
 export { generateFlutterTheme } from "./flutter.js";
 export type { FlutterThemeOptions, FlutterThemeResult } from "./flutter.js";
+export { generateSwiftUITheme } from "./swiftui.js";
+export type { SwiftUIThemeOptions, SwiftUIThemeResult } from "./swiftui.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
