@@ -118,6 +118,8 @@ export { generateDtcgTokens } from "./dtcg.js";
 export type { DtcgToken, DtcgColorToken, DtcgDimensionToken, DtcgGroup, DtcgTokensResult } from "./dtcg.js";
 export { generateTailwindConfig } from "./tailwind.js";
 export type { TailwindThemeExtend, TailwindConfigResult } from "./tailwind.js";
+export { generatePandaConfig } from "./panda.js";
+export type { PandaToken, PandaSemanticColor, PandaBaseTokens, PandaSemanticTokens, PandaConfigOptions, PandaConfigResult } from "./panda.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
