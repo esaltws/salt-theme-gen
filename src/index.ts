@@ -120,6 +120,10 @@ export { generateTailwindConfig } from "./tailwind.js";
 export type { TailwindThemeExtend, TailwindConfigResult } from "./tailwind.js";
 export { generatePandaConfig } from "./panda.js";
 export type { PandaToken, PandaSemanticColor, PandaBaseTokens, PandaSemanticTokens, PandaConfigOptions, PandaConfigResult } from "./panda.js";
+export { generateFigmaVariables } from "./figma.js";
+export type { FigmaRGBA, FigmaColorValue, FigmaFloatValue, FigmaStringValue, FigmaVariableValue, FigmaVariable, FigmaVariableMode, FigmaVariableCollection, FigmaVariablesPayload, FigmaVariablesOptions, FigmaVariablesResult } from "./figma.js";
+export { generateFlutterTheme } from "./flutter.js";
+export type { FlutterThemeOptions, FlutterThemeResult } from "./flutter.js";
 
 // ─── Validation (for deserialized themes) ────────────────────────────
 export { parseThemeJSON } from "./validate.js";
