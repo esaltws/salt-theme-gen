@@ -54,11 +54,17 @@ describe("generateShadcnTheme — structure", () => {
     expect(result.css).toContain("@layer base {");
   });
 
-  it("sections appear in correct order: @theme inline → :root → .dark → @layer base", () => {
-    const ti = result.css.indexOf("@theme inline");
+  it("css contains @custom-variant dark directive", () => {
+    expect(result.css).toContain("@custom-variant dark (&:is(.dark *));");
+  });
+
+  it("sections appear in correct order: @custom-variant → @theme inline → :root → .dark → @layer base", () => {
+    const variant = result.css.indexOf("@custom-variant dark");
+    const ti   = result.css.indexOf("@theme inline");
     const root = result.css.indexOf(":root {");
     const dark = result.css.indexOf(".dark {");
     const base = result.css.indexOf("@layer base");
+    expect(variant).toBeLessThan(ti);
     expect(ti).toBeLessThan(root);
     expect(root).toBeLessThan(dark);
     expect(dark).toBeLessThan(base);

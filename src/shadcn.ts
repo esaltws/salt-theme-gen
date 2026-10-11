@@ -300,7 +300,12 @@ function buildColorDecls(
   return lines;
 }
 
-// ─── @layer base ─────────────────────────────────────────────────────
+// ─── Fixed CSS blocks ─────────────────────────────────────────────────
+
+// Required for Tailwind v4 class-based dark mode (.dark selector).
+// Placed at the top so the file is self-contained and importable
+// directly in globals.css without overwriting developer CSS choices.
+const DARK_VARIANT = `@custom-variant dark (&:is(.dark *));`;
 
 const LAYER_BASE = `@layer base {
   * { @apply border-border outline-ring/50; }
@@ -346,7 +351,7 @@ export function generateShadcnTheme(
   const rootBlock   = `:root {\n${ind(lightDecls)}\n}`;
   const darkBlock   = `.dark {\n${ind(darkDecls)}\n}`;
 
-  const css = [themeInline, rootBlock, darkBlock, LAYER_BASE].join("\n\n");
+  const css = [DARK_VARIANT, themeInline, rootBlock, darkBlock, LAYER_BASE].join("\n\n");
 
   return { css, light, dark };
 }
