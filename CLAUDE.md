@@ -1,6 +1,8 @@
 # CLAUDE.md — salt-theme-gen
 
 > Project reference for Claude Code. Read before writing any code, modifying types, or answering questions about this package.
+>
+> For consumer API reference (call signatures, options, examples) see **[AGENTS.md](./AGENTS.md)**.
 
 ---
 
@@ -8,11 +10,11 @@
 
 - **Package**: `salt-theme-gen` v2.0.0
 - **npm**: [npmjs.com/package/salt-theme-gen](https://www.npmjs.com/package/salt-theme-gen)
-- **Author**: Hasan Sarwer (hasanmathju@gmail.com)
+- **Author**: Hasan Sarwer (<hasanmathju@gmail.com>)
 - **Repo**: [github.com/esaltws/salt-theme-gen](https://github.com/esaltws/salt-theme-gen)
 - **Docs site**: [learn.esalt.net/salt-theme-gen](https://learn.esalt.net/salt-theme-gen) (Astro, lives at `e:/salt_theme_gen_tutorial`)
 
-One function call turns a single hex color into a complete light + dark design system: 23 semantic colors, 88 tonal palette steps, 32 interactive states, 4 surface elevations, typography, spacing, radius, CSS variables, Tailwind config, DTCG tokens, React Native styles, WCAG and APCA reports, and color blindness simulation.
+One function call turns a single hex color into a complete light + dark design system: 26 semantic colors, 88 tonal palette steps, 32 interactive states, 4 surface elevations, typography, spacing, radius, CSS variables, SCSS variables, Tailwind config, shadcn/ui theme, Panda CSS config, DTCG tokens, Figma Variables payload, Flutter/Dart constants, SwiftUI constants, React Native styles, WCAG and APCA reports, and color blindness simulation.
 
 **Zero runtime dependencies. Pure TypeScript. Strict mode throughout.**
 
@@ -27,7 +29,7 @@ npm run typecheck     # tsc --noEmit (no emit, strict)
 npm run build         # CJS + ESM dual output to dist/
 ```
 
-Run `npm test` after any change. All 2107+ tests must pass before committing.
+Run `npm test` after any change. All 2292+ tests must pass before committing.
 
 ---
 
@@ -37,19 +39,26 @@ Run `npm test` after any change. All 2107+ tests must pass before committing.
 src/
 ├── index.ts              # Public API — re-exports only, no logic
 ├── types.ts              # All TypeScript types — no runtime code
+├── file-header.ts        # Internal: buildCssHeader / buildScssHeader / buildJsonDescription
 ├── generate-theme.ts     # Entry point: generateTheme() orchestrator
 ├── adjust-theme.ts       # adjustTheme(), adjustTokens()
 ├── diff-theme.ts         # diffTheme()
 ├── validate.ts           # parseThemeJSON() — runtime validation + token diagnostics
 ├── rn-utils.ts           # resolveTextStyle() — React Native typography helper
 ├── color-math.ts         # Pure math: OKLCH/sRGB/hex conversions, WCAG, APCA, manipulation
-├── butterfly.ts          # Butterfly Rule: derives 23 semantic colors from primary
+├── butterfly.ts          # Butterfly Rule: derives 26 semantic colors from primary
 ├── on-colors.ts          # "on" color derivation, WCAG auto-correction, accessibility reports
 ├── state-colors.ts       # hover/pressed/focused/disabled states (8 intents × 4)
 ├── palettes.ts           # 11-step OKLCH tonal palettes (8 keys)
 ├── css-variables.ts      # generateCssVariables() — hex/oklch/both, fluid typography opt-in
+├── scss.ts               # generateScssVariables() — SCSS variables with -dark suffix
+├── shadcn.ts             # generateShadcnTheme() / shadcnTheme() — Tailwind v4 + shadcn/ui CSS
 ├── dtcg.ts               # generateDtcgTokens() — W3C DTCG format
 ├── tailwind.ts           # generateTailwindConfig() — Tailwind theme.extend
+├── panda.ts              # generatePandaConfig() — Panda CSS tokens + semanticTokens
+├── figma.ts              # generateFigmaVariables() — Figma Variables REST API payload
+├── flutter.ts            # generateFlutterTheme() — Flutter/Dart constants class
+├── swiftui.ts            # generateSwiftUITheme() — SwiftUI constants enum
 ├── color-blindness.ts    # simulateColorBlindness/simulateTheme (7 CVD types, Machado 2009)
 ├── typography-utils.ts   # computeTypographyScale, computeModularFontSizes, lookupFontSizes
 ├── icon-utils.ts         # Size constants: DEFAULT_ICON_SIZES, DEFAULT_CONTROL_SIZES, etc.
@@ -69,7 +78,7 @@ generateTheme(options)
   → buildTokens()              GeneratedThemeTokens (mode-agnostic)
   → adjustTokens()             if options.tokens provided
   → generateMode() ×2          light + dark GeneratedThemeColors
-      → deriveColors()         Butterfly Rule: 23 semantic colors
+      → deriveColors()         Butterfly Rule: 26 semantic colors
       → generateTonalPalettes() 8 × 11 tonal steps
       → deriveSurfaceElevation() 4 elevation levels
       → deriveAllIntentStates() 32 state colors
@@ -93,7 +102,7 @@ generateTheme(options)
 ```
 
 **`GeneratedThemeColors`** — changes between modes:
-`mode`, `colors` (23 semantic hex strings), `palettes` (8 × 11 steps), `surfaceElevation` (4 levels), `states` (8 × 4 = 32 hex strings), `accessibility` (WCAG report), `apca` (APCA report).
+`mode`, `colors` (26 semantic hex strings), `palettes` (8 × 11 steps), `surfaceElevation` (4 levels), `states` (8 × 4 = 32 hex strings), `accessibility` (WCAG report), `apca` (APCA report).
 
 **`GeneratedThemeTokens`** — identical in light and dark, stored once:
 `spacing`, `radius`, `fontSizes`, `iconSizes`, `icons`, `controlSizes`, `touchTargets`, `borderWidths`, `avatarSizes`, `breakpoints`, `baseFont`, `fontScale`, `fontFamilySans?`, `fontFamilyDisplay?`, `typography`, `lineHeights`, `fontWeights`, `letterSpacings`.
@@ -141,6 +150,14 @@ generateTheme(options)
 
 ---
 
+## SCSS variable naming
+
+Light mode: `$salt-color-primary`, `$salt-spacing-md`, `$salt-radius-lg` (no suffix).
+Dark mode adds `-dark` suffix: `$salt-color-primary-dark`.
+Mode-agnostic tokens (spacing, radius, typography, sizes) are emitted once, in the light block.
+
+---
+
 ## Tailwind class naming
 
 All tokens prefixed `salt-`. Colors are CSS `var()` refs (require `generateCssVariables` in the CSS). All other values are static strings.
@@ -164,9 +181,15 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 | `diff-theme.test.ts` | diffTheme() structured comparison, schemaVersion diff |
 | `validate.test.ts` | parseThemeJSON() shape errors + TokenWarning diagnostics, schemaVersion validation |
 | `rn-utils.test.ts` | resolveTextStyle() — RN value conversion |
-| `css-variables.test.ts` | CSS output: format, selectors, fluid typography |
+| `css-variables.test.ts` | CSS output: format, selectors, fluid typography, file header |
+| `scss.test.ts` | SCSS variables: light/dark split, -dark suffix, token declarations |
+| `shadcn.test.ts` | shadcn/ui CSS: @theme inline, :root, .dark, @layer base, all tokens |
 | `tailwind.test.ts` | Tailwind extend object: colors, spacing, typography tuples |
 | `dtcg.test.ts` | DTCG token tree: colors, palettes, controlSize, touchTarget |
+| `panda.test.ts` | Panda CSS: base tokens (radii key), semantic color values, json output |
+| `figma.test.ts` | Figma Variables payload: two collections, RGBA 0–1, FLOAT/STRING types |
+| `flutter.test.ts` | Flutter/Dart: Color(0xFF...) format, Dark suffix, token constants |
+| `swiftui.test.ts` | SwiftUI: Color(red:green:blue:) format, Dark suffix, CGFloat/Font.Weight |
 | `color-blindness.test.ts` | simulateTheme(), simulateColorBlindness(), schemaVersion preservation |
 | `color-math.test.ts` | OKLCH math, WCAG/APCA, hex utilities |
 | `butterfly.test.ts` | Butterfly Rule color derivation |
@@ -198,4 +221,4 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 4. `--salt-size-*` and `--salt-dimension-*` CSS variables removed.
 5. DTCG `size.*` and `dimension.*` groups removed.
 
-New in v2.0.0: `schemaVersion: "2.0"` + `SCHEMA_VERSION`, `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight.
+New in v2.0.0: `schemaVersion: "2.0"` + `SCHEMA_VERSION`, `VERSION`, `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight, `generateScssVariables`, `generateShadcnTheme`/`shadcnTheme`, `generatePandaConfig`, `generateFigmaVariables`, `generateFlutterTheme`, `generateSwiftUITheme`, new semantic tokens `input`/`ring`/`onMuted`, generation headers on all file outputs.

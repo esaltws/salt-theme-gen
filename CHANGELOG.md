@@ -1,5 +1,34 @@
 # Changelog
 
+## Unreleased
+
+### New output formats
+
+- **`generateScssVariables(theme, options?)`** — SCSS variable file. Light colors use plain `$salt-color-primary: #hex` names; dark colors add a `-dark` suffix (`$salt-color-primary-dark`). Mode-agnostic tokens (spacing, radius, typography, sizes) emitted once. Options: `prefix`, `includePalettes`.
+
+- **`generatePandaConfig(theme, options?)`** — Panda CSS `tokens` + `semanticTokens` objects. Semantic colors carry `{ value: { base: "#light", _dark: "#dark" } }` for automatic dark mode. Spread directly into `panda.config.ts`. Options: `includePalettes`.
+
+- **`generateFigmaVariables(theme, options?)`** — Figma Variables REST API payload (`PATCH /v1/files/:id/variables`). Two collections: `Salt / Colors` (Light + Dark modes, COLOR type, RGBA 0–1) and `Salt / Tokens` (single mode, FLOAT/STRING). Options: `includePalettes`.
+
+- **`generateFlutterTheme(theme, options?)`** — Flutter/Dart constants class. Colors are `Color(0xFF...)`. Dark mode adds `Dark` suffix. Tokens are `static const double` / `static const int`. Options: `className`.
+
+- **`generateSwiftUITheme(theme, options?)`** — SwiftUI constants enum with `Colors` and `Tokens` nested enums. Colors are `Color(red:green:blue:)`. Dark mode adds `Dark` suffix. Tokens are `CGFloat` / `Font.Weight`. Options: `enumName`.
+
+- **`shadcnTheme(options?)`** / **`generateShadcnTheme(theme, options?)`** — Tailwind v4 + shadcn/ui compatible CSS. Self-contained importable file with `@custom-variant dark`, `@theme inline`, `:root`, `.dark`, and `@layer base`. Options: `baseColor` (`neutral` | `zinc` | `stone` | `mauve` | `olive` | `mist` | `taupe`), `includePalettes`.
+
+### New tokens
+
+- **`input`** — form control border color (L=0.82 light / L=0.36 dark), slightly more prominent than `border`.
+- **`ring`** — focus indicator ring color (primary hue, WCAG 2.4.11 non-text contrast ≥ 3:1 guaranteed).
+- **`onMuted`** — readable foreground for muted surfaces; `WCAG AA` guaranteed against `muted`.
+
+### Other additions
+
+- **`VERSION`** constant (`"2.0.0-rc.2"`) exported from the package alongside `SCHEMA_VERSION`.
+- All generated file outputs (`css`, `scss`, `dart`, `swift`, DTCG `json`) now include a generation header with function name, primary seed, non-default options, and ISO timestamp — useful for tracing and AI tooling.
+
+---
+
 ## 2.0.0 — 2026-08-07
 
 ### Breaking changes

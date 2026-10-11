@@ -1,8 +1,8 @@
 # salt-theme-gen
 
-**One color. 380+ design tokens. Light + dark. Accessible by default.**
+**One color. 400+ design tokens. Light + dark. Accessible by default.**
 
-Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, typography, CSS custom properties, Tailwind config, DTCG tokens, React Native styles, WCAG and APCA contrast reports, and color blindness simulation. All from a single function call.
+Give it a hex color — or pick one of 20 curated presets. Get back a complete, mathematically correct design system: semantic colors, tonal palettes, interactive states, surface elevations, spacing, radius, typography — then output it to CSS, SCSS, Tailwind, shadcn/ui, Panda CSS, DTCG, Figma Variables, Flutter, or SwiftUI. All from a single function call.
 
 ```ts
 const theme = generateTheme({ primary: '#0E9D8E' });
@@ -41,12 +41,12 @@ const theme = generateTheme({ preset: 'ocean' });
 
 `theme.light` and `theme.dark` each contain:
 
-- **23 semantic colors** — `primary`, `onPrimary`, `background`, `surface`, `text`, `danger`, `success` …
+- **26 semantic colors** — `primary`, `onPrimary`, `background`, `surface`, `text`, `danger`, `success`, `input`, `ring`, `onMuted` …
 - **32 state colors** — hover, pressed, focused, disabled for all 8 intents
 - **4 surface elevation levels** — card, elevated, modal, popover
 - **88 tonal palette steps** — 11-step scales for all 8 intent colors
-- **WCAG accessibility report** — 25 pre-computed contrast checks
-- **APCA contrast report** — 25 perceptual contrast checks
+- **WCAG accessibility report** — 26 pre-computed contrast checks
+- **APCA contrast report** — 26 perceptual contrast checks
 
 `theme.tokens` contains mode-agnostic design tokens:
 
@@ -164,6 +164,152 @@ const { json } = generateDtcgTokens(theme);
 // Groups: color.*, spacing.*, radius.*, fontSize.*, controlSize.*, touchTarget.*,
 //         typography.*, lineHeight.*, fontWeight.*, letterSpacing.*
 ```
+
+---
+
+## shadcn/ui (Tailwind v4)
+
+```ts
+import { shadcnTheme } from 'salt-theme-gen';
+
+// One call — accepts all generateTheme options plus shadcn-specific options
+const { css } = shadcnTheme({ preset: 'ocean', baseColor: 'zinc' });
+// → complete importable CSS: @custom-variant dark + @theme inline + :root + .dark + @layer base
+```
+
+```ts
+// Or two-step for more control
+import { generateTheme, generateShadcnTheme } from 'salt-theme-gen';
+
+const theme = generateTheme({ primary: '#6366f1' });
+const { css, light, dark } = generateShadcnTheme(theme, {
+  baseColor: 'zinc',       // tinted neutral background (neutral | zinc | stone | mauve | olive | mist | taupe)
+  includePalettes: true,   // emit --palette-primary-50 … --palette-info-950
+});
+```
+
+In your `globals.css`:
+
+```css
+@import "./salt-theme.css"; /* drop-in, preserves your existing CSS */
+```
+
+---
+
+## SCSS Variables
+
+```ts
+import { generateScssVariables } from 'salt-theme-gen';
+
+const { scss } = generateScssVariables(theme);
+// → $salt-color-primary: #6366f1;
+// → $salt-color-primary-dark: #818cf8;  (dark mode with -dark suffix)
+// → $salt-spacing-md: 16px;
+// → $salt-font-size-md: 1rem;
+// → ... all tokens
+```
+
+```scss
+// In your SCSS:
+@use 'salt-theme' as *;
+
+.button {
+  background: $salt-color-primary;
+  padding: $salt-spacing-sm $salt-spacing-md;
+  border-radius: $salt-radius-md;
+}
+
+@media (prefers-color-scheme: dark) {
+  .button { background: $salt-color-primary-dark; }
+}
+```
+
+Options: `prefix` (default `"salt"`), `includePalettes` (default `false`).
+
+---
+
+## Panda CSS
+
+```ts
+import { generatePandaConfig } from 'salt-theme-gen';
+
+const { tokens, semanticTokens } = generatePandaConfig(theme);
+```
+
+```ts
+// panda.config.ts
+export default defineConfig({
+  theme: { tokens, semanticTokens },
+});
+```
+
+Semantic colors carry `{ value: { base: "#light", _dark: "#dark" } }` — automatic dark mode with zero extra config. Includes all 26 semantic colors, 32 state tokens, surface elevations, spacing, radius, font sizes, and more.
+
+---
+
+## Figma Variables
+
+```ts
+import { generateFigmaVariables } from 'salt-theme-gen';
+
+const { payload, json } = generateFigmaVariables(theme);
+
+// POST to the Figma REST API
+await fetch(`https://api.figma.com/v1/files/${fileKey}/variables`, {
+  method: 'PATCH',
+  headers: { 'X-Figma-Token': token, 'Content-Type': 'application/json' },
+  body: json,
+});
+```
+
+Creates two variable collections:
+
+- **Salt / Colors** — semantic colors + states in Light and Dark modes (COLOR type, RGBA 0–1)
+- **Salt / Tokens** — spacing, radius, font sizes, control sizes, etc. (FLOAT / STRING)
+
+---
+
+## Flutter / Dart
+
+```ts
+import { generateFlutterTheme } from 'salt-theme-gen';
+
+const { dart } = generateFlutterTheme(theme);
+// Write to lib/salt_theme.dart
+```
+
+```dart
+// In your Flutter app:
+import 'salt_theme.dart';
+
+Container(color: SaltTheme.primary)
+isDark ? SaltTheme.primaryDark : SaltTheme.primary
+SizedBox(height: SaltTheme.spacingMd)
+```
+
+Light colors use plain names; dark colors add a `Dark` suffix. Tokens are `static const double` / `static const int` constants. `className` option customizes the class name.
+
+---
+
+## SwiftUI
+
+```ts
+import { generateSwiftUITheme } from 'salt-theme-gen';
+
+const { swift } = generateSwiftUITheme(theme);
+// Write to SaltTheme.swift
+```
+
+```swift
+// In your SwiftUI app:
+import SaltTheme
+
+Text("Hello")
+    .foregroundColor(SaltTheme.Colors.primary)
+    .padding(SaltTheme.Tokens.spacingMd)
+```
+
+Organized as `SaltTheme.Colors.*` (light + `Dark` suffix) and `SaltTheme.Tokens.*` (`CGFloat`/`Font.Weight`). `enumName` option customizes the enum name.
 
 ---
 
@@ -315,8 +461,15 @@ const warnings = tokenWarnings.filter(w => w.severity === 'warning');
 |----------|-------------|
 | `generateTheme` | Main entry point — one color → full theme |
 | `generateCssVariables` | CSS custom properties (hex / oklch / both) |
+| `generateScssVariables` | SCSS variables — light + dark with `-dark` suffix |
 | `generateTailwindConfig` | Tailwind `theme.extend` object |
+| `shadcnTheme` | One-call shadcn/ui CSS (Tailwind v4) |
+| `generateShadcnTheme` | shadcn/ui CSS from an existing `GeneratedTheme` |
+| `generatePandaConfig` | Panda CSS `tokens` + `semanticTokens` |
 | `generateDtcgTokens` | W3C Design Tokens (DTCG) export |
+| `generateFigmaVariables` | Figma Variables API payload (PATCH `/v1/files/:id/variables`) |
+| `generateFlutterTheme` | Flutter/Dart constants class |
+| `generateSwiftUITheme` | SwiftUI constants enum |
 | `resolveTextStyle` | Convert `TypographyStyle` to React Native `StyleSheet` values |
 | `generateTonalPalette` | 11-step tonal scale for any color |
 | `generateTonalPalettes` | All 8 tonal palettes from a theme |
@@ -325,7 +478,7 @@ const warnings = tokenWarnings.filter(w => w.severity === 'warning');
 | `adjustTheme` | Post-generation color and token overrides |
 | `diffTheme` | Structured comparison of two themes |
 | `parseThemeJSON` | Runtime validation for deserialized themes |
-| `deriveColors` | 23 semantic colors from a primary |
+| `deriveColors` | 26 semantic colors from a primary |
 | `deriveSurfaceElevation` | 4 elevation levels |
 | `resolveHarmonyAccents` | Hue offsets for harmony strategies |
 | `deriveOnColor` | WCAG AA foreground for a background |
@@ -349,11 +502,11 @@ const warnings = tokenWarnings.filter(w => w.severity === 'warning');
 
 ### Types
 
-`GeneratedTheme` · `GeneratedThemeColors` · `GeneratedThemeTokens` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `TypographyStyle` · `TypographyScale` · `LineHeightScale` · `FontWeightScale` · `LetterSpacingScale` · `FontWeight` · `FontScaleName` · `FontFamilyOptions` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `TailwindThemeExtend` · `TailwindConfigResult` · `TailwindTypographyTuple` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `RNTextStyle` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `IconSizeScale` · `SemanticIconSizes` · `ControlSizeScale` · `TouchTargetScale` · `BorderWidthScale` · `AvatarSizeScale` · `BreakpointScale` · `ThemeOverrides` · `ThemeColorOverrides` · `ThemeTokenOverrides` · `ThemeDiff` · `ThemeColorsDiff` · `ThemeTokensDiff` · `ThemeModeDiff` · `FieldChange<T>` · `TokenWarning` · `ParseThemeResult` · `SchemaVersion` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
+`GeneratedTheme` · `GeneratedThemeColors` · `GeneratedThemeTokens` · `GenerateThemeOptions` · `SemanticColors` · `StateColors` · `IntentStates` · `SurfaceElevation` · `TonalPalette` · `TonalPalettes` · `TonalPaletteKey` · `TonalStep` · `TypographyStyle` · `TypographyScale` · `LineHeightScale` · `FontWeightScale` · `LetterSpacingScale` · `FontWeight` · `FontScaleName` · `FontFamilyOptions` · `AccessibilityReport` · `ContrastEntry` · `APCAReport` · `APCAEntry` · `APCALevel` · `CssFormat` · `CssVariablesOptions` · `CssVariablesResult` · `ScssVariablesOptions` · `ScssVariablesResult` · `ShadcnBaseColor` · `ShadcnThemeOptions` · `ShadcnThemeResult` · `ShadcnOneCallOptions` · `TailwindThemeExtend` · `TailwindConfigResult` · `TailwindTypographyTuple` · `PandaToken` · `PandaSemanticColor` · `PandaBaseTokens` · `PandaSemanticTokens` · `PandaConfigOptions` · `PandaConfigResult` · `DtcgToken` · `DtcgColorToken` · `DtcgDimensionToken` · `DtcgGroup` · `DtcgTokensResult` · `FigmaRGBA` · `FigmaColorValue` · `FigmaFloatValue` · `FigmaStringValue` · `FigmaVariableValue` · `FigmaVariable` · `FigmaVariableMode` · `FigmaVariableCollection` · `FigmaVariablesPayload` · `FigmaVariablesOptions` · `FigmaVariablesResult` · `FlutterThemeOptions` · `FlutterThemeResult` · `SwiftUIThemeOptions` · `SwiftUIThemeResult` · `RNTextStyle` · `ColorBlindnessType` · `ColorHarmony` · `ThemePreset` · `SpacingPreset` · `FontSizePreset` · `RadiusPreset` · `SpacingScale` · `RadiusScale` · `FontSizeScale` · `IconSizeScale` · `SemanticIconSizes` · `ControlSizeScale` · `TouchTargetScale` · `BorderWidthScale` · `AvatarSizeScale` · `BreakpointScale` · `ThemeOverrides` · `ThemeColorOverrides` · `ThemeTokenOverrides` · `ThemeDiff` · `ThemeColorsDiff` · `ThemeTokensDiff` · `ThemeModeDiff` · `FieldChange<T>` · `TokenWarning` · `ParseThemeResult` · `SchemaVersion` · `Version` · `DeriveColorsOptions` · `HarmonyAccents` · `RGB` · `OKLCH` · `Oklab`
 
 ### Constants
 
-`SCHEMA_VERSION` · `NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS` · `DEFAULT_ICON_SIZES` · `DEFAULT_SEMANTIC_ICON_SIZES` · `DEFAULT_CONTROL_SIZES` · `DEFAULT_TOUCH_TARGETS` · `DEFAULT_BORDER_WIDTHS` · `DEFAULT_AVATAR_SIZES` · `DEFAULT_BREAKPOINTS` · `FONT_SCALE_RATIOS` · `DEFAULT_LINE_HEIGHTS` · `DEFAULT_FONT_WEIGHTS` · `DEFAULT_LETTER_SPACINGS`
+`SCHEMA_VERSION` · `VERSION` · `NATURE_PRESETS` · `SPACING_PRESETS` · `RADIUS_PRESETS` · `FONT_SIZE_PRESETS` · `DEFAULT_ICON_SIZES` · `DEFAULT_SEMANTIC_ICON_SIZES` · `DEFAULT_CONTROL_SIZES` · `DEFAULT_TOUCH_TARGETS` · `DEFAULT_BORDER_WIDTHS` · `DEFAULT_AVATAR_SIZES` · `DEFAULT_BREAKPOINTS` · `FONT_SCALE_RATIOS` · `DEFAULT_LINE_HEIGHTS` · `DEFAULT_FONT_WEIGHTS` · `DEFAULT_LETTER_SPACINGS`
 
 ---
 
