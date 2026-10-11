@@ -1,5 +1,6 @@
 import { hexToOklch } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeColors, TonalStep } from "./types.js";
+import { generateTheme } from "./generate-theme.js";
+import type { GeneratedTheme, GeneratedThemeColors, GenerateThemeOptions, TonalStep } from "./types.js";
 
 // ─── Public types ─────────────────────────────────────────────────────
 
@@ -307,6 +308,22 @@ const LAYER_BASE = `@layer base {
 }`;
 
 // ─── Public API ───────────────────────────────────────────────────────
+
+/** All generateTheme options plus shadcn-specific output options in one object. */
+export type ShadcnOneCallOptions = GenerateThemeOptions & ShadcnThemeOptions;
+
+/**
+ * One-call convenience: generate theme + shadcn CSS in a single step.
+ *
+ * @example
+ * shadcnTheme({ primary: "violet" })
+ * shadcnTheme({ primary: "#6366f1", baseColor: "zinc" })
+ * shadcnTheme({ preset: "peacock", baseColor: "mist", includePalettes: true })
+ */
+export function shadcnTheme(options?: ShadcnOneCallOptions): ShadcnThemeResult {
+  const { baseColor, includePalettes, ...themeOptions } = options ?? {};
+  return generateShadcnTheme(generateTheme(themeOptions), { baseColor, includePalettes });
+}
 
 export function generateShadcnTheme(
   theme: GeneratedTheme,

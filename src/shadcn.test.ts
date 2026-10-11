@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { generateTheme } from "./generate-theme.js";
-import { generateShadcnTheme } from "./shadcn.js";
+import { generateShadcnTheme, shadcnTheme } from "./shadcn.js";
 import type { ShadcnBaseColor, ShadcnThemeResult } from "./shadcn.js";
 
 const CORE_SHADCN_TOKENS = [
@@ -302,5 +302,49 @@ describe("generateShadcnTheme — baseColor option", () => {
     const zincBorder  = zinc.match(/--border: (oklch\([^)]+\))/)?.[1];
     const stoneBorder = stone.match(/--border: (oklch\([^)]+\))/)?.[1];
     expect(zincBorder).not.toBe(stoneBorder);
+  });
+});
+
+describe("shadcnTheme — one-call API", () => {
+  it("produces same output as generateTheme + generateShadcnTheme", () => {
+    const theme = generateTheme({ preset: "peacock" });
+    const twoStep = generateShadcnTheme(theme);
+    const oneCall = shadcnTheme({ preset: "peacock" });
+    expect(oneCall.css).toBe(twoStep.css);
+  });
+
+  it("accepts hex color string", () => {
+    const { css } = shadcnTheme({ primary: "#6366f1" });
+    expect(css).toContain("@theme inline");
+    expect(css).toContain("--primary:");
+  });
+
+  it("accepts CSS named color", () => {
+    const { css } = shadcnTheme({ primary: "violet" });
+    expect(css).toContain("--primary:");
+  });
+
+  it("accepts baseColor option", () => {
+    const withBase = shadcnTheme({ primary: "#6366f1", baseColor: "zinc" });
+    expect(withBase.light).toContain("--background: oklch(0.990 0.004 240.000)");
+  });
+
+  it("accepts includePalettes option", () => {
+    const { light } = shadcnTheme({ preset: "ocean", includePalettes: true });
+    expect(light).toContain("--palette-primary-50:");
+  });
+
+  it("no options uses default theme", () => {
+    const { css } = shadcnTheme();
+    expect(css).toContain("@theme inline");
+    expect(css).toContain(":root {");
+  });
+
+  it("all generateTheme options pass through (spacing, radius, harmony, etc.)", () => {
+    const direct = generateShadcnTheme(
+      generateTheme({ preset: "aurora", radius: "rounded", harmony: "triadic" })
+    );
+    const oneCall = shadcnTheme({ preset: "aurora", radius: "rounded", harmony: "triadic" });
+    expect(oneCall.css).toBe(direct.css);
   });
 });
