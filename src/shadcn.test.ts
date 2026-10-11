@@ -1,0 +1,306 @@
+import { describe, it, expect, beforeAll } from "vitest";
+import { generateTheme } from "./generate-theme.js";
+import { generateShadcnTheme } from "./shadcn.js";
+import type { ShadcnBaseColor, ShadcnThemeResult } from "./shadcn.js";
+
+const CORE_SHADCN_TOKENS = [
+  "--background", "--foreground",
+  "--card", "--card-foreground",
+  "--popover", "--popover-foreground",
+  "--primary", "--primary-foreground",
+  "--secondary", "--secondary-foreground",
+  "--muted", "--muted-foreground",
+  "--accent", "--accent-foreground",
+  "--destructive", "--destructive-foreground",
+  "--border", "--input", "--ring",
+  "--chart-1", "--chart-2", "--chart-3", "--chart-4", "--chart-5",
+  "--sidebar", "--sidebar-foreground",
+  "--sidebar-primary", "--sidebar-primary-foreground",
+  "--sidebar-accent", "--sidebar-accent-foreground",
+  "--sidebar-border", "--sidebar-ring",
+];
+
+const SALT_EXTENSION_TOKENS = [
+  "--success", "--success-foreground",
+  "--warning", "--warning-foreground",
+  "--info", "--info-foreground",
+  "--quaternary", "--quaternary-foreground",
+];
+
+const INTENTS = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
+const STATES  = ["hover", "pressed", "focused", "disabled"] as const;
+
+describe("generateShadcnTheme — structure", () => {
+  let result: ShadcnThemeResult;
+
+  beforeAll(() => {
+    const theme = generateTheme({ preset: "peacock" });
+    result = generateShadcnTheme(theme);
+  });
+
+  it("css contains @theme inline block", () => {
+    expect(result.css).toContain("@theme inline {");
+  });
+
+  it("css contains :root block", () => {
+    expect(result.css).toContain(":root {");
+  });
+
+  it("css contains .dark block", () => {
+    expect(result.css).toContain(".dark {");
+  });
+
+  it("css contains @layer base block", () => {
+    expect(result.css).toContain("@layer base {");
+  });
+
+  it("sections appear in correct order: @theme inline → :root → .dark → @layer base", () => {
+    const ti = result.css.indexOf("@theme inline");
+    const root = result.css.indexOf(":root {");
+    const dark = result.css.indexOf(".dark {");
+    const base = result.css.indexOf("@layer base");
+    expect(ti).toBeLessThan(root);
+    expect(root).toBeLessThan(dark);
+    expect(dark).toBeLessThan(base);
+  });
+});
+
+describe("generateShadcnTheme — light declarations", () => {
+  let result: ShadcnThemeResult;
+
+  beforeAll(() => {
+    const theme = generateTheme({ preset: "ocean" });
+    result = generateShadcnTheme(theme);
+  });
+
+  it("light contains --radius in rem", () => {
+    expect(result.light).toMatch(/--radius:\s*[\d.]+rem/);
+  });
+
+  it("dark does not contain --radius", () => {
+    expect(result.dark).not.toContain("--radius:");
+  });
+
+  it("light contains all 34 core shadcn tokens", () => {
+    for (const token of CORE_SHADCN_TOKENS) {
+      expect(result.light).toContain(`${token}:`);
+    }
+  });
+
+  it("light contains all 8 salt extension tokens", () => {
+    for (const token of SALT_EXTENSION_TOKENS) {
+      expect(result.light).toContain(`${token}:`);
+    }
+  });
+
+  it("light contains all 32 intent state tokens", () => {
+    for (const intent of INTENTS) {
+      for (const state of STATES) {
+        expect(result.light).toContain(`--${intent}-${state}:`);
+      }
+    }
+  });
+
+  it("light values use oklch decimal format (no percentages, no hex)", () => {
+    // Every oklch value should be decimal form: oklch(0.xxx 0.xxx 0.xxx)
+    const colorLines = result.light
+      .split("\n")
+      .filter((l) => l.includes("oklch("));
+    expect(colorLines.length).toBeGreaterThan(0);
+    for (const line of colorLines) {
+      // Decimal form: L is 0.xxx (not 0.xxx%)
+      expect(line).toMatch(/oklch\(\d+\.\d+ \d+\.\d+ \d+\.\d+\)/);
+      expect(line).not.toContain("%");
+    }
+  });
+});
+
+describe("generateShadcnTheme — dark declarations", () => {
+  let result: ShadcnThemeResult;
+  let lightResult: ShadcnThemeResult;
+
+  beforeAll(() => {
+    const theme = generateTheme({ preset: "forest" });
+    result = generateShadcnTheme(theme);
+    lightResult = result;
+  });
+
+  it("dark contains all 34 core shadcn tokens", () => {
+    for (const token of CORE_SHADCN_TOKENS) {
+      expect(result.dark).toContain(`${token}:`);
+    }
+  });
+
+  it("dark background differs from light background", () => {
+    const lightBg = result.light.match(/--background: (oklch\([^)]+\))/)?.[1];
+    const darkBg  = result.dark.match(/--background: (oklch\([^)]+\))/)?.[1];
+    expect(lightBg).toBeDefined();
+    expect(darkBg).toBeDefined();
+    expect(lightBg).not.toBe(darkBg);
+  });
+
+  it("dark primary differs from light primary", () => {
+    const lightP = result.light.match(/--primary: (oklch\([^)]+\))/)?.[1];
+    const darkP  = result.dark.match(/--primary: (oklch\([^)]+\))/)?.[1];
+    expect(lightP).not.toBe(darkP);
+  });
+});
+
+describe("generateShadcnTheme — @theme inline", () => {
+  let result: ShadcnThemeResult;
+
+  beforeAll(() => {
+    const theme = generateTheme({ primary: "#6366f1" });
+    result = generateShadcnTheme(theme);
+  });
+
+  it("@theme inline maps all core tokens via var()", () => {
+    for (const token of CORE_SHADCN_TOKENS) {
+      expect(result.css).toContain(`--color-${token.slice(2)}: var(${token});`);
+    }
+  });
+
+  it("@theme inline contains radius scale with calc() multipliers", () => {
+    expect(result.css).toContain("--radius-sm:  calc(var(--radius) * 0.6);");
+    expect(result.css).toContain("--radius-lg:  var(--radius);");
+    expect(result.css).toContain("--radius-4xl: calc(var(--radius) * 2.6);");
+  });
+
+  it("@theme inline maps salt extension tokens", () => {
+    for (const token of SALT_EXTENSION_TOKENS) {
+      expect(result.css).toContain(`--color-${token.slice(2)}: var(${token});`);
+    }
+  });
+
+  it("@theme inline maps all 32 state tokens", () => {
+    for (const intent of INTENTS) {
+      for (const state of STATES) {
+        expect(result.css).toContain(`--color-${intent}-${state}: var(--${intent}-${state});`);
+      }
+    }
+  });
+
+  it("@theme inline does NOT contain actual color values (only var() refs)", () => {
+    const inlineBlock = result.css.slice(
+      result.css.indexOf("@theme inline"),
+      result.css.indexOf(":root {")
+    );
+    expect(inlineBlock).not.toContain("oklch(");
+  });
+});
+
+describe("generateShadcnTheme — includePalettes option", () => {
+  it("palettes absent by default", () => {
+    const theme = generateTheme({ preset: "peacock" });
+    const result = generateShadcnTheme(theme);
+    expect(result.light).not.toContain("--palette-primary-50:");
+    expect(result.css).not.toContain("--color-palette-primary-50:");
+  });
+
+  it("palettes present when includePalettes: true", () => {
+    const theme = generateTheme({ preset: "peacock" });
+    const result = generateShadcnTheme(theme, { includePalettes: true });
+    expect(result.light).toContain("--palette-primary-50:");
+    expect(result.light).toContain("--palette-primary-950:");
+    expect(result.dark).toContain("--palette-primary-50:");
+    expect(result.css).toContain("--color-palette-primary-50: var(--palette-primary-50);");
+  });
+
+  it("includePalettes emits all 8 × 11 = 88 palette vars per mode", () => {
+    const theme = generateTheme({ preset: "peacock" });
+    const result = generateShadcnTheme(theme, { includePalettes: true });
+    const lightMatches = result.light.match(/--palette-/g) ?? [];
+    expect(lightMatches).toHaveLength(88);
+  });
+});
+
+describe("generateShadcnTheme — css string assembly", () => {
+  it("css is a single string containing all sections", () => {
+    const theme = generateTheme({ preset: "desert" });
+    const { css, light, dark } = generateShadcnTheme(theme);
+    expect(typeof css).toBe("string");
+    expect(css.length).toBeGreaterThan(0);
+    // light and dark declarations should be substrings of css
+    expect(css).toContain(light.split("\n")[1]); // second line of light decls
+    expect(css).toContain(dark.split("\n")[0]);  // first line of dark decls
+  });
+
+  it("produces consistent output for same theme", () => {
+    const theme = generateTheme({ primary: "#3b82f6" });
+    const r1 = generateShadcnTheme(theme);
+    const r2 = generateShadcnTheme(theme);
+    expect(r1.css).toBe(r2.css);
+  });
+});
+
+describe("generateShadcnTheme — baseColor option", () => {
+  const theme = generateTheme({ preset: "peacock" });
+
+  it("no baseColor: --background derives from salt theme (tinted by primary hue)", () => {
+    const { light } = generateShadcnTheme(theme);
+    // With no baseColor, background comes from salt's butterfly derivation
+    expect(light).toContain("--background:");
+  });
+
+  it("baseColor: neutral produces near-gray background (C ≈ 0)", () => {
+    const { light } = generateShadcnTheme(theme, { baseColor: "neutral" });
+    // neutral has chroma=0, so the oklch value should have 0.000 chroma
+    expect(light).toMatch(/--background: oklch\(0\.990 0\.000 0\.000\)/);
+  });
+
+  it("baseColor: zinc produces cool-tinted neutrals (H ≈ 240)", () => {
+    const { light } = generateShadcnTheme(theme, { baseColor: "zinc" });
+    expect(light).toContain("--background: oklch(0.990 0.004 240.000)");
+  });
+
+  it("baseColor: mauve produces purple-tinted neutrals (H ≈ 300)", () => {
+    const { light } = generateShadcnTheme(theme, { baseColor: "mauve" });
+    expect(light).toContain("--background: oklch(0.990 0.006 300.000)");
+  });
+
+  it("baseColor does NOT affect --primary", () => {
+    const noBase  = generateShadcnTheme(theme).light;
+    const withBase = generateShadcnTheme(theme, { baseColor: "zinc" }).light;
+    const primaryNoBase  = noBase.match(/--primary: (oklch\([^)]+\))/)?.[1];
+    const primaryWithBase = withBase.match(/--primary: (oklch\([^)]+\))/)?.[1];
+    expect(primaryNoBase).toBe(primaryWithBase);
+  });
+
+  it("baseColor does NOT affect --destructive", () => {
+    const noBase   = generateShadcnTheme(theme).light;
+    const withBase = generateShadcnTheme(theme, { baseColor: "stone" }).light;
+    const d1 = noBase.match(/--destructive: (oklch\([^)]+\))/)?.[1];
+    const d2 = withBase.match(/--destructive: (oklch\([^)]+\))/)?.[1];
+    expect(d1).toBe(d2);
+  });
+
+  it("baseColor does NOT affect state tokens", () => {
+    const noBase   = generateShadcnTheme(theme).light;
+    const withBase = generateShadcnTheme(theme, { baseColor: "taupe" }).light;
+    const s1 = noBase.match(/--primary-hover: (oklch\([^)]+\))/)?.[1];
+    const s2 = withBase.match(/--primary-hover: (oklch\([^)]+\))/)?.[1];
+    expect(s1).toBe(s2);
+  });
+
+  it("dark mode baseColor uses darker neutral lightness values", () => {
+    const { dark } = generateShadcnTheme(theme, { baseColor: "zinc" });
+    expect(dark).toContain("--background: oklch(0.145 0.006 240.000)");
+  });
+
+  it("all 7 base color presets produce valid output", () => {
+    const bases: ShadcnBaseColor[] = ["neutral", "zinc", "stone", "mauve", "olive", "mist", "taupe"];
+    for (const baseColor of bases) {
+      const { css } = generateShadcnTheme(theme, { baseColor });
+      expect(css).toContain("@theme inline");
+      expect(css).toContain("--background:");
+    }
+  });
+
+  it("different base colors produce different --border values", () => {
+    const zinc  = generateShadcnTheme(theme, { baseColor: "zinc" }).light;
+    const stone = generateShadcnTheme(theme, { baseColor: "stone" }).light;
+    const zincBorder  = zinc.match(/--border: (oklch\([^)]+\))/)?.[1];
+    const stoneBorder = stone.match(/--border: (oklch\([^)]+\))/)?.[1];
+    expect(zincBorder).not.toBe(stoneBorder);
+  });
+});
