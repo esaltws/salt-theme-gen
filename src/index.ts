@@ -108,6 +108,8 @@ export { generateTonalPalette, generateTonalPalettes } from "./palettes.js";
 // ─── CSS Custom Property Output ──────────────────────────────────────
 export { generateCssVariables } from "./css-variables.js";
 export type { CssFormat, CssVariablesOptions, CssVariablesResult } from "./css-variables.js";
+export { generateScssVariables } from "./scss.js";
+export type { ScssVariablesOptions, ScssVariablesResult } from "./scss.js";
 export { generateShadcnTheme, shadcnTheme } from "./shadcn.js";
 export type { ShadcnBaseColor, ShadcnThemeOptions, ShadcnThemeResult, ShadcnOneCallOptions } from "./shadcn.js";
 
