@@ -364,7 +364,7 @@ export type GeneratedThemeTokens = {
 export const SCHEMA_VERSION = "2.0" as const;
 export type SchemaVersion = typeof SCHEMA_VERSION;
 
-export const VERSION = "2.0.0-rc.2" as const;
+export const VERSION = "2.0.0-rc.3" as const;
 export type Version = typeof VERSION;
 
 export type GeneratedTheme = {

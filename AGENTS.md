@@ -145,7 +145,7 @@ type GeneratedThemeTokens = {
 - `controlSizes` is canonical — `sizeMap` and `dimensions` were deleted in v2.0.0.
 - `generateCssVariables` `fluidTypography` defaults to `false` — opt in explicitly.
 - `parseThemeJSON` returns `{ theme, tokenWarnings }` — not a bare `GeneratedTheme`.
-- `schemaVersion: "2.0"` is stamped on every `GeneratedTheme` by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`. `parseThemeJSON` validates it first — missing or wrong version throws before any other check. `SCHEMA_VERSION` constant, `SchemaVersion` type, `VERSION` constant (`"2.0.0-rc.2"`), and `Version` type are exported from `index.ts`.
+- `schemaVersion: "2.0"` is stamped on every `GeneratedTheme` by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`. `parseThemeJSON` validates it first — missing or wrong version throws before any other check. `SCHEMA_VERSION` constant, `SchemaVersion` type, `VERSION` constant (`"2.0.0-rc.3"`), and `Version` type are exported from `index.ts`.
 - All generated file outputs (CSS, SCSS, Dart, Swift, DTCG JSON) include a generation header with function name, primary seed, non-default options, and ISO timestamp.
 
 ---
