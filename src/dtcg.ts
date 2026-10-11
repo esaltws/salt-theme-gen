@@ -1,4 +1,5 @@
 import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens } from "./types.js";
+import { buildJsonDescription } from "./file-header.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -214,5 +215,6 @@ function buildMode(colors: GeneratedThemeColors, tokens: GeneratedThemeTokens): 
 export function generateDtcgTokens(theme: GeneratedTheme): DtcgTokensResult {
   const light = buildMode(theme.light, theme.tokens);
   const dark  = buildMode(theme.dark,  theme.tokens);
-  return { light, dark, json: JSON.stringify({ light, dark }, null, 2) };
+  const $description = buildJsonDescription("generateDtcgTokens", theme.light.colors.primary);
+  return { light, dark, json: JSON.stringify({ $description, light, dark }, null, 2) };
 }

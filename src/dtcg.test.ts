@@ -373,6 +373,15 @@ describe("generateDtcgTokens — light/dark/json", () => {
     expect(parsed.dark).toEqual(dark);
   });
 
+  it("json contains $description with generation metadata", () => {
+    const parsed = JSON.parse(json);
+    expect(typeof parsed.$description).toBe("string");
+    expect(parsed.$description).toContain("salt-theme-gen");
+    expect(parsed.$description).toContain("generateDtcgTokens");
+    expect(parsed.$description).toContain("Primary: #");
+    expect(parsed.$description).toMatch(/20\d\d-\d\d-\d\dT/);
+  });
+
   it("all presets produce valid token trees", () => {
     const presets = ["peacock", "ocean", "forest", "sunset", "midnight"] as const;
     for (const preset of presets) {

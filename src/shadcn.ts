@@ -1,6 +1,7 @@
 import { hexToOklch } from "./color-math.js";
 import { generateTheme } from "./generate-theme.js";
 import type { GeneratedTheme, GeneratedThemeColors, GenerateThemeOptions, TonalStep } from "./types.js";
+import { buildCssHeader } from "./file-header.js";
 
 // ─── Public types ─────────────────────────────────────────────────────
 
@@ -351,7 +352,11 @@ export function generateShadcnTheme(
   const rootBlock   = `:root {\n${ind(lightDecls)}\n}`;
   const darkBlock   = `.dark {\n${ind(darkDecls)}\n}`;
 
-  const css = [DARK_VARIANT, themeInline, rootBlock, darkBlock, LAYER_BASE].join("\n\n");
+  const body = [DARK_VARIANT, themeInline, rootBlock, darkBlock, LAYER_BASE].join("\n\n");
+  const header = buildCssHeader("generateShadcnTheme", theme.light.colors.primary, {
+    baseColor:       options?.baseColor,
+    includePalettes: options?.includePalettes || undefined,
+  });
 
-  return { css, light, dark };
+  return { css: header + body, light, dark };
 }

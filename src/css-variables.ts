@@ -1,5 +1,6 @@
 import { hexToOklch } from "./color-math.js";
 import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, TypographyStyle } from "./types.js";
+import { buildCssHeader } from "./file-header.js";
 
 // ─── Public Types ────────────────────────────────────────────────────
 
@@ -284,5 +285,13 @@ export function generateCssVariables(
     ].join("\n\n");
   }
 
-  return { css, light, dark, classes: buildTypographyClasses(p) };
+  const header = buildCssHeader("generateCssVariables", theme.light.colors.primary, {
+    format:           format    !== "hex"              ? format    : undefined,
+    lightSelector:    lightSel  !== ":root"            ? lightSel  : undefined,
+    darkSelector:     darkSel   !== "[data-theme='dark']" ? darkSel : undefined,
+    prefix:           prefix    !== "salt"             ? prefix    : undefined,
+    fluidTypography:  fluid                            ? fluid     : undefined,
+  });
+
+  return { css: header + css, light, dark, classes: buildTypographyClasses(p) };
 }
