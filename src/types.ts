@@ -160,6 +160,8 @@ export type SemanticColors = {
   text: string;
   muted: string;
   border: string;
+  input: string;
+  ring: string;
   danger: string;
   success: string;
   warning: string;
@@ -170,6 +172,7 @@ export type SemanticColors = {
   onQuaternary: string;
   onBackground: string;
   onSurface: string;
+  onMuted: string;
   onDanger: string;
   onSuccess: string;
   onWarning: string;
@@ -218,7 +221,7 @@ export type TonalPalettes = Record<TonalPaletteKey, TonalPalette>;
 
 export type BaseColorKey =
   | "primary" | "secondary" | "tertiary" | "quaternary"
-  | "background" | "surface" | "text" | "muted" | "border"
+  | "background" | "surface" | "text" | "muted" | "border" | "input" | "ring"
   | "danger" | "success" | "warning" | "info";
 
 export type BaseColorOverride = Partial<Record<BaseColorKey, string>>;
@@ -272,6 +275,7 @@ export type AccessibilityReport = {
   onQuaternaryOnQuaternary: ContrastEntry;
   onBackgroundOnBackground: ContrastEntry;
   onSurfaceOnSurface: ContrastEntry;
+  onMutedOnMuted: ContrastEntry;
   onDangerOnDanger: ContrastEntry;
   onSuccessOnSuccess: ContrastEntry;
   onWarningOnWarning: ContrastEntry;
@@ -311,6 +315,7 @@ export type APCAReport = {
   onQuaternaryOnQuaternary: APCAEntry;
   onBackgroundOnBackground: APCAEntry;
   onSurfaceOnSurface: APCAEntry;
+  onMutedOnMuted: APCAEntry;
   onDangerOnDanger: APCAEntry;
   onSuccessOnSuccess: APCAEntry;
   onWarningOnWarning: APCAEntry;

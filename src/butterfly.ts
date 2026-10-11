@@ -109,6 +109,8 @@ const LIGHT_RULES: Record<string, DerivationRule> = {
   text:       { L: 0.13,  C: (p) => p.C * 0.05, H: (p) => p.H },
   muted:      { L: 0.55,  C: (p) => p.C * 0.12, H: (p) => p.H },
   border:     { L: 0.88,  C: (p) => p.C * 0.05, H: (p) => p.H },
+  input:      { L: 0.82,  C: (p) => p.C * 0.06, H: (p) => p.H },
+  ring:       { L: (p) => adaptiveL(0.48, p.H), C: (p) => p.C, H: (p) => p.H },
   danger:     { L: 0.55,  C: 0.18,              H: 25 },
   success:    { L: 0.55,  C: 0.16,              H: 145 },
   warning:    { L: 0.62,  C: 0.16,              H: 80 },
@@ -124,6 +126,8 @@ const DARK_RULES: Record<string, DerivationRule> = {
   text:       { L: 0.97,  C: (p) => p.C * 0.03, H: (p) => p.H },
   muted:      { L: 0.65,  C: (p) => p.C * 0.12, H: (p) => p.H },
   border:     { L: 0.30,  C: (p) => p.C * 0.05, H: (p) => p.H },
+  input:      { L: 0.36,  C: (p) => p.C * 0.06, H: (p) => p.H },
+  ring:       { L: (p) => adaptiveL(0.80, p.H, 0.04), C: (p) => p.C, H: (p) => p.H },
   danger:     { L: 0.72,  C: 0.16,              H: 25 },
   success:    { L: 0.72,  C: 0.14,              H: 145 },
   warning:    { L: 0.75,  C: 0.14,              H: 80 },
@@ -223,21 +227,23 @@ export function deriveColors(
   for (const key of autoCorrectKeys) {
     base[key] = autoCorrectContrast(base[key], base.background, 4.5);
   }
-  // Auto-correct muted at 3.0:1 (large text / UI element threshold)
+  // Auto-correct muted and ring at 3.0:1 (non-text / UI element threshold)
   base.muted = autoCorrectContrast(base.muted, base.background, 3.0);
+  base.ring  = autoCorrectContrast(base.ring,  base.background, 3.0);
 
   // Apply explicit overrides (user intent wins — no auto-correction)
   if (opts.secondary) base.secondary = opts.secondary;
   if (opts.tertiary) base.tertiary = opts.tertiary;
   if (opts.quaternary) base.quaternary = opts.quaternary;
 
-  // Derive 10 "on" colors with WCAG auto-correction
+  // Derive 11 "on" colors with WCAG auto-correction
   const onPrimary    = deriveOnColor(base.primary);
   const onSecondary  = deriveOnColor(base.secondary);
   const onTertiary   = deriveOnColor(base.tertiary);
   const onQuaternary = deriveOnColor(base.quaternary);
   const onBackground = deriveOnColor(base.background);
   const onSurface    = deriveOnColor(base.surface);
+  const onMuted      = deriveOnColor(base.muted);
   const onDanger     = deriveOnColor(base.danger);
   const onSuccess    = deriveOnColor(base.success);
   const onWarning    = deriveOnColor(base.warning);
@@ -253,6 +259,8 @@ export function deriveColors(
     text: base.text,
     muted: base.muted,
     border: base.border,
+    input: base.input,
+    ring: base.ring,
     danger: base.danger,
     success: base.success,
     warning: base.warning,
@@ -263,6 +271,7 @@ export function deriveColors(
     onQuaternary,
     onBackground,
     onSurface,
+    onMuted,
     onDanger,
     onSuccess,
     onWarning,

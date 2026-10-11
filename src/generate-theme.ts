@@ -34,11 +34,11 @@ import type {
 
 const ALL_BASE_KEYS: BaseColorKey[] = [
   "primary", "secondary", "tertiary", "quaternary",
-  "background", "surface", "text", "muted", "border",
+  "background", "surface", "text", "muted", "border", "input", "ring",
   "danger", "success", "warning", "info",
 ];
 
-// The 8 base→on pairs (must re-derive on-colors after overrides settle)
+// The 9 base→on pairs (must re-derive on-colors after overrides settle)
 const BASE_TO_ON: [BaseColorKey, keyof SemanticColors][] = [
   ["primary",    "onPrimary"],
   ["secondary",  "onSecondary"],
@@ -46,6 +46,7 @@ const BASE_TO_ON: [BaseColorKey, keyof SemanticColors][] = [
   ["quaternary", "onQuaternary"],
   ["background", "onBackground"],
   ["surface",    "onSurface"],
+  ["muted",      "onMuted"],
   ["danger",     "onDanger"],
   ["success",    "onSuccess"],
   ["warning",    "onWarning"],
@@ -64,7 +65,8 @@ const WCAG_PAIRS: Partial<Record<BaseColorKey, number>> = {
   info:       4.5,
   text:       4.5,
   muted:      3.0, // large text / UI element threshold
-  // background, surface, border → no check (these are backgrounds/non-text)
+  ring:       3.0, // focus indicator (WCAG 2.4.11 non-text contrast)
+  // background, surface, border, input → no check (these are backgrounds/non-text)
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────

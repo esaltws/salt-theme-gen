@@ -7,9 +7,9 @@ const HSL_RE = /^hsla?\(\s*-?[\d.]+[\s,][\s\S]*?\)/i;
 
 const SEMANTIC_COLOR_KEYS = [
   "primary", "secondary", "tertiary", "quaternary", "background", "surface", "text",
-  "muted", "border", "danger", "success", "warning", "info",
+  "muted", "border", "input", "ring", "danger", "success", "warning", "info",
   "onPrimary", "onSecondary", "onTertiary", "onQuaternary",
-  "onBackground", "onSurface",
+  "onBackground", "onSurface", "onMuted",
   "onDanger", "onSuccess", "onWarning", "onInfo",
 ] as const;
 
@@ -29,7 +29,7 @@ const BREAKPOINT_KEYS = ["sm", "md", "lg", "xl", "xxl"] as const;
 
 const BASE_COLOR_KEYS: BaseColorKey[] = [
   "primary", "secondary", "tertiary", "quaternary",
-  "background", "surface", "text", "muted", "border",
+  "background", "surface", "text", "muted", "border", "input", "ring",
   "danger", "success", "warning", "info",
 ];
 
@@ -51,7 +51,7 @@ const ACCESSIBILITY_KEYS = [
   "textOnBackground", "textOnSurface", "mutedOnBackground",
   "dangerOnBackground", "successOnBackground", "warningOnBackground", "infoOnBackground",
   "onPrimaryOnPrimary", "onSecondaryOnSecondary", "onTertiaryOnTertiary", "onQuaternaryOnQuaternary",
-  "onBackgroundOnBackground", "onSurfaceOnSurface",
+  "onBackgroundOnBackground", "onSurfaceOnSurface", "onMutedOnMuted",
   "onDangerOnDanger", "onSuccessOnSuccess", "onWarningOnWarning", "onInfoOnInfo",
   "textOnCard", "textOnElevated", "textOnModal", "textOnPopover",
 ] as const;

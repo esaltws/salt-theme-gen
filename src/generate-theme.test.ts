@@ -358,8 +358,8 @@ describe("generateTheme - output structure", () => {
     }
   });
 
-  it("accessibility object has 25 entries", () => {
-    expect(Object.keys(theme.light.accessibility)).toHaveLength(25);
+  it("accessibility object has 26 entries", () => {
+    expect(Object.keys(theme.light.accessibility)).toHaveLength(26);
   });
 
   it("all color values in output match hex format", () => {
@@ -577,6 +577,7 @@ describe("generateTheme - full-mode bypass", () => {
     primary: "#3498db", secondary: "#2ecc71", tertiary: "#e74c3c",
     quaternary: "#f39c12", background: "#ecf0f1", surface: "#ffffff",
     text: "#2c3e50", muted: "#7f8c8d", border: "#bdc3c7",
+    input: "#a5abb0", ring: "#2980b9",
     danger: "#c0392b", success: "#27ae60", warning: "#d4ac0d",
     info: "#2980b9",
   };
