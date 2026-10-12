@@ -1,7 +1,21 @@
 #!/usr/bin/env node
 /// <reference types="node" />
 
+import { parseArgs } from "node:util";
+import { writeFileSync } from "node:fs";
 import { VERSION } from "./types.js";
+import type { GenerateThemeOptions, GeneratedTheme, ColorHarmony, FontScaleName, ThemeWarning } from "./types.js";
+import { generateTheme } from "./generate-theme.js";
+import { generateCssVariables } from "./css-variables.js";
+import { generateScssVariables } from "./scss.js";
+import { generateShadcnTheme } from "./shadcn.js";
+import { generateTailwindConfig } from "./tailwind.js";
+import { generateDtcgTokens } from "./dtcg.js";
+import { generatePandaConfig } from "./panda.js";
+import { generateFigmaVariables } from "./figma.js";
+import { generateFlutterTheme } from "./flutter.js";
+import { generateSwiftUITheme } from "./swiftui.js";
+import { FONT_SCALE_RATIOS } from "./typography-utils.js";
 
 // ─── Output helpers ───────────────────────────────────────────────────
 
@@ -210,17 +224,203 @@ ThemeOverrides shape:
   }
 `;
 
+// ─── Shared format / mode constants ──────────────────────────────────
+
+const VALID_FORMATS = [
+  "json", "css", "scss", "tailwind", "dtcg", "shadcn", "panda", "figma", "flutter", "swiftui",
+] as const;
+type CliFormat = typeof VALID_FORMATS[number];
+
+const VALID_MODES = ["both", "light", "dark"] as const;
+type CliMode = typeof VALID_MODES[number];
+
+const VALID_HARMONIES: ColorHarmony[] = [
+  "analogous", "complementary", "triadic", "split-complementary", "tetradic", "monochromatic",
+];
+
+const VALID_SPACING  = ["compact", "default", "relaxed", "spacious"];
+const VALID_RADIUS   = ["sharp", "default", "rounded", "pill"];
+const VALID_FONTSIZE = ["small", "default", "large", "editorial"];
+const NAMED_FONT_SCALES = Object.keys(FONT_SCALE_RATIOS) as FontScaleName[];
+
+// ─── Shared output helpers ─────────────────────────────────────────────
+
+/** Render a GeneratedTheme into a string for the chosen format + mode. */
+function applyFormat(theme: GeneratedTheme, format: CliFormat, mode: CliMode): string {
+  switch (format) {
+    case "json":
+      return JSON.stringify(theme, null, 2);
+    case "css": {
+      const r = generateCssVariables(theme);
+      return mode === "light" ? r.light : mode === "dark" ? r.dark : r.css;
+    }
+    case "scss": {
+      const r = generateScssVariables(theme);
+      return mode === "light" ? r.light : mode === "dark" ? r.dark : r.scss;
+    }
+    case "tailwind": return generateTailwindConfig(theme).json;
+    case "dtcg":     return generateDtcgTokens(theme).json;
+    case "shadcn":   return generateShadcnTheme(theme).css;
+    case "panda":    return generatePandaConfig(theme).json;
+    case "figma":    return generateFigmaVariables(theme).json;
+    case "flutter":  return generateFlutterTheme(theme).dart;
+    case "swiftui":  return generateSwiftUITheme(theme).swift;
+  }
+}
+
+/** Write content to a file or stdout, ensuring a trailing newline. */
+function writeOutput(content: string, outFile?: string): void {
+  const payload = content.endsWith("\n") ? content : content + "\n";
+  if (outFile) {
+    try {
+      writeFileSync(outFile, payload, "utf8");
+    } catch (e) {
+      err(`salt-theme-gen: cannot write '${outFile}': ${(e as Error).message}\n`);
+      process.exit(1);
+    }
+  } else {
+    out(payload);
+  }
+}
+
+/** Print WCAG warnings from a generated theme to stderr. */
+function warnTheme(warnings: ThemeWarning[], quiet: boolean): void {
+  if (quiet || warnings.length === 0) return;
+  for (const w of warnings) {
+    const action = w.action === "corrected"
+      ? `corrected → ${w.finalValue}`
+      : `kept as ${w.value}`;
+    err(`warning [${w.mode}] ${w.key}: contrast ${w.ratio.toFixed(2)}:1 < ${w.required}:1 — ${action}\n`);
+  }
+}
+
+/**
+ * Thin parseArgs wrapper: catches unknown-option TypeErrors → exit 2.
+ * Returns a plain Record to sidestep parseArgs's complex conditional types.
+ */
+function cliParse(
+  argv: string[],
+  options: Record<string, { type: "string" | "boolean" }>,
+  allowPositionals = false,
+): Record<string, string | boolean | undefined> {
+  try {
+    return parseArgs({ args: argv, options, strict: true, allowPositionals })
+      .values as Record<string, string | boolean | undefined>;
+  } catch (e) {
+    die((e as Error).message);
+  }
+}
+
 // ─── Command registry ─────────────────────────────────────────────────
 
 const COMMANDS = ["generate", "export", "validate", "diff", "simulate", "adjust"] as const;
 type Command = typeof COMMANDS[number];
 
-// ─── Per-command stubs (replaced in Tasks 2–7) ───────────────────────
+// ─── generate ─────────────────────────────────────────────────────────
 
 function runGenerate(argv: string[]): void {
   if (hasHelp(argv)) { out(GENERATE_HELP); process.exit(0); }
-  notImplemented("generate");
+
+  const v = cliParse(argv, {
+    primary:      { type: "string" },
+    preset:       { type: "string" },
+    harmony:      { type: "string" },
+    spacing:      { type: "string" },
+    radius:       { type: "string" },
+    "font-size":  { type: "string" },
+    "base-font":  { type: "string" },
+    "font-scale": { type: "string" },
+    format:       { type: "string" },
+    mode:         { type: "string" },
+    out:          { type: "string" },
+    quiet:        { type: "boolean" },
+    silent:       { type: "boolean" },
+  });
+
+  const primary   = v["primary"]    as string | undefined;
+  const preset    = v["preset"]     as string | undefined;
+  const harmony   = v["harmony"]    as string | undefined;
+  const spacing   = v["spacing"]    as string | undefined;
+  const radius    = v["radius"]     as string | undefined;
+  const fontSize  = v["font-size"]  as string | undefined;
+  const rawBase   = v["base-font"]  as string | undefined;
+  const rawScale  = v["font-scale"] as string | undefined;
+  const rawFormat = (v["format"]    as string | undefined) ?? "json";
+  const rawMode   = (v["mode"]      as string | undefined) ?? "both";
+  const outFile   = v["out"]        as string | undefined;
+  const quiet     = v["quiet"] === true || v["silent"] === true;
+
+  // ── Validate color source ──
+  if (!primary && !preset) die("generate requires --primary <hex> or --preset <name>");
+  if (primary && preset)   die("--primary and --preset are mutually exclusive");
+
+  // ── Validate --format / --mode ──
+  if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
+    die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
+  }
+  if (!(VALID_MODES as readonly string[]).includes(rawMode)) {
+    die(`unknown mode '${rawMode}' — valid: both, light, dark`);
+  }
+  const format = rawFormat as CliFormat;
+  const mode   = rawMode   as CliMode;
+
+  // ── Validate generation options ──
+  if (harmony  && !VALID_HARMONIES.includes(harmony as ColorHarmony)) {
+    die(`unknown harmony '${harmony}' — valid: ${VALID_HARMONIES.join(", ")}`);
+  }
+  if (spacing  && !VALID_SPACING.includes(spacing)) {
+    die(`unknown spacing preset '${spacing}' — valid: ${VALID_SPACING.join(", ")}`);
+  }
+  if (radius   && !VALID_RADIUS.includes(radius)) {
+    die(`unknown radius preset '${radius}' — valid: ${VALID_RADIUS.join(", ")}`);
+  }
+  if (fontSize && !VALID_FONTSIZE.includes(fontSize)) {
+    die(`unknown font-size preset '${fontSize}' — valid: ${VALID_FONTSIZE.join(", ")}`);
+  }
+
+  let baseFont: number | undefined;
+  if (rawBase !== undefined) {
+    baseFont = Number(rawBase);
+    if (!Number.isFinite(baseFont)) die("--base-font must be a finite number");
+  }
+
+  let fontScale: number | FontScaleName | undefined;
+  if (rawScale !== undefined) {
+    const asNum = Number(rawScale);
+    if (Number.isFinite(asNum)) {
+      fontScale = asNum;
+    } else if (NAMED_FONT_SCALES.includes(rawScale as FontScaleName)) {
+      fontScale = rawScale as FontScaleName;
+    } else {
+      die(`unknown font scale '${rawScale}' — valid names: ${NAMED_FONT_SCALES.join(", ")}`);
+    }
+  }
+
+  // ── Build GenerateThemeOptions ──
+  const options: GenerateThemeOptions = {};
+  if (primary)              options.primary   = primary;
+  if (preset)               options.preset    = preset    as GenerateThemeOptions["preset"];
+  if (harmony)              options.harmony   = harmony   as ColorHarmony;
+  if (spacing)              options.spacing   = spacing   as GenerateThemeOptions["spacing"];
+  if (radius)               options.radius    = radius    as GenerateThemeOptions["radius"];
+  if (fontSize)             options.fontSize  = fontSize  as GenerateThemeOptions["fontSize"];
+  if (baseFont  !== undefined) options.baseFont  = baseFont;
+  if (fontScale !== undefined) options.fontScale = fontScale;
+
+  // ── Generate ──
+  let theme: GeneratedTheme;
+  try {
+    theme = generateTheme(options);
+  } catch (e) {
+    err(`salt-theme-gen: ${(e as Error).message}\n`);
+    process.exit(1);
+  }
+
+  if (theme.warnings) warnTheme(theme.warnings, quiet);
+  writeOutput(applyFormat(theme, format, mode), outFile);
 }
+
+// ─── export / validate / diff / simulate / adjust (Tasks 3–7) ────────
 
 function runExport(argv: string[]): void {
   if (hasHelp(argv)) { out(EXPORT_HELP); process.exit(0); }
