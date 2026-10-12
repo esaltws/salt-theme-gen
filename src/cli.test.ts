@@ -267,6 +267,16 @@ describe("export", () => {
     unlinkSync(bad);
   });
 
+  it("theme with token errors exits 1", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["export", bad, "--format", "css"]);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("error [token]");
+    unlinkSync(bad);
+  });
+
   it("export --help exits 0", () => {
     expect(cli(["export", "--help"]).status).toBe(0);
   });
@@ -376,6 +386,16 @@ describe("diff", () => {
     expect(r.stderr).toContain("requires <old> <new>");
   });
 
+  it("theme with token errors exits 1", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["diff", bad, themeFile]);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("error [token]");
+    unlinkSync(bad);
+  });
+
   it("diff --help exits 0", () => {
     expect(cli(["diff", "--help"]).status).toBe(0);
   });
@@ -435,6 +455,16 @@ describe("simulate", () => {
   it("no file and no --primary exits 2", () => {
     const r = cli(["simulate", "--type", "protanopia"]);
     expect(r.status).toBe(2);
+  });
+
+  it("theme with token errors exits 1", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["simulate", bad, "--type", "deuteranopia"]);
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("error [token]");
+    unlinkSync(bad);
   });
 
   it("simulate --help exits 0", () => {
@@ -515,6 +545,16 @@ describe("adjust", () => {
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("not valid JSON");
     unlinkSync(overrides);
+  });
+
+  it("theme with token errors exits 1", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["adjust", bad], { stdin: "{}" });
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("error [token]");
+    unlinkSync(bad);
   });
 
   it("adjust --help exits 0", () => {

@@ -444,7 +444,8 @@ function readInput(source: string): string {
 
 /**
  * Read, JSON-parse, and validate a GeneratedTheme from a file or stdin.
- * Prints token warnings to stderr. Exits 2 on I/O or JSON errors.
+ * Prints token diagnostics to stderr. Exits 2 on I/O or JSON errors.
+ * Exits 1 if any tokenWarnings have severity "error".
  */
 function loadTheme(source: string, quiet: boolean): GeneratedTheme {
   const raw = readInput(source);
@@ -457,10 +458,15 @@ function loadTheme(source: string, quiet: boolean): GeneratedTheme {
   }
   try {
     const { theme, tokenWarnings } = parseThemeJSON(parsed as object);
+    const errors   = tokenWarnings.filter(w => w.severity === "error");
+    const warnings = tokenWarnings.filter(w => w.severity === "warning");
     if (!quiet) {
-      for (const w of tokenWarnings) {
-        err(`warning [${w.severity}] ${w.path}: ${w.message}\n`);
-      }
+      for (const w of errors)   err(`error [token] ${w.path}: ${w.message}\n`);
+      for (const w of warnings) err(`warning [token] ${w.path}: ${w.message}\n`);
+    }
+    if (errors.length > 0) {
+      err(`salt-theme-gen: theme has ${errors.length} token error${errors.length === 1 ? "" : "s"} — refusing to process\n`);
+      process.exit(1);
     }
     return theme;
   } catch (e) {
