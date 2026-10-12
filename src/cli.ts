@@ -2,9 +2,15 @@
 /// <reference types="node" />
 
 import { parseArgs } from "node:util";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { VERSION } from "./types.js";
-import type { GenerateThemeOptions, GeneratedTheme, ColorHarmony, FontScaleName, ThemeWarning } from "./types.js";
+import type { GenerateThemeOptions, GeneratedTheme, ColorHarmony, FontScaleName, ThemeWarning, TokenWarning } from "./types.js";
+import { parseThemeJSON } from "./validate.js";
+import { adjustTheme } from "./adjust-theme.js";
+import type { ThemeOverrides } from "./adjust-theme.js";
+import { diffTheme } from "./diff-theme.js";
+import { simulateTheme } from "./color-blindness.js";
+import type { ColorBlindnessType } from "./color-blindness.js";
 import { generateTheme } from "./generate-theme.js";
 import { generateCssVariables } from "./css-variables.js";
 import { generateScssVariables } from "./scss.js";
@@ -302,10 +308,13 @@ function cliParse(
   argv: string[],
   options: Record<string, { type: "string" | "boolean" }>,
   allowPositionals = false,
-): Record<string, string | boolean | undefined> {
+): { values: Record<string, string | boolean | undefined>; positionals: string[] } {
   try {
-    return parseArgs({ args: argv, options, strict: true, allowPositionals })
-      .values as Record<string, string | boolean | undefined>;
+    const result = parseArgs({ args: argv, options, strict: true, allowPositionals });
+    return {
+      values:      result.values      as Record<string, string | boolean | undefined>,
+      positionals: result.positionals ?? [],
+    };
   } catch (e) {
     die((e as Error).message);
   }
@@ -321,7 +330,7 @@ type Command = typeof COMMANDS[number];
 function runGenerate(argv: string[]): void {
   if (hasHelp(argv)) { out(GENERATE_HELP); process.exit(0); }
 
-  const v = cliParse(argv, {
+  const { values: v } = cliParse(argv, {
     primary:      { type: "string" },
     preset:       { type: "string" },
     harmony:      { type: "string" },
@@ -420,42 +429,317 @@ function runGenerate(argv: string[]): void {
   writeOutput(applyFormat(theme, format, mode), outFile);
 }
 
-// ─── export / validate / diff / simulate / adjust (Tasks 3–7) ────────
+// ─── Shared I/O helpers ───────────────────────────────────────────────
+
+/** Read from a file path or stdin (when source is "-"). Exits 2 on failure. */
+function readInput(source: string): string {
+  try {
+    return source === "-"
+      ? readFileSync(0, "utf8")
+      : readFileSync(source, "utf8");
+  } catch (e) {
+    die(`cannot read '${source}': ${(e as Error).message}`);
+  }
+}
+
+/**
+ * Read, JSON-parse, and validate a GeneratedTheme from a file or stdin.
+ * Prints token warnings to stderr. Exits 2 on I/O or JSON errors.
+ */
+function loadTheme(source: string, quiet: boolean): GeneratedTheme {
+  const raw = readInput(source);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    err(`salt-theme-gen: '${source === "-" ? "stdin" : source}' is not valid JSON\n`);
+    process.exit(2);
+  }
+  try {
+    const { theme, tokenWarnings } = parseThemeJSON(parsed as object);
+    if (!quiet) {
+      for (const w of tokenWarnings) {
+        err(`warning [${w.severity}] ${w.path}: ${w.message}\n`);
+      }
+    }
+    return theme;
+  } catch (e) {
+    err(`salt-theme-gen: ${(e as Error).message}\n`);
+    process.exit(2);
+  }
+}
+
+// ─── export ───────────────────────────────────────────────────────────
 
 function runExport(argv: string[]): void {
   if (hasHelp(argv)) { out(EXPORT_HELP); process.exit(0); }
-  notImplemented("export");
+
+  const { values: v, positionals } = cliParse(argv, {
+    format:  { type: "string" },
+    mode:    { type: "string" },
+    out:     { type: "string" },
+    quiet:   { type: "boolean" },
+    silent:  { type: "boolean" },
+  }, true);
+
+  if (positionals.length === 0) die("export requires <file>");
+  if (positionals.length > 1)   die("export accepts exactly one <file> argument");
+
+  const source    = positionals[0];
+  const rawFormat = v["format"] as string | undefined;
+  const rawMode   = (v["mode"] as string | undefined) ?? "both";
+  const outFile   = v["out"]   as string | undefined;
+  const quiet     = v["quiet"] === true || v["silent"] === true;
+
+  if (!rawFormat) die("export requires --format <name>");
+  if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
+    die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
+  }
+  if (!(VALID_MODES as readonly string[]).includes(rawMode)) {
+    die(`unknown mode '${rawMode}' — valid: both, light, dark`);
+  }
+  const format = rawFormat as CliFormat;
+  const mode   = rawMode   as CliMode;
+
+  const theme = loadTheme(source, quiet);
+  writeOutput(applyFormat(theme, format, mode), outFile);
 }
+
+// ─── validate ─────────────────────────────────────────────────────────
 
 function runValidate(argv: string[]): void {
   if (hasHelp(argv)) { out(VALIDATE_HELP); process.exit(0); }
-  notImplemented("validate");
+
+  const { values: v, positionals } = cliParse(argv, {
+    quiet:  { type: "boolean" },
+    silent: { type: "boolean" },
+  }, true);
+
+  if (positionals.length === 0) die("validate requires <file>");
+  if (positionals.length > 1)   die("validate accepts exactly one <file> argument");
+
+  const source = positionals[0];
+  const quiet  = v["quiet"] === true || v["silent"] === true;
+
+  const raw = readInput(source);
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    err(`salt-theme-gen: '${source === "-" ? "stdin" : source}' is not valid JSON\n`);
+    process.exit(2);
+  }
+
+  let tokenWarnings: ReturnType<typeof parseThemeJSON>["tokenWarnings"];
+  try {
+    ({ tokenWarnings } = parseThemeJSON(parsed as object));
+  } catch (e) {
+    err(`salt-theme-gen: ${(e as Error).message}\n`);
+    process.exit(1);
+  }
+
+  if (!quiet) {
+    for (const w of tokenWarnings) {
+      err(`warning [${w.severity}] ${w.path}: ${w.message}\n`);
+    }
+  }
+  const wCount = tokenWarnings.length;
+  out(`valid${wCount > 0 ? ` (${wCount} warning${wCount === 1 ? "" : "s"})` : ""}\n`);
 }
+
+// ─── diff ─────────────────────────────────────────────────────────────
 
 function runDiff(argv: string[]): void {
   if (hasHelp(argv)) { out(DIFF_HELP); process.exit(0); }
-  notImplemented("diff");
+
+  const { values: v, positionals } = cliParse(argv, {
+    json:   { type: "boolean" },
+    quiet:  { type: "boolean" },
+    silent: { type: "boolean" },
+  }, true);
+
+  if (positionals.length < 2) die("diff requires <old> <new>");
+  if (positionals.length > 2) die("diff accepts exactly two file arguments");
+
+  const quiet   = v["quiet"] === true || v["silent"] === true;
+  const asJson  = v["json"]  === true;
+
+  const oldTheme = loadTheme(positionals[0], quiet);
+  const newTheme = loadTheme(positionals[1], quiet);
+
+  const diff = diffTheme(oldTheme, newTheme);
+
+  if (asJson) {
+    writeOutput(JSON.stringify(diff, null, 2));
+  } else {
+    const lines = flattenDiff(diff);
+    if (lines.length === 0) {
+      out("no differences\n");
+    } else {
+      writeOutput(lines.join("\n"));
+    }
+  }
+
+  process.exit(diff.identical ? 0 : 1);
 }
+
+/** Recursively collect `old → new` change lines from a ThemeDiff. */
+function flattenDiff(obj: unknown, prefix = ""): string[] {
+  if (obj === null || typeof obj !== "object") return [];
+  const lines: string[] = [];
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (k === "identical") continue;
+    const path = prefix ? `${prefix}.${k}` : k;
+    if (v !== null && typeof v === "object" && "old" in v && "new" in v) {
+      const change = v as { old: unknown; new: unknown };
+      lines.push(`${path}: ${JSON.stringify(change.old)} → ${JSON.stringify(change.new)}`);
+    } else {
+      lines.push(...flattenDiff(v, path));
+    }
+  }
+  return lines;
+}
+
+// ─── simulate ─────────────────────────────────────────────────────────
+
+const VALID_CVD_TYPES: ColorBlindnessType[] = [
+  "protanopia", "deuteranopia", "tritanopia",
+  "protanomaly", "deuteranomaly", "tritanomaly",
+  "achromatopsia",
+];
 
 function runSimulate(argv: string[]): void {
   if (hasHelp(argv)) { out(SIMULATE_HELP); process.exit(0); }
-  notImplemented("simulate");
+
+  const { values: v, positionals } = cliParse(argv, {
+    type:         { type: "string" },
+    primary:      { type: "string" },
+    preset:       { type: "string" },
+    harmony:      { type: "string" },
+    spacing:      { type: "string" },
+    radius:       { type: "string" },
+    "font-size":  { type: "string" },
+    "base-font":  { type: "string" },
+    "font-scale": { type: "string" },
+    format:       { type: "string" },
+    out:          { type: "string" },
+    quiet:        { type: "boolean" },
+    silent:       { type: "boolean" },
+  }, true);
+
+  const rawType  = v["type"]   as string | undefined;
+  const rawFormat = (v["format"] as string | undefined) ?? "json";
+  const outFile  = v["out"]    as string | undefined;
+  const quiet    = v["quiet"] === true || v["silent"] === true;
+
+  if (!rawType) die("simulate requires --type <cvd>");
+  if (!VALID_CVD_TYPES.includes(rawType as ColorBlindnessType)) {
+    die(`unknown CVD type '${rawType}' — valid: ${VALID_CVD_TYPES.join(", ")}`);
+  }
+  const cvdType = rawType as ColorBlindnessType;
+
+  if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
+    die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
+  }
+  const format = rawFormat as CliFormat;
+
+  let theme: GeneratedTheme;
+  if (positionals.length > 0) {
+    if (positionals.length > 1) die("simulate accepts at most one <file> argument");
+    theme = loadTheme(positionals[0], quiet);
+  } else {
+    // Generate from flags
+    const primary  = v["primary"] as string | undefined;
+    const preset   = v["preset"]  as string | undefined;
+    if (!primary && !preset) die("simulate requires <file>, --primary <hex>, or --preset <name>");
+    if (primary && preset)   die("--primary and --preset are mutually exclusive");
+
+    const options: GenerateThemeOptions = {};
+    if (primary)  options.primary  = primary;
+    if (preset)   options.preset   = preset as GenerateThemeOptions["preset"];
+    if (v["harmony"])    options.harmony   = v["harmony"]   as ColorHarmony;
+    if (v["spacing"])    options.spacing   = v["spacing"]   as GenerateThemeOptions["spacing"];
+    if (v["radius"])     options.radius    = v["radius"]    as GenerateThemeOptions["radius"];
+    if (v["font-size"])  options.fontSize  = v["font-size"] as GenerateThemeOptions["fontSize"];
+    if (v["base-font"])  options.baseFont  = Number(v["base-font"]);
+    if (v["font-scale"]) {
+      const rawScale = v["font-scale"] as string;
+      const asNum = Number(rawScale);
+      options.fontScale = Number.isFinite(asNum) ? asNum : rawScale as FontScaleName;
+    }
+    try {
+      theme = generateTheme(options);
+    } catch (e) {
+      err(`salt-theme-gen: ${(e as Error).message}\n`);
+      process.exit(1);
+    }
+    if (theme.warnings) warnTheme(theme.warnings, quiet);
+  }
+
+  const simulated = simulateTheme(theme, cvdType);
+  writeOutput(applyFormat(simulated, format, "both"), outFile);
 }
+
+// ─── adjust ───────────────────────────────────────────────────────────
 
 function runAdjust(argv: string[]): void {
   if (hasHelp(argv)) { out(ADJUST_HELP); process.exit(0); }
-  notImplemented("adjust");
+
+  const { values: v, positionals } = cliParse(argv, {
+    overrides: { type: "string" },
+    format:    { type: "string" },
+    out:       { type: "string" },
+    quiet:     { type: "boolean" },
+    silent:    { type: "boolean" },
+  }, true);
+
+  if (positionals.length === 0) die("adjust requires <file>");
+  if (positionals.length > 1)   die("adjust accepts exactly one <file> argument");
+
+  const source        = positionals[0];
+  const overridesFile = v["overrides"] as string | undefined;
+  const rawFormat     = (v["format"]   as string | undefined) ?? "json";
+  const outFile       = v["out"]       as string | undefined;
+  const quiet         = v["quiet"] === true || v["silent"] === true;
+
+  if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
+    die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
+  }
+  const format = rawFormat as CliFormat;
+
+  // Overrides: explicit file, or stdin. When theme source is already stdin,
+  // overrides cannot also come from stdin.
+  const overridesSource = overridesFile ?? "-";
+  if (source === "-" && overridesSource === "-") {
+    die("cannot read both theme and overrides from stdin — provide one as a file");
+  }
+
+  const theme = loadTheme(source, quiet);
+
+  const rawOverrides = readInput(overridesSource);
+  let overrides: ThemeOverrides;
+  try {
+    overrides = JSON.parse(rawOverrides) as ThemeOverrides;
+  } catch {
+    die(`overrides is not valid JSON`);
+  }
+
+  let adjusted: GeneratedTheme;
+  try {
+    adjusted = adjustTheme(theme, overrides);
+  } catch (e) {
+    err(`salt-theme-gen: ${(e as Error).message}\n`);
+    process.exit(1);
+  }
+
+  if (adjusted.warnings) warnTheme(adjusted.warnings, quiet);
+  writeOutput(applyFormat(adjusted, format, "both"), outFile);
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────
 
 function hasHelp(argv: string[]): boolean {
   return argv.includes("--help") || argv.includes("-h");
-}
-
-function notImplemented(cmd: string): never {
-  err(`salt-theme-gen: '${cmd}' is not yet implemented\n`);
-  process.exit(1);
 }
 
 // ─── Entry point ──────────────────────────────────────────────────────
