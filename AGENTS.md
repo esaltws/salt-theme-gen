@@ -89,8 +89,8 @@ The package ships a `salt-theme-gen` binary (CJS, `dist/cjs/cli.js`). It require
 | Code | Meaning |
 | ---- | ------- |
 | `0` | Success |
-| `1` | Domain error (validation failed, token errors, WCAG issues) |
-| `2` | Input error (bad flags, missing args, unreadable file, invalid JSON) |
+| `1` | Validation / domain error — wrong schema, missing fields, token errors, invalid colors, diff found changes |
+| `2` | Usage / I/O error — unknown command, bad flags, missing args, unreadable file, malformed JSON syntax |
 
 ### Commands
 
@@ -109,7 +109,11 @@ The package ships a `salt-theme-gen` binary (CJS, `dist/cjs/cli.js`). It require
 
 ### Modes (`--mode`, for `css`/`scss` only)
 
-`both` (default) · `light` · `dark` — `light`/`dark` emit raw declarations without a selector wrapper.
+`both` (default) · `light` · `dark`
+
+- `both` — full file with light selector + dark selector (default)
+- `light` — standalone `:root {}` block containing the complete light theme
+- `dark` — standalone `:root {}` block containing dark colors plus all mode-independent tokens (spacing, radius, typography, etc.) — valid as a drop-in single-mode CSS file
 
 ### Key behaviors
 
@@ -117,7 +121,7 @@ The package ships a `salt-theme-gen` binary (CJS, `dist/cjs/cli.js`). It require
 - `loadTheme` rejects themes with `severity:"error"` token diagnostics before processing (exits 1).
 - `validate` distinguishes errors (exit 1) from warnings (exit 0, printed to stderr).
 - `export`, `simulate`, and `validate` accept `-` as the file argument to read from stdin.
-- `adjust` reads the theme from a file (or stdin with `-`) and the overrides from `--overrides <file>` or stdin when `--overrides` is omitted. Both cannot be stdin simultaneously.
+- `adjust` reads the theme from a file (or stdin with `-`) and the overrides from `--overrides <file>` or stdin when `--overrides` is omitted. Both cannot be stdin simultaneously. When `--overrides` is omitted and stdin is an interactive terminal (`process.stdin.isTTY`), exits 2 with a usage error instead of blocking.
 - Output always ends with a newline.
 
 ### Examples

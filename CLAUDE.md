@@ -29,7 +29,7 @@ npm run typecheck     # tsc --noEmit (no emit, strict)
 npm run build         # CJS + ESM dual output to dist/
 ```
 
-Run `npm test` after any change. All 2434+ tests must pass before committing.
+Run `npm test` after any change. All 2444+ tests must pass before committing.
 
 ---
 
@@ -50,7 +50,7 @@ src/
 ├── on-colors.ts          # "on" color derivation, WCAG auto-correction, accessibility reports
 ├── state-colors.ts       # hover/pressed/focused/disabled states (8 intents × 4)
 ├── palettes.ts           # 11-step OKLCH tonal palettes (8 keys)
-├── css-variables.ts      # generateCssVariables() — hex/oklch/both, fluid typography opt-in
+├── css-variables.ts      # generateCssVariables() — hex/oklch/both, fluid typography opt-in; lightRoot/darkRoot for standalone single-mode CSS
 ├── scss.ts               # generateScssVariables() — SCSS variables with -dark suffix
 ├── shadcn.ts             # generateShadcnTheme() / shadcnTheme() — Tailwind v4 + shadcn/ui CSS
 ├── dtcg.ts               # generateDtcgTokens() — W3C DTCG format
@@ -122,6 +122,8 @@ generateTheme(options)
 - **`parseThemeJSON` returns `{ theme, tokenWarnings }`** — not a bare `GeneratedTheme`. Shape errors throw; value errors/warnings are collected as `TokenWarning[]`. After validation, all color strings in the returned theme are normalized to `#rrggbb` — callers may pass oklch/rgb/hsl stored themes.
 - **`generateTheme` and `adjustTheme` throw `RangeError` on token errors** — negative sizes, NaN, non-positive lineHeight, descending breakpoints. The same rules as `parseThemeJSON` `severity:"error"` diagnostics. Warnings (small touch targets, body text < 12 px) are permitted and do not throw.
 - **`adjustTheme` warnings are dropped when color overrides are present** — a color change may fix the failing contrast, so stale warnings are removed. Token-only adjustments preserve `theme.warnings` unchanged. `simulateTheme` always drops `theme.warnings` — the CVD-transformed colors make original contrast warnings meaningless.
+- **CLI exit codes: 0 = success, 1 = validation/domain error, 2 = usage/I/O error** — file-not-found, unreadable file, malformed JSON syntax exit 2; schema mismatch, missing required fields, token errors, and contrast failures exit 1. This contract is enforced across all six commands.
+- **CLI `adjust` exits 2 when run interactively without `--overrides`** — if no `--overrides` flag is given and stdin is a TTY (`process.stdin.isTTY`), the command fails immediately with a usage error instead of blocking. Piped input (`cat overrides.json | ...`) is unaffected.
 - **Token keys use camelCase internally, kebab-case in CSS/Tailwind/DTCG** — `onPrimary` → `--salt-color-on-primary`, `bodyMedium` → `salt-body-medium`.
 - **All color derivation happens in OKLCH** — never manipulate sRGB channels directly for perceptual operations.
 - **WCAG AA (4.5:1) is guaranteed for all `onX` colors** — auto-correction walks the lightness axis until contrast is met.
