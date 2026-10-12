@@ -10,7 +10,7 @@ export type IconSizeScale = {
   "3xl": number;
 };
 
-export const DEFAULT_ICON_SIZES: IconSizeScale = Object.freeze({
+export const DEFAULT_ICON_SIZES: Readonly<IconSizeScale> = Object.freeze({
   xs:    12,
   sm:    16,
   md:    20,
@@ -18,7 +18,7 @@ export const DEFAULT_ICON_SIZES: IconSizeScale = Object.freeze({
   xl:    32,
   xxl:   40,
   "3xl": 48,
-}) as IconSizeScale;
+});
 
 export type SemanticIconSizes = {
   inline:     number; // 16 — inline with text
@@ -29,14 +29,14 @@ export type SemanticIconSizes = {
   hero:       number; // 48 — hero / empty state
 };
 
-export const DEFAULT_SEMANTIC_ICON_SIZES: SemanticIconSizes = Object.freeze({
+export const DEFAULT_SEMANTIC_ICON_SIZES: Readonly<SemanticIconSizes> = Object.freeze({
   inline:     16,
   compact:    16,
   control:    20,
   navigation: 24,
   feature:    32,
   hero:       48,
-}) as SemanticIconSizes;
+});
 
 // ─── Control Size Scale ──────────────────────────────────────────────
 
@@ -48,13 +48,13 @@ export type ControlSizeScale = {
   xl: number; // 56 — hero button, FAB
 };
 
-export const DEFAULT_CONTROL_SIZES: ControlSizeScale = Object.freeze({
+export const DEFAULT_CONTROL_SIZES: Readonly<ControlSizeScale> = Object.freeze({
   xs: 24,
   sm: 32,
   md: 40,
   lg: 48,
   xl: 56,
-}) as ControlSizeScale;
+});
 
 // ─── Touch Target Scale ──────────────────────────────────────────────
 
@@ -64,11 +64,11 @@ export type TouchTargetScale = {
   comfortable: number; // 48 — comfortable for most users
 };
 
-export const DEFAULT_TOUCH_TARGETS: TouchTargetScale = Object.freeze({
+export const DEFAULT_TOUCH_TARGETS: Readonly<TouchTargetScale> = Object.freeze({
   minimum:     24,
   recommended: 44,
   comfortable: 48,
-}) as TouchTargetScale;
+});
 
 // ─── Border Width Scale ──────────────────────────────────────────────
 
@@ -79,12 +79,12 @@ export type BorderWidthScale = {
   thick:  number;
 };
 
-export const DEFAULT_BORDER_WIDTHS: BorderWidthScale = Object.freeze({
+export const DEFAULT_BORDER_WIDTHS: Readonly<BorderWidthScale> = Object.freeze({
   none:   0,
   thin:   1,
   medium: 2,
   thick:  3,
-}) as BorderWidthScale;
+});
 
 // ─── Avatar Size Scale ───────────────────────────────────────────────
 
@@ -97,14 +97,14 @@ export type AvatarSizeScale = {
   xxl: number;
 };
 
-export const DEFAULT_AVATAR_SIZES: AvatarSizeScale = Object.freeze({
+export const DEFAULT_AVATAR_SIZES: Readonly<AvatarSizeScale> = Object.freeze({
   xs:  24,
   sm:  32,
   md:  40,
   lg:  48,
   xl:  64,
   xxl: 80,
-}) as AvatarSizeScale;
+});
 
 // ─── Breakpoint Scale ────────────────────────────────────────────────
 
@@ -116,10 +116,10 @@ export type BreakpointScale = {
   xxl: number;
 };
 
-export const DEFAULT_BREAKPOINTS: BreakpointScale = Object.freeze({
+export const DEFAULT_BREAKPOINTS: Readonly<BreakpointScale> = Object.freeze({
   sm:  480,
   md:  768,
   lg:  1024,
   xl:  1280,
   xxl: 1536,
-}) as BreakpointScale;
+});

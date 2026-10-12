@@ -7,6 +7,7 @@ import { SCHEMA_VERSION } from "./types";
 import { RADIUS_PRESETS } from "./presets/radius-presets";
 import { FONT_SIZE_PRESETS } from "./presets/font-size-presets";
 import { NATURE_PRESETS } from "./presets/nature-presets";
+import { FONT_SCALE_RATIOS } from "./typography-utils";
 import { expectValidHex } from "./test-helpers";
 import type { ThemePreset, BaseColorOverride } from "./types";
 
@@ -813,6 +814,14 @@ describe("generateTheme — preset freeze", () => {
 
   it("FONT_SIZE_PRESETS inner objects are frozen", () => {
     expect(Object.isFrozen(FONT_SIZE_PRESETS.default)).toBe(true);
+  });
+
+  it("FONT_SCALE_RATIOS is frozen", () => {
+    expect(Object.isFrozen(FONT_SCALE_RATIOS)).toBe(true);
+  });
+
+  it("mutating FONT_SCALE_RATIOS throws in strict mode", () => {
+    expect(() => { (FONT_SCALE_RATIOS as any)["major-third"] = 1.5; }).toThrow();
   });
 });
 
