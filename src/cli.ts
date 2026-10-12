@@ -448,8 +448,7 @@ function readInput(source: string): string {
 
 /**
  * Read, JSON-parse, and validate a GeneratedTheme from a file or stdin.
- * Prints token diagnostics to stderr. Exits 2 on I/O or JSON errors.
- * Exits 1 if any tokenWarnings have severity "error".
+ * Exits 2 on I/O or JSON syntax errors. Exits 1 on schema/shape/token errors.
  */
 function loadTheme(source: string, quiet: boolean): GeneratedTheme {
   const raw = readInput(source);
@@ -475,7 +474,7 @@ function loadTheme(source: string, quiet: boolean): GeneratedTheme {
     return theme;
   } catch (e) {
     err(`salt-theme-gen: ${(e as Error).message}\n`);
-    process.exit(2);
+    process.exit(1);
   }
 }
 

@@ -269,6 +269,13 @@ describe("export", () => {
     unlinkSync(bad);
   });
 
+  it("wrong schema exits 1", () => {
+    const bad = tmpFile(JSON.stringify({ schemaVersion: "1.0" }));
+    const r = cli(["export", bad, "--format", "css"]);
+    expect(r.status).toBe(1);
+    unlinkSync(bad);
+  });
+
   it("theme with token errors exits 1", () => {
     const theme = generateTheme({ primary: "#2563eb" });
     (theme.tokens.spacing as Record<string, number>).md = -20;
@@ -386,6 +393,13 @@ describe("diff", () => {
     const r = cli(["diff", themeFile]);
     expect(r.status).toBe(2);
     expect(r.stderr).toContain("requires <old> <new>");
+  });
+
+  it("wrong schema exits 1", () => {
+    const bad = tmpFile(JSON.stringify({ schemaVersion: "1.0" }));
+    const r = cli(["diff", bad, themeFile]);
+    expect(r.status).toBe(1);
+    unlinkSync(bad);
   });
 
   it("theme with token errors exits 1", () => {
