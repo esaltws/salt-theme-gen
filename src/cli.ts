@@ -743,6 +743,9 @@ function runAdjust(argv: string[]): void {
   if (source === "-" && overridesSource === "-") {
     die("cannot read both theme and overrides from stdin — provide one as a file");
   }
+  if (overridesSource === "-" && process.stdin.isTTY) {
+    die("adjust requires --overrides <file> or piped JSON on stdin");
+  }
 
   const theme = loadTheme(source, quiet);
 
