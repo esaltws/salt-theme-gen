@@ -506,3 +506,74 @@ describe("parseThemeJSON - token validity warnings", () => {
     expect(tokenWarnings.filter((w) => w.severity === "warning")).toHaveLength(0);
   });
 });
+
+// ─── color normalization ────────────────────────────────────────────
+
+describe("parseThemeJSON - color normalization", () => {
+  it("normalizes rgb() in light.colors to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.light.colors.primary = "rgb(255, 0, 0)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.colors.primary).toBe("#ff0000");
+  });
+
+  it("normalizes rgb() in dark.colors to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.dark.colors.danger = "rgb(0, 255, 0)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.dark.colors.danger).toBe("#00ff00");
+  });
+
+  it("normalizes oklch() in light.colors to a valid hex", () => {
+    const obj = validThemeObj();
+    obj.light.colors.secondary = "oklch(0.5 0.2 264)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.colors.secondary).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("normalizes palette step rgb() to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.light.palettes.primary["500"] = "rgb(30, 144, 255)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.palettes.primary["500"]).toBe("#1e90ff");
+  });
+
+  it("normalizes surfaceElevation rgb() to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.light.surfaceElevation.card = "rgb(255, 255, 255)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.surfaceElevation.card).toBe("#ffffff");
+  });
+
+  it("normalizes state rgb() to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.light.states.primary.hover = "rgb(0, 0, 255)";
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.states.primary.hover).toBe("#0000ff");
+  });
+
+  it("leaves already-hex colors unchanged", () => {
+    const obj = validThemeObj();
+    const primaryBefore = obj.light.colors.primary as string;
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.colors.primary).toBe(primaryBefore);
+  });
+
+  it("normalizes warning value/background/finalValue to #rrggbb", () => {
+    const obj = validThemeObj();
+    obj.warnings = [{
+      mode: "light",
+      key: "danger",
+      value: "rgb(255, 0, 0)",
+      background: "rgb(255, 255, 255)",
+      ratio: 3.5,
+      required: 4.5,
+      action: "warn",
+      finalValue: "rgb(255, 0, 0)",
+    }];
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.warnings![0].value).toBe("#ff0000");
+    expect(theme.warnings![0].background).toBe("#ffffff");
+    expect(theme.warnings![0].finalValue).toBe("#ff0000");
+  });
+});

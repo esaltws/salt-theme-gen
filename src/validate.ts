@@ -1,7 +1,5 @@
 import { parseColor } from "./color-math.js";
-import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, BaseColorKey, TokenWarning } from "./types.js";
-
-const HSL_RE = /^hsla?\(\s*-?[\d.]+[\s,][\s\S]*?\)/i;
+import type { GeneratedTheme, GeneratedThemeColors, GeneratedThemeTokens, BaseColorKey, TokenWarning, ThemeWarning } from "./types.js";
 
 // ─── Shape Definitions ──────────────────────────────────────────────
 
@@ -68,7 +66,6 @@ function requireObject(v: unknown, path: string): Record<string, unknown> {
 }
 
 function isValidColor(v: string): boolean {
-  if (HSL_RE.test(v)) return true;
   try { parseColor(v); return true; } catch { return false; }
 }
 
@@ -97,6 +94,15 @@ function validateColorObject(obj: Record<string, unknown>, keys: readonly string
   for (const key of keys) {
     requireColor(obj[key], `${path}.${key}`);
   }
+}
+
+function normalizeColorObject(
+  obj: Record<string, unknown>,
+  keys: readonly string[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const key of keys) out[key] = parseColor(obj[key] as string);
+  return out;
 }
 
 function validateNumberObject(obj: Record<string, unknown>, keys: readonly string[], path: string): void {
@@ -154,6 +160,38 @@ function validateMode(v: unknown, path: string): void {
       throw new Error(`${path}.apca.${key}.level: expected "Lc75", "Lc60", "Lc45", or "fail", got ${JSON.stringify(entry.level)}`);
     }
   }
+}
+
+function normalizeMode(raw: Record<string, unknown>): GeneratedThemeColors {
+  const colors = normalizeColorObject(
+    raw.colors as Record<string, unknown>, SEMANTIC_COLOR_KEYS
+  );
+
+  const rawPalettes = raw.palettes as Record<string, Record<string, unknown>>;
+  const palettes: Record<string, Record<string, string>> = {};
+  for (const intent of TONAL_PALETTE_KEYS) {
+    palettes[intent] = normalizeColorObject(rawPalettes[intent], TONAL_STEP_STR_KEYS);
+  }
+
+  const surfaceElevation = normalizeColorObject(
+    raw.surfaceElevation as Record<string, unknown>, SURFACE_ELEVATION_KEYS
+  );
+
+  const rawStates = raw.states as Record<string, Record<string, unknown>>;
+  const states: Record<string, Record<string, string>> = {};
+  for (const intent of INTENT_KEYS) {
+    states[intent] = normalizeColorObject(rawStates[intent], STATE_KEYS);
+  }
+
+  return {
+    mode: raw.mode as "light" | "dark",
+    colors: colors as GeneratedThemeColors["colors"],
+    palettes: palettes as GeneratedThemeColors["palettes"],
+    surfaceElevation: surfaceElevation as GeneratedThemeColors["surfaceElevation"],
+    states: states as GeneratedThemeColors["states"],
+    accessibility: raw.accessibility as GeneratedThemeColors["accessibility"],
+    apca: raw.apca as GeneratedThemeColors["apca"],
+  };
 }
 
 // ─── Tokens Shape Validator ─────────────────────────────────────────
@@ -224,6 +262,16 @@ function validateThemeWarning(v: unknown, path: string): void {
     throw new Error(`${path}.action: expected "warn" or "corrected", got ${JSON.stringify(obj.action)}`);
   }
   requireColor(obj.finalValue, `${path}.finalValue`);
+}
+
+function normalizeWarning(raw: Record<string, unknown>): ThemeWarning {
+  const base = raw as unknown as ThemeWarning;
+  return {
+    ...base,
+    value:      parseColor(base.value),
+    background: parseColor(base.background),
+    finalValue: parseColor(base.finalValue),
+  };
 }
 
 // ─── Token Value Validator ──────────────────────────────────────────
@@ -383,8 +431,8 @@ export function parseThemeJSON(value: unknown): ParseThemeResult {
   validateMode(obj.dark, "theme.dark");
   validateTokens(obj.tokens, "theme.tokens");
 
-  const light  = obj.light  as GeneratedThemeColors;
-  const dark   = obj.dark   as GeneratedThemeColors;
+  const light  = normalizeMode(obj.light as Record<string, unknown>);
+  const dark   = normalizeMode(obj.dark as Record<string, unknown>);
   const tokens = obj.tokens as GeneratedThemeTokens;
 
   if (light.mode !== "light") {
@@ -403,10 +451,14 @@ export function parseThemeJSON(value: unknown): ParseThemeResult {
     }
   }
 
+  const normalizedWarnings: GeneratedTheme["warnings"] = obj.warnings !== undefined
+    ? (obj.warnings as Record<string, unknown>[]).map(normalizeWarning)
+    : undefined;
+
   const theme: GeneratedTheme = {
     schemaVersion: "2.0",
     light, dark, tokens,
-    ...(obj.warnings !== undefined && { warnings: obj.warnings as GeneratedTheme["warnings"] }),
+    ...(normalizedWarnings !== undefined && { warnings: normalizedWarnings }),
   };
 
   const tokenWarnings = validateTokenValues(
