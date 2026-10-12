@@ -23,6 +23,14 @@ import type {
 
 export type { ThemeColorOverrides, ThemeTokenOverrides, ThemeOverrides };
 
+// ─── Internal helpers ────────────────────────────────────────────────
+
+function copyPalettes(src: TonalPalettes): TonalPalettes {
+  const out = {} as TonalPalettes;
+  for (const k of Object.keys(src) as (keyof TonalPalettes)[]) out[k] = { ...src[k] };
+  return out;
+}
+
 // ─── Constants ──────────────────────────────────────────────────────
 
 const BASE_TO_ON: [keyof SemanticColors, keyof SemanticColors][] = [
@@ -107,25 +115,26 @@ function adjustColors(
     INTENT_KEYS.some((k) => colorChanged(k)) || colorChanged("background");
   const surfaceInputChanged = colorChanged("surface") || colorChanged("primary");
 
-  // 4. States
+  // 4. States — always return independent copies (no shared references)
   let states: IntentStates;
   if (overrides.states) {
     const base = anyStateInputChanged
       ? deriveAllIntentStates(mergedColors)
       : mode.states;
-    states = { ...base };
+    states = {} as IntentStates;
     for (const intent of INTENT_KEYS) {
-      if (intent in overrides.states) {
-        states[intent] = { ...states[intent], ...overrides.states[intent]! };
-      }
+      states[intent] = intent in overrides.states
+        ? { ...base[intent], ...overrides.states[intent]! }
+        : { ...base[intent] };
     }
   } else if (anyStateInputChanged) {
     states = deriveAllIntentStates(mergedColors);
   } else {
-    states = mode.states;
+    states = {} as IntentStates;
+    for (const intent of INTENT_KEYS) states[intent] = { ...mode.states[intent] };
   }
 
-  // 5. Surface elevation
+  // 5. Surface elevation — always return independent copy
   let surfaceElevation: SurfaceElevation;
   if (overrides.surfaceElevation) {
     const base = surfaceInputChanged
@@ -135,22 +144,22 @@ function adjustColors(
   } else if (surfaceInputChanged) {
     surfaceElevation = deriveSurfaceElevation(mergedColors.surface, mergedColors.primary, mode.mode);
   } else {
-    surfaceElevation = mode.surfaceElevation;
+    surfaceElevation = { ...mode.surfaceElevation };
   }
 
   // 6. Palettes — regenerate if any of the 8 palette source colors changed
   const anyPaletteInputChanged = INTENT_KEYS.some((k) => colorChanged(k));
   const palettes: TonalPalettes = anyPaletteInputChanged
     ? generateTonalPalettes(mergedColors)
-    : mode.palettes;
+    : copyPalettes(mode.palettes);
 
-  // 7. Accessibility (WCAG + APCA)
+  // 7. Accessibility (WCAG + APCA) — copy each entry (flat objects, two-level spread is complete)
   const accessibility: AccessibilityReport = anyColorChanged
     ? buildAccessibilityReport(mergedColors, surfaceElevation)
-    : mode.accessibility;
+    : Object.fromEntries(Object.entries(mode.accessibility).map(([k, v]) => [k, { ...v }])) as AccessibilityReport;
   const apca: APCAReport = anyColorChanged
     ? buildAPCAReport(mergedColors, surfaceElevation)
-    : mode.apca;
+    : Object.fromEntries(Object.entries(mode.apca).map(([k, v]) => [k, { ...v }])) as APCAReport;
 
   return {
     mode: mode.mode,
@@ -169,40 +178,40 @@ export function adjustTokens(
 ): GeneratedThemeTokens {
   const spacing = overrides.spacing
     ? { ...tokens.spacing, ...overrides.spacing }
-    : tokens.spacing;
+    : { ...tokens.spacing };
   const radius = overrides.radius
     ? { ...tokens.radius, ...overrides.radius }
-    : tokens.radius;
+    : { ...tokens.radius };
   const iconSizes = overrides.iconSizes
     ? { ...tokens.iconSizes, ...overrides.iconSizes }
-    : tokens.iconSizes;
+    : { ...tokens.iconSizes };
   const icons = overrides.icons
     ? { ...tokens.icons, ...overrides.icons }
-    : tokens.icons;
+    : { ...tokens.icons };
   const controlSizes = overrides.controlSizes
     ? { ...tokens.controlSizes, ...overrides.controlSizes }
-    : tokens.controlSizes;
+    : { ...tokens.controlSizes };
   const touchTargets = overrides.touchTargets
     ? { ...tokens.touchTargets, ...overrides.touchTargets }
-    : tokens.touchTargets;
+    : { ...tokens.touchTargets };
   const borderWidths = overrides.borderWidths
     ? { ...tokens.borderWidths, ...overrides.borderWidths }
-    : tokens.borderWidths;
+    : { ...tokens.borderWidths };
   const avatarSizes = overrides.avatarSizes
     ? { ...tokens.avatarSizes, ...overrides.avatarSizes }
-    : tokens.avatarSizes;
+    : { ...tokens.avatarSizes };
   const breakpoints = overrides.breakpoints
     ? { ...tokens.breakpoints, ...overrides.breakpoints }
-    : tokens.breakpoints;
+    : { ...tokens.breakpoints };
   const lineHeights = overrides.lineHeights
     ? { ...tokens.lineHeights, ...overrides.lineHeights }
-    : tokens.lineHeights;
+    : { ...tokens.lineHeights };
   const fontWeights = overrides.fontWeights
     ? { ...tokens.fontWeights, ...overrides.fontWeights }
-    : tokens.fontWeights;
+    : { ...tokens.fontWeights };
   const letterSpacings = overrides.letterSpacings
     ? { ...tokens.letterSpacings, ...overrides.letterSpacings }
-    : tokens.letterSpacings;
+    : { ...tokens.letterSpacings };
 
   if (overrides.baseFont !== undefined && !Number.isFinite(overrides.baseFont)) {
     throw new RangeError("baseFont must be a finite number.");
@@ -235,7 +244,9 @@ export function adjustTokens(
   const fontFamilyChanged = overrides.fontFamilySans !== undefined || overrides.fontFamilyDisplay !== undefined;
   let typography: TypographyScale = (fontSizesChanged || fontFamilyChanged)
     ? computeTypographyScale(fontSizes, { sans: fontFamilySans, display: fontFamilyDisplay })
-    : tokens.typography;
+    : Object.fromEntries(
+        Object.entries(tokens.typography).map(([k, v]) => [k, { ...v }])
+      ) as TypographyScale;
 
   if (overrides.typography) {
     const merged = { ...typography };
@@ -291,9 +302,9 @@ export function adjustTheme(
 
   return {
     schemaVersion: theme.schemaVersion,
-    light:  lightColorOverrides ? adjustColors(theme.light,  lightColorOverrides) : theme.light,
-    dark:   darkColorOverrides  ? adjustColors(theme.dark,   darkColorOverrides)  : theme.dark,
-    tokens: overrides.tokens    ? adjustTokens(theme.tokens, overrides.tokens)    : theme.tokens,
+    light:  adjustColors(theme.light,  lightColorOverrides  ?? {}),
+    dark:   adjustColors(theme.dark,   darkColorOverrides   ?? {}),
+    tokens: adjustTokens(theme.tokens, overrides.tokens     ?? {}),
     ...(theme.warnings !== undefined && { warnings: theme.warnings }),
   };
 }

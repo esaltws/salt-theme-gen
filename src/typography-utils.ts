@@ -11,31 +11,31 @@ export const FONT_SCALE_RATIOS: Record<FontScaleName, number> = {
   "golden-ratio":     1.618,
 };
 
-export const DEFAULT_LINE_HEIGHTS: LineHeightScale = {
+export const DEFAULT_LINE_HEIGHTS: LineHeightScale = Object.freeze({
   none:    1,
   tight:   1.25,
   snug:    1.375,
   normal:  1.5,
   relaxed: 1.625,
   loose:   2,
-};
+}) as LineHeightScale;
 
-export const DEFAULT_FONT_WEIGHTS: FontWeightScale = {
+export const DEFAULT_FONT_WEIGHTS: FontWeightScale = Object.freeze({
   light:     300,
   regular:   400,
   medium:    500,
   semibold:  600,
   bold:      700,
   extrabold: 800,
-};
+}) as FontWeightScale;
 
-export const DEFAULT_LETTER_SPACINGS: LetterSpacingScale = {
+export const DEFAULT_LETTER_SPACINGS: LetterSpacingScale = Object.freeze({
   tight:   -0.04,
   normal:  0,
   wide:    0.025,
   wider:   0.05,
   widest:  0.1,
-};
+}) as LetterSpacingScale;
 
 type TypographyDefaults = {
   /** Which fontSizes key drives this style's fontSize. "display" uses 3xl × 1.25. */

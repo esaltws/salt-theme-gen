@@ -6,3 +6,5 @@ export const FONT_SIZE_PRESETS: Record<FontSizePreset, FontSizeScale> = {
   large:     { xs: 14, sm: 16, md: 18, lg: 24, xl: 28, xxl: 36, "3xl": 44 },
   editorial: { xs: 14, sm: 16, md: 20, lg: 28, xl: 36, xxl: 48, "3xl": 56 },
 };
+for (const v of Object.values(FONT_SIZE_PRESETS)) Object.freeze(v);
+Object.freeze(FONT_SIZE_PRESETS);

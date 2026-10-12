@@ -180,21 +180,21 @@ function buildTokens(
     spacing,
     radius,
     fontSizes,
-    iconSizes: DEFAULT_ICON_SIZES,
-    icons: DEFAULT_SEMANTIC_ICON_SIZES,
-    controlSizes: DEFAULT_CONTROL_SIZES,
-    touchTargets: DEFAULT_TOUCH_TARGETS,
-    borderWidths: DEFAULT_BORDER_WIDTHS,
-    avatarSizes: DEFAULT_AVATAR_SIZES,
-    breakpoints: DEFAULT_BREAKPOINTS,
+    iconSizes:     { ...DEFAULT_ICON_SIZES },
+    icons:         { ...DEFAULT_SEMANTIC_ICON_SIZES },
+    controlSizes:  { ...DEFAULT_CONTROL_SIZES },
+    touchTargets:  { ...DEFAULT_TOUCH_TARGETS },
+    borderWidths:  { ...DEFAULT_BORDER_WIDTHS },
+    avatarSizes:   { ...DEFAULT_AVATAR_SIZES },
+    breakpoints:   { ...DEFAULT_BREAKPOINTS },
     baseFont,
     fontScale,
     fontFamilySans: fontFamily?.sans,
     fontFamilyDisplay: fontFamily?.display,
     typography: computeTypographyScale(fontSizes, fontFamily),
-    lineHeights: DEFAULT_LINE_HEIGHTS,
-    fontWeights: DEFAULT_FONT_WEIGHTS,
-    letterSpacings: DEFAULT_LETTER_SPACINGS,
+    lineHeights:   { ...DEFAULT_LINE_HEIGHTS },
+    fontWeights:   { ...DEFAULT_FONT_WEIGHTS },
+    letterSpacings: { ...DEFAULT_LETTER_SPACINGS },
   };
 }
 
@@ -368,11 +368,11 @@ function resolveScale<P extends string, S extends Record<string, unknown>>(
   presets: Record<string, S>,
   defaultKey: string
 ): S {
-  if (input === undefined) return presets[defaultKey];
+  if (input === undefined) return { ...presets[defaultKey] } as S;
   if (typeof input === "string") {
     const preset = presets[input];
     if (!preset) throw new Error(`Unknown scale preset: "${input}"`);
-    return preset;
+    return { ...preset } as S;
   }
   return { ...presets[defaultKey], ...input } as S;
 }

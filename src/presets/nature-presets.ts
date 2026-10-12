@@ -22,3 +22,5 @@ export const NATURE_PRESETS: Record<ThemePreset, NaturePresetData> = {
   storm:            { name: "storm",            hue: 245, chroma: 0.04, description: "Gray-blue thundercloud" },
   aurora:           { name: "aurora",           hue: 155, chroma: 0.13, description: "Northern lights green" },
 };
+for (const v of Object.values(NATURE_PRESETS)) Object.freeze(v);
+Object.freeze(NATURE_PRESETS);

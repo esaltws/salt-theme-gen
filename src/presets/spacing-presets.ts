@@ -6,3 +6,5 @@ export const SPACING_PRESETS: Record<SpacingPreset, SpacingScale> = {
   relaxed:  { none: 0, xs: 6,  sm: 12, md: 16, lg: 20, xl: 32, xxl: 40 },
   spacious: { none: 0, xs: 8,  sm: 16, md: 20, lg: 28, xl: 40, xxl: 52 },
 };
+for (const v of Object.values(SPACING_PRESETS)) Object.freeze(v);
+Object.freeze(SPACING_PRESETS);

@@ -35,10 +35,10 @@ describe("adjustTheme - identity", () => {
     expect(result).toEqual(theme);
   });
 
-  it("no-op mode returns same object reference", () => {
+  it("no-op mode returns an independent copy with equal values", () => {
     const result = adjustTheme(theme, { light: { colors: { primary: "#ff0000" } } });
-    // Dark mode was not overridden, should be same ref
-    expect(result.dark).toBe(theme.dark);
+    expect(result.dark).not.toBe(theme.dark);
+    expect(result.dark.colors).toStrictEqual(theme.dark.colors);
   });
 });
 
@@ -193,11 +193,12 @@ describe("adjustTheme - states regeneration", () => {
     expectValidHex(result.light.states.primary.pressed);
   });
 
-  it("non-intent color change does not regenerate states", () => {
+  it("non-intent color change returns states with equal values but independent reference", () => {
     const result = adjustTheme(theme, {
       light: { colors: { text: "#333333" } },
     });
-    expect(result.light.states).toBe(theme.light.states);
+    expect(result.light.states).not.toBe(theme.light.states);
+    expect(result.light.states).toStrictEqual(theme.light.states);
   });
 
   it("states-only override (no color change) applies on existing states", () => {
@@ -239,11 +240,12 @@ describe("adjustTheme - surface elevation regeneration", () => {
     expectValidHex(result.dark.surfaceElevation.card);
   });
 
-  it("non-surface/primary color change does not regenerate elevation", () => {
+  it("non-surface/primary color change returns elevation with equal values but independent reference", () => {
     const result = adjustTheme(theme, {
       dark: { colors: { danger: "#ff0000" } },
     });
-    expect(result.dark.surfaceElevation).toBe(theme.dark.surfaceElevation);
+    expect(result.dark.surfaceElevation).not.toBe(theme.dark.surfaceElevation);
+    expect(result.dark.surfaceElevation).toStrictEqual(theme.dark.surfaceElevation);
   });
 });
 
@@ -260,11 +262,12 @@ describe("adjustTheme - accessibility regeneration", () => {
     expect(["AAA", "AA", "fail"]).toContain(result.light.accessibility.primaryOnBackground.level);
   });
 
-  it("no color change does not regenerate accessibility", () => {
+  it("no color change returns accessibility with equal values but independent reference", () => {
     const result = adjustTheme(theme, {
       tokens: { spacing: { md: 20 } },
     });
-    expect(result.light.accessibility).toBe(theme.light.accessibility);
+    expect(result.light.accessibility).not.toBe(theme.light.accessibility);
+    expect(result.light.accessibility).toStrictEqual(theme.light.accessibility);
   });
 });
 
@@ -416,5 +419,71 @@ describe("adjustTheme — schemaVersion", () => {
       tokens: { radius: { md: 8 } },
     });
     expect(result.schemaVersion).toBe("2.0");
+  });
+});
+
+// ─── Mutation isolation (no shared mutable objects) ──────────────────
+
+describe("adjustTheme — mutation isolation", () => {
+  const original = generateTheme({ primary: "#6366f1" });
+
+  it("no-op adjust returns a different object from the input", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted).not.toBe(original);
+    expect(adjusted.light).not.toBe(original.light);
+    expect(adjusted.dark).not.toBe(original.dark);
+    expect(adjusted.tokens).not.toBe(original.tokens);
+  });
+
+  it("adjusted.light.states.primary is independent of original", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted.light.states.primary).not.toBe(original.light.states.primary);
+  });
+
+  it("adjusted.light.surfaceElevation is independent of original", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted.light.surfaceElevation).not.toBe(original.light.surfaceElevation);
+  });
+
+  it("adjusted.light.palettes.primary is independent of original", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted.light.palettes.primary).not.toBe(original.light.palettes.primary);
+  });
+
+  it("adjusted.tokens.spacing is independent of original", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted.tokens.spacing).not.toBe(original.tokens.spacing);
+  });
+
+  it("mutating adjusted colors does not affect original", () => {
+    const adjusted = adjustTheme(original, {});
+    const originalBorder = original.light.colors.border;
+    (adjusted.light.colors as Record<string, string>).border = "#cccccc";
+    expect(original.light.colors.border).toBe(originalBorder);
+  });
+
+  it("mutating adjusted tokens does not affect original", () => {
+    const adjusted = adjustTheme(original, {});
+    const originalMd = original.tokens.spacing.md;
+    (adjusted.tokens.spacing as Record<string, number>).md = 999;
+    expect(original.tokens.spacing.md).toBe(originalMd);
+  });
+
+  it("chaining adjustTheme does not corrupt the intermediate result", () => {
+    const b = adjustTheme(original, { both: { colors: { primary: "#ff6b6b" } } });
+    const primaryAfterFirst = b.light.colors.primary;
+    adjustTheme(b, { both: { colors: { primary: "#00ff00" } } });
+    expect(b.light.colors.primary).toBe(primaryAfterFirst);
+  });
+
+  it("partial override: untouched mode is still independent", () => {
+    const adjusted = adjustTheme(original, { dark: { colors: { primary: "#ff0000" } } });
+    expect(adjusted.light).not.toBe(original.light);
+    expect(adjusted.light.states.primary).not.toBe(original.light.states.primary);
+  });
+
+  it("typography entries are independent copies", () => {
+    const adjusted = adjustTheme(original, {});
+    expect(adjusted.tokens.typography.bodyMedium).not.toBe(original.tokens.typography.bodyMedium);
   });
 });

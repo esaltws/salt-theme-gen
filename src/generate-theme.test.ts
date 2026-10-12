@@ -728,3 +728,90 @@ describe("generateTheme — schemaVersion", () => {
     expect(generateTheme().schemaVersion).toBe(SCHEMA_VERSION);
   });
 });
+
+// ─── Token independence (no shared mutable objects) ──────────────────
+
+describe("generateTheme — token independence", () => {
+  it("tokens.spacing is a fresh object on each call", () => {
+    const a = generateTheme();
+    const b = generateTheme();
+    expect(a.tokens.spacing).not.toBe(b.tokens.spacing);
+  });
+
+  it("tokens.iconSizes is a fresh object on each call", () => {
+    const a = generateTheme();
+    const b = generateTheme();
+    expect(a.tokens.iconSizes).not.toBe(b.tokens.iconSizes);
+  });
+
+  it("tokens.lineHeights is a fresh object on each call", () => {
+    const a = generateTheme();
+    const b = generateTheme();
+    expect(a.tokens.lineHeights).not.toBe(b.tokens.lineHeights);
+  });
+
+  it("tokens.fontWeights is a fresh object on each call", () => {
+    const a = generateTheme();
+    const b = generateTheme();
+    expect(a.tokens.fontWeights).not.toBe(b.tokens.fontWeights);
+  });
+
+  it("tokens.controlSizes is a fresh object on each call", () => {
+    const a = generateTheme();
+    const b = generateTheme();
+    expect(a.tokens.controlSizes).not.toBe(b.tokens.controlSizes);
+  });
+
+  it("mutating one theme's tokens does not contaminate the next generateTheme call", () => {
+    const a = generateTheme();
+    (a.tokens.spacing as Record<string, number>).md = 999;
+    const c = generateTheme();
+    expect(c.tokens.spacing.md).not.toBe(999);
+  });
+
+  it("preset themes have independent spacing objects", () => {
+    const a = generateTheme({ preset: "peacock" });
+    const b = generateTheme({ preset: "peacock" });
+    expect(a.tokens.spacing).not.toBe(b.tokens.spacing);
+  });
+});
+
+// ─── Preset freeze ───────────────────────────────────────────────────
+
+describe("generateTheme — preset freeze", () => {
+  it("SPACING_PRESETS is frozen", () => {
+    expect(Object.isFrozen(SPACING_PRESETS)).toBe(true);
+  });
+
+  it("SPACING_PRESETS inner objects are frozen", () => {
+    expect(Object.isFrozen(SPACING_PRESETS.default)).toBe(true);
+  });
+
+  it("mutating SPACING_PRESETS throws in strict mode", () => {
+    expect(() => { (SPACING_PRESETS as any).newKey = {}; }).toThrow();
+  });
+
+  it("mutating a SPACING_PRESETS inner preset throws in strict mode", () => {
+    expect(() => { (SPACING_PRESETS.default as any).md = 500; }).toThrow();
+  });
+
+  it("NATURE_PRESETS is frozen", () => {
+    expect(Object.isFrozen(NATURE_PRESETS)).toBe(true);
+  });
+
+  it("NATURE_PRESETS inner objects are frozen", () => {
+    expect(Object.isFrozen(NATURE_PRESETS.ocean)).toBe(true);
+  });
+
+  it("mutating NATURE_PRESETS.ocean.hue throws in strict mode", () => {
+    expect(() => { (NATURE_PRESETS.ocean as any).hue = 0; }).toThrow();
+  });
+
+  it("RADIUS_PRESETS inner objects are frozen", () => {
+    expect(Object.isFrozen(RADIUS_PRESETS.default)).toBe(true);
+  });
+
+  it("FONT_SIZE_PRESETS inner objects are frozen", () => {
+    expect(Object.isFrozen(FONT_SIZE_PRESETS.default)).toBe(true);
+  });
+});
