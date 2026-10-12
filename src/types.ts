@@ -361,6 +361,8 @@ export type GeneratedThemeTokens = {
   letterSpacings: LetterSpacingScale;
 };
 
+// Increment ONLY when the serialized GeneratedTheme shape breaks stored/round-tripped themes.
+// Independent of the npm version — a feature or bug-fix release does NOT require a schema bump.
 export const SCHEMA_VERSION = "2.0" as const;
 export type SchemaVersion = typeof SCHEMA_VERSION;
 

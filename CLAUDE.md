@@ -111,7 +111,7 @@ generateTheme(options)
 
 ## Key invariants
 
-- **`schemaVersion: "2.0"` is stamped on every `GeneratedTheme`** — set by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`, validated by `parseThemeJSON`. Missing or mismatched versions throw before any other validation. `SCHEMA_VERSION` and `SchemaVersion` are exported from `index.ts`.
+- **`schemaVersion: "2.0"` is stamped on every `GeneratedTheme`** — set by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`, validated by `parseThemeJSON`. Missing or mismatched versions throw before any other validation. `SCHEMA_VERSION` and `SchemaVersion` are exported from `index.ts`. **`schemaVersion` is independent of the npm version** — only increment it when the serialized `GeneratedTheme` shape changes in a way that breaks stored/round-tripped themes (e.g. adding a required field, removing a key, changing value semantics). A feature release or bug-fix npm version bump does NOT imply a schema bump.
 - **All colors in the theme are hex strings** — `#rrggbb` (lowercase, 6-digit). Never oklch strings in the output; those are used only inside `color-math.ts` computations.
 - **`TypographyStyle.lineHeight` is a unitless ratio** (1.5, 1.1) — NOT px. Multiply by `fontSize` to get px.
 - **`TypographyStyle.letterSpacing` is an em decimal** (0.04 = 0.04em) — NOT px. Multiply by `fontSize` to get px.
