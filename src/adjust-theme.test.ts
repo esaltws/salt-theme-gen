@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { adjustTheme } from "./adjust-theme";
 import type { ThemeOverrides } from "./adjust-theme";
+import type { SemanticColors } from "./types";
 import { generateTheme } from "./generate-theme";
 import { contrastRatio } from "./color-math";
 import { expectValidHex } from "./test-helpers";
@@ -141,16 +142,30 @@ describe("adjustTheme - color overrides", () => {
     expect(result.dark.colors.onSecondary).not.toBe(theme.dark.colors.onSecondary);
   });
 
-  it("all 8 base→on pairs re-derive correctly", () => {
-    const bases = ["primary", "secondary", "tertiary", "quaternary", "danger", "success", "warning", "info"] as const;
-    const onKeys = ["onPrimary", "onSecondary", "onTertiary", "onQuaternary", "onDanger", "onSuccess", "onWarning", "onInfo"] as const;
-    for (let i = 0; i < bases.length; i++) {
+  it("all 11 base→on pairs re-derive correctly", () => {
+    const pairs: [keyof SemanticColors, keyof SemanticColors][] = [
+      ["primary", "onPrimary"], ["secondary", "onSecondary"],
+      ["tertiary", "onTertiary"], ["quaternary", "onQuaternary"],
+      ["background", "onBackground"], ["surface", "onSurface"],
+      ["muted", "onMuted"],
+      ["danger", "onDanger"], ["success", "onSuccess"],
+      ["warning", "onWarning"], ["info", "onInfo"],
+    ];
+    for (const [base, onKey] of pairs) {
       const result = adjustTheme(theme, {
-        light: { colors: { [bases[i]]: "#ff0000" } },
+        light: { colors: { [base]: "#ff0000" } },
       });
-      expect(result.light.colors[onKeys[i]]).not.toBe(theme.light.colors[onKeys[i]]);
-      expect(contrastRatio(result.light.colors[onKeys[i]], "#ff0000")).toBeGreaterThanOrEqual(4.5);
+      expect(result.light.colors[onKey], `onKey=${onKey}`).not.toBe(theme.light.colors[onKey]);
+      expect(contrastRatio(result.light.colors[onKey], "#ff0000"), `contrast for ${onKey}`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("muted override regenerates onMuted with sufficient contrast", () => {
+    const result = adjustTheme(theme, {
+      light: { colors: { muted: "#ffffff" } },
+    });
+    expect(contrastRatio(result.light.colors.onMuted, "#ffffff")).toBeGreaterThanOrEqual(4.5);
+    expect(result.light.colors.onMuted).not.toBe(theme.light.colors.onMuted);
   });
 
   it("non-base color override does not change on-colors", () => {
