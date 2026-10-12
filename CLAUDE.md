@@ -29,7 +29,7 @@ npm run typecheck     # tsc --noEmit (no emit, strict)
 npm run build         # CJS + ESM dual output to dist/
 ```
 
-Run `npm test` after any change. All 2292+ tests must pass before committing.
+Run `npm test` after any change. All 2351+ tests must pass before committing.
 
 ---
 
@@ -43,7 +43,7 @@ src/
 ├── generate-theme.ts     # Entry point: generateTheme() orchestrator
 ├── adjust-theme.ts       # adjustTheme(), adjustTokens()
 ├── diff-theme.ts         # diffTheme()
-├── validate.ts           # parseThemeJSON() — runtime validation + token diagnostics
+├── validate.ts           # parseThemeJSON() — runtime validation + color normalization + token diagnostics; assertTokenErrors() (internal, called by buildTokens/adjustTokens)
 ├── rn-utils.ts           # resolveTextStyle() — React Native typography helper
 ├── color-math.ts         # Pure math: OKLCH/sRGB/hex conversions, WCAG, APCA, manipulation
 ├── butterfly.ts          # Butterfly Rule: derives 26 semantic colors from primary
@@ -112,13 +112,15 @@ generateTheme(options)
 ## Key invariants
 
 - **`schemaVersion: "2.0"` is stamped on every `GeneratedTheme`** — set by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`, validated by `parseThemeJSON`. Missing or mismatched versions throw before any other validation. `SCHEMA_VERSION` and `SchemaVersion` are exported from `index.ts`. **`schemaVersion` is independent of the npm version** — only increment it when the serialized `GeneratedTheme` shape changes in a way that breaks stored/round-tripped themes (e.g. adding a required field, removing a key, changing value semantics). A feature release or bug-fix npm version bump does NOT imply a schema bump.
-- **All colors in the theme are hex strings** — `#rrggbb` (lowercase, 6-digit). Never oklch strings in the output; those are used only inside `color-math.ts` computations.
+- **All colors in the theme are hex strings** — `#rrggbb` (lowercase, 6-digit). Never oklch strings in the output; those are used only inside `color-math.ts` computations. This invariant is enforced at every entry point: `generateTheme` derives hex, `adjustTheme` normalizes all color override fields (`colors`, `states`, `surfaceElevation`) via `parseColor()`, and `parseThemeJSON` normalizes every color in the deserialized object before returning it.
 - **`TypographyStyle.lineHeight` is a unitless ratio** (1.5, 1.1) — NOT px. Multiply by `fontSize` to get px.
 - **`TypographyStyle.letterSpacing` is an em decimal** (0.04 = 0.04em) — NOT px. Multiply by `fontSize` to get px.
 - **Use `resolveTextStyle(style)` for React Native** — raw `TypographyStyle` values break RN layout.
 - **`controlSizes` is the canonical control-height scale** — `sizeMap` and `dimensions` were deleted in v2.0.0.
 - **`generateCssVariables` `fluidTypography` defaults to `false`** — static rem output by default. The `fluidTypography: true` opt-in emits `clamp()` for titleSmall–display, floored at `baseFont` to prevent headings shrinking below body text.
-- **`parseThemeJSON` returns `{ theme, tokenWarnings }`** — not a bare `GeneratedTheme`. Shape errors throw; value errors/warnings are collected as `TokenWarning[]`.
+- **`parseThemeJSON` returns `{ theme, tokenWarnings }`** — not a bare `GeneratedTheme`. Shape errors throw; value errors/warnings are collected as `TokenWarning[]`. After validation, all color strings in the returned theme are normalized to `#rrggbb` — callers may pass oklch/rgb/hsl stored themes.
+- **`generateTheme` and `adjustTheme` throw `RangeError` on token errors** — negative sizes, NaN, non-positive lineHeight, descending breakpoints. The same rules as `parseThemeJSON` `severity:"error"` diagnostics. Warnings (small touch targets, body text < 12 px) are permitted and do not throw.
+- **`adjustTheme` warnings are dropped when color overrides are present** — a color change may fix the failing contrast, so stale warnings are removed. Token-only adjustments preserve `theme.warnings` unchanged. `simulateTheme` always drops `theme.warnings` — the CVD-transformed colors make original contrast warnings meaningless.
 - **Token keys use camelCase internally, kebab-case in CSS/Tailwind/DTCG** — `onPrimary` → `--salt-color-on-primary`, `bodyMedium` → `salt-body-medium`.
 - **All color derivation happens in OKLCH** — never manipulate sRGB channels directly for perceptual operations.
 - **WCAG AA (4.5:1) is guaranteed for all `onX` colors** — auto-correction walks the lightness axis until contrast is met.
@@ -176,10 +178,10 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 
 | File | What it covers |
 | --- | --- |
-| `generate-theme.test.ts` | Core generation, presets, harmony, overrides, token option, schemaVersion |
-| `adjust-theme.test.ts` | adjustTheme() color + token overrides, schemaVersion preservation |
+| `generate-theme.test.ts` | Core generation, presets, harmony, overrides, token option, schemaVersion, token error throwing, mutation isolation |
+| `adjust-theme.test.ts` | adjustTheme() color + token overrides, schemaVersion preservation, mutation isolation, override color normalization, token error throwing, warnings staleness |
 | `diff-theme.test.ts` | diffTheme() structured comparison, schemaVersion diff |
-| `validate.test.ts` | parseThemeJSON() shape errors + TokenWarning diagnostics, schemaVersion validation |
+| `validate.test.ts` | parseThemeJSON() shape errors + TokenWarning diagnostics, schemaVersion validation, color normalization |
 | `rn-utils.test.ts` | resolveTextStyle() — RN value conversion |
 | `css-variables.test.ts` | CSS output: format, selectors, fluid typography, file header |
 | `scss.test.ts` | SCSS variables: light/dark split, -dark suffix, token declarations |
@@ -190,7 +192,8 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 | `figma.test.ts` | Figma Variables payload: two collections, RGBA 0–1, FLOAT/STRING types |
 | `flutter.test.ts` | Flutter/Dart: Color(0xFF...) format, Dark suffix, token constants |
 | `swiftui.test.ts` | SwiftUI: Color(red:green:blue:) format, Dark suffix, CGFloat/Font.Weight |
-| `color-blindness.test.ts` | simulateTheme(), simulateColorBlindness(), schemaVersion preservation |
+| `color-blindness.test.ts` | simulateTheme(), simulateColorBlindness(), schemaVersion preservation, warnings dropped |
+| `version.test.ts` | VERSION constant matches package.json version |
 | `color-math.test.ts` | OKLCH math, WCAG/APCA, hex utilities |
 | `butterfly.test.ts` | Butterfly Rule color derivation |
 | `on-colors.test.ts` | on-color derivation, auto-correction |

@@ -438,7 +438,7 @@ const adjusted = adjustTheme(theme, {
 });
 ```
 
-Overrides are partial — only specified keys change. `both` applies to both modes; `light`/`dark` apply to one mode only.
+Overrides are partial — only specified keys change. `both` applies to both modes; `light`/`dark` apply to one mode only. All color values in `colors`, `states`, and `surfaceElevation` overrides are normalized to canonical `#rrggbb` hex, so you may pass `rgb()`, `oklch()`, or named colors. Throws `RangeError` on token errors (negative sizes, NaN, descending breakpoints). **`theme.warnings` is dropped when any color override is present** (colors may now pass contrast); token-only adjustments preserve it.
 
 ---
 
@@ -464,7 +464,7 @@ const { theme, tokenWarnings } = parseThemeJSON(JSON.parse(stored));
 // tokenWarnings: TokenWarning[] — severity "error" | "warning"
 ```
 
-Validates a deserialized theme object. Shape errors throw. Value issues (negative sizes, descending breakpoints, compressed typography) return `TokenWarning[]`. Rejects missing or mismatched `schemaVersion`.
+Validates a deserialized theme object. Shape errors throw. Value issues (negative sizes, descending breakpoints, compressed typography) return `TokenWarning[]`. Rejects missing or mismatched `schemaVersion`. **All color strings in the returned theme are normalized to canonical `#rrggbb` hex** — the input may contain `oklch()`, `rgb()`, `hsl()`, or named colors.
 
 ---
 
@@ -501,7 +501,7 @@ const simulated = simulateTheme(theme, "deuteranomaly");
 | `"tritanomaly"` | Weak blue cones (~0.01% of population) |
 | `"achromatopsia"` | Complete color blindness (very rare) |
 
-Returns a full `GeneratedTheme` with all colors shifted through the simulation matrix. `schemaVersion` is preserved.
+Returns a full `GeneratedTheme` with all colors shifted through the simulation matrix. `schemaVersion` is preserved. `theme.warnings` is always dropped — original generation warnings relate to pre-simulation colors and are meaningless after the CVD transform.
 
 ---
 
