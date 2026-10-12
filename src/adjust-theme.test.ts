@@ -529,3 +529,51 @@ describe("adjustTheme - override color normalization", () => {
     expect(result.dark.states.info.disabled).toBe("#ff0000");
   });
 });
+
+// ─── warnings staleness ─────────────────────────────────────────────
+
+describe("adjustTheme - warnings staleness", () => {
+  // Generate a theme with a WCAG-failing color to get warnings
+  const themeWithWarnings = generateTheme({
+    colors: { both: { danger: "#ffcccc" } },
+    override: false,
+  });
+
+  it("theme fixture has warnings to test against", () => {
+    expect(themeWithWarnings.warnings).toBeDefined();
+    expect(themeWithWarnings.warnings!.length).toBeGreaterThan(0);
+  });
+
+  it("token-only adjustment preserves existing warnings", () => {
+    const result = adjustTheme(themeWithWarnings, { tokens: { spacing: { md: 20 } } });
+    expect(result.warnings).toEqual(themeWithWarnings.warnings);
+  });
+
+  it("color adjustment drops stale warnings", () => {
+    const result = adjustTheme(themeWithWarnings, {
+      both: { colors: { danger: "#cc0000" } },
+    });
+    expect(result.warnings).toBeUndefined();
+  });
+
+  it("light-only color adjustment drops warnings", () => {
+    const result = adjustTheme(themeWithWarnings, {
+      light: { colors: { danger: "#cc0000" } },
+    });
+    expect(result.warnings).toBeUndefined();
+  });
+
+  it("dark-only color adjustment drops warnings", () => {
+    const result = adjustTheme(themeWithWarnings, {
+      dark: { colors: { danger: "#cc0000" } },
+    });
+    expect(result.warnings).toBeUndefined();
+  });
+
+  it("empty overrides on a warning-free theme leaves warnings undefined", () => {
+    const clean = generateTheme({ primary: "#1e90ff" });
+    expect(clean.warnings).toBeUndefined();
+    const result = adjustTheme(clean, {});
+    expect(result.warnings).toBeUndefined();
+  });
+});

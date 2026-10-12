@@ -200,6 +200,5 @@ export function simulateTheme(theme: GeneratedTheme, type: ColorBlindnessType): 
     light:  simulateMode(theme.light, type),
     dark:   simulateMode(theme.dark,  type),
     tokens: theme.tokens,
-    ...(theme.warnings !== undefined && { warnings: theme.warnings }),
   };
 }

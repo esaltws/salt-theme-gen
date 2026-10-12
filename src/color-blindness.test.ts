@@ -195,13 +195,9 @@ describe("simulateTheme — structure", () => {
     expect(sim.tokens.iconSizes).toEqual(baseTheme.tokens.iconSizes);
   });
 
-  it("preserves warnings if present", () => {
+  it("never carries over generation warnings (colors have been transformed)", () => {
     const sim = simulateTheme(baseTheme, "protanopia");
-    if (baseTheme.warnings !== undefined) {
-      expect(sim.warnings).toEqual(baseTheme.warnings);
-    } else {
-      expect(sim.warnings).toBeUndefined();
-    }
+    expect(sim.warnings).toBeUndefined();
   });
 });
 

@@ -313,12 +313,13 @@ export function adjustTheme(
 ): GeneratedTheme {
   const lightColorOverrides = mergeColorOverrides(overrides.both, overrides.light);
   const darkColorOverrides  = mergeColorOverrides(overrides.both, overrides.dark);
+  const hasColorOverrides = overrides.both !== undefined || overrides.light !== undefined || overrides.dark !== undefined;
 
   return {
     schemaVersion: theme.schemaVersion,
     light:  adjustColors(theme.light,  lightColorOverrides  ?? {}),
     dark:   adjustColors(theme.dark,   darkColorOverrides   ?? {}),
     tokens: adjustTokens(theme.tokens, overrides.tokens     ?? {}),
-    ...(theme.warnings !== undefined && { warnings: theme.warnings }),
+    ...(!hasColorOverrides && theme.warnings !== undefined && { warnings: theme.warnings }),
   };
 }
