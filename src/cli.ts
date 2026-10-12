@@ -54,10 +54,12 @@ Commands:
   simulate   Apply color blindness simulation to a theme
   adjust     Adjust a theme using a ThemeOverrides JSON file
 
-Global options:
+Options:
   --help, -h      Show help (also works after a command)
   --version, -v   Print version number
-  --quiet         Suppress warnings on stderr
+
+Common command options:
+  --quiet         Suppress warnings on stderr (pass after the command)
   --silent        Alias for --quiet
 
 Examples:
