@@ -40,6 +40,10 @@ export type CssVariablesResult = {
   light: string;
   /** Dark-mode declarations only — no selector wrapper, for custom injection. */
   dark: string;
+  /** Standalone CSS for light mode only — lightSelector with complete light theme. */
+  lightRoot: string;
+  /** Standalone CSS for dark mode only — lightSelector with dark colors + all tokens. */
+  darkRoot: string;
   /** Typography utility classes (.{prefix}-caption, .{prefix}-body-medium, etc.) that reference the CSS vars. */
   classes: string;
 };
@@ -293,5 +297,8 @@ export function generateCssVariables(
     fluidTypography:  fluid                            ? fluid     : undefined,
   });
 
-  return { css: header + css, light, dark, classes: buildTypographyClasses(p) };
+  const lightRoot = header + block(lightSel, lightAll);
+  const darkRoot  = header + block(lightSel, [...darkColors, ...darkExtras, ...tokenDecls]);
+
+  return { css: header + css, light, dark, lightRoot, darkRoot, classes: buildTypographyClasses(p) };
 }

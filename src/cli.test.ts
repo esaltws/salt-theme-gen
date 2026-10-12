@@ -170,11 +170,13 @@ describe("generate", () => {
     expect(r.stdout).not.toContain(".dark");
   });
 
-  it("--mode dark emits dark variables only, no :root block", () => {
+  it("--mode dark emits standalone :root with dark colors and tokens", () => {
     const r = cli(["generate", "--primary", "#2563eb", "--format", "css", "--mode", "dark"]);
     expect(r.status).toBe(0);
+    expect(r.stdout).toContain(":root");
     expect(r.stdout).toContain("--salt-color-primary:");
-    expect(r.stdout).not.toContain(":root");
+    expect(r.stdout).toContain("--salt-spacing-md:");
+    expect(r.stdout).not.toContain("[data-theme");
   });
 
   it("--mode both (default) emits :root and dark selectors", () => {
@@ -467,11 +469,13 @@ describe("simulate", () => {
     unlinkSync(bad);
   });
 
-  it("--mode dark emits dark variables only", () => {
+  it("--mode dark emits standalone :root with dark colors and tokens", () => {
     const r = cli(["simulate", themeFile, "--type", "deuteranopia", "--format", "css", "--mode", "dark"]);
     expect(r.status).toBe(0);
+    expect(r.stdout).toContain(":root");
     expect(r.stdout).toContain("--salt-color-primary:");
-    expect(r.stdout).not.toContain(":root");
+    expect(r.stdout).toContain("--salt-spacing-md:");
+    expect(r.stdout).not.toContain("[data-theme");
   });
 
   it("--mode light emits light variables only", () => {
@@ -571,12 +575,14 @@ describe("adjust", () => {
     unlinkSync(bad);
   });
 
-  it("--mode dark emits dark CSS only", () => {
+  it("--mode dark emits standalone :root with dark colors and tokens", () => {
     const overrides = tmpFile("{}");
     const r = cli(["adjust", themeFile, "--overrides", overrides, "--format", "css", "--mode", "dark"]);
     expect(r.status).toBe(0);
+    expect(r.stdout).toContain(":root");
     expect(r.stdout).toContain("--salt-color-primary:");
-    expect(r.stdout).not.toContain(":root");
+    expect(r.stdout).toContain("--salt-spacing-md:");
+    expect(r.stdout).not.toContain("[data-theme");
     unlinkSync(overrides);
   });
 

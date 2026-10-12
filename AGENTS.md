@@ -330,7 +330,7 @@ const theme = generateTheme({ primary: "#6366f1" });
 ```typescript
 import { generateCssVariables } from "salt-theme-gen";
 
-const { css, light, dark, classes } = generateCssVariables(theme, {
+const { css, light, dark, lightRoot, darkRoot, classes } = generateCssVariables(theme, {
   format: "oklch",
   fluidTypography: true,
 });
@@ -344,7 +344,7 @@ const { css, light, dark, classes } = generateCssVariables(theme, {
 | `prefix` | `string` | `"salt"` | CSS variable prefix (`--{prefix}-color-*`) |
 | `fluidTypography` | `boolean` | `false` | Emit `clamp()` for titleSmall–display sizes |
 
-Returns `{ css, light, dark, classes }`. Use `css` for a complete file; `light`/`dark` are bare declarations without selectors.
+Returns `{ css, light, dark, lightRoot, darkRoot, classes }`. Use `css` for a complete file; `light`/`dark` are bare declarations without selectors for custom injection; `lightRoot`/`darkRoot` are standalone CSS files for single-mode output (used by the CLI `--mode light/dark`).
 
 ---
 

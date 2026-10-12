@@ -262,7 +262,7 @@ function applyFormat(theme: GeneratedTheme, format: CliFormat, mode: CliMode): s
       return JSON.stringify(theme, null, 2);
     case "css": {
       const r = generateCssVariables(theme);
-      return mode === "light" ? r.light : mode === "dark" ? r.dark : r.css;
+      return mode === "light" ? r.lightRoot : mode === "dark" ? r.darkRoot : r.css;
     }
     case "scss": {
       const r = generateScssVariables(theme);
