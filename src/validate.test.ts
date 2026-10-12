@@ -577,3 +577,40 @@ describe("parseThemeJSON - color normalization", () => {
     expect(theme.warnings![0].finalValue).toBe("#ff0000");
   });
 });
+
+// ─── Mutation isolation ───────────────────────────────────────────────
+
+describe("parseThemeJSON — mutation isolation", () => {
+  it("tokens object is independent of the input", () => {
+    const obj = validThemeObj();
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.tokens).not.toBe(obj.tokens);
+  });
+
+  it("mutating returned tokens does not affect input", () => {
+    const obj = validThemeObj();
+    const { theme } = parseThemeJSON(obj);
+    (theme.tokens.spacing as Record<string, number>).md = 9999;
+    expect((obj.tokens as Record<string, Record<string, number>>).spacing.md).not.toBe(9999);
+  });
+
+  it("accessibility object is independent of the input", () => {
+    const obj = validThemeObj();
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.accessibility).not.toBe(obj.light.accessibility);
+  });
+
+  it("mutating returned accessibility does not affect input", () => {
+    const obj = validThemeObj();
+    const { theme } = parseThemeJSON(obj);
+    const key = Object.keys(theme.light.accessibility)[0] as keyof typeof theme.light.accessibility;
+    (theme.light.accessibility[key] as Record<string, unknown>).ratio = 99;
+    expect((obj.light.accessibility as Record<string, Record<string, unknown>>)[key].ratio).not.toBe(99);
+  });
+
+  it("apca object is independent of the input", () => {
+    const obj = validThemeObj();
+    const { theme } = parseThemeJSON(obj);
+    expect(theme.light.apca).not.toBe(obj.light.apca);
+  });
+});

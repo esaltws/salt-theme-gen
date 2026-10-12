@@ -318,3 +318,28 @@ describe("simulateTheme — schemaVersion", () => {
     expect(sim.schemaVersion).toBe("2.0");
   });
 });
+
+// ─── Mutation isolation ───────────────────────────────────────────────
+
+describe("simulateTheme — mutation isolation", () => {
+  it("tokens object is independent of the original theme", () => {
+    const original  = generateTheme({ primary: "#1e90ff" });
+    const simulated = simulateTheme(original, "deuteranopia");
+    expect(simulated.tokens).not.toBe(original.tokens);
+  });
+
+  it("mutating simulated tokens does not affect original", () => {
+    const original  = generateTheme({ primary: "#1e90ff" });
+    const simulated = simulateTheme(original, "deuteranopia");
+    (simulated.tokens.spacing as Record<string, number>).md = 9999;
+    expect(original.tokens.spacing.md).not.toBe(9999);
+  });
+
+  it("mutating original tokens does not affect simulated", () => {
+    const original  = generateTheme({ primary: "#1e90ff" });
+    const simulated = simulateTheme(original, "deuteranopia");
+    const before = simulated.tokens.spacing.md;
+    (original.tokens.spacing as Record<string, number>).md = 9999;
+    expect(simulated.tokens.spacing.md).toBe(before);
+  });
+});

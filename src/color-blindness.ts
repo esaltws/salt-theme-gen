@@ -3,6 +3,7 @@ import { buildAccessibilityReport, buildAPCAReport } from "./on-colors.js";
 import type {
   GeneratedTheme,
   GeneratedThemeColors,
+  GeneratedThemeTokens,
   SemanticColors,
   SurfaceElevation,
   IntentStates,
@@ -122,6 +123,33 @@ export function simulateColorBlindness(hex: string, type: ColorBlindnessType): s
   }
 }
 
+// ─── Token Copy Helper ───────────────────────────────────────────────
+
+function copyTokens(t: GeneratedThemeTokens): GeneratedThemeTokens {
+  return {
+    spacing:        { ...t.spacing },
+    radius:         { ...t.radius },
+    fontSizes:      { ...t.fontSizes },
+    iconSizes:      { ...t.iconSizes },
+    icons:          { ...t.icons },
+    controlSizes:   { ...t.controlSizes },
+    touchTargets:   { ...t.touchTargets },
+    borderWidths:   { ...t.borderWidths },
+    avatarSizes:    { ...t.avatarSizes },
+    breakpoints:    { ...t.breakpoints },
+    baseFont:       t.baseFont,
+    fontScale:      t.fontScale,
+    fontFamilySans:    t.fontFamilySans,
+    fontFamilyDisplay: t.fontFamilyDisplay,
+    typography:     Object.fromEntries(
+      Object.entries(t.typography).map(([k, v]) => [k, { ...v }])
+    ) as GeneratedThemeTokens["typography"],
+    lineHeights:    { ...t.lineHeights },
+    fontWeights:    { ...t.fontWeights },
+    letterSpacings: { ...t.letterSpacings },
+  };
+}
+
 // ─── Theme-level Simulation ──────────────────────────────────────────
 
 function simulateColors(colors: SemanticColors, type: ColorBlindnessType): SemanticColors {
@@ -199,6 +227,6 @@ export function simulateTheme(theme: GeneratedTheme, type: ColorBlindnessType): 
     schemaVersion: theme.schemaVersion,
     light:  simulateMode(theme.light, type),
     dark:   simulateMode(theme.dark,  type),
-    tokens: theme.tokens,
+    tokens: copyTokens(theme.tokens),
   };
 }

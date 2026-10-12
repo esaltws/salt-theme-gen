@@ -189,8 +189,12 @@ function normalizeMode(raw: Record<string, unknown>): GeneratedThemeColors {
     palettes: palettes as GeneratedThemeColors["palettes"],
     surfaceElevation: surfaceElevation as GeneratedThemeColors["surfaceElevation"],
     states: states as GeneratedThemeColors["states"],
-    accessibility: raw.accessibility as GeneratedThemeColors["accessibility"],
-    apca: raw.apca as GeneratedThemeColors["apca"],
+    accessibility: Object.fromEntries(
+      Object.entries(raw.accessibility as Record<string, unknown>).map(([k, v]) => [k, { ...(v as object) }])
+    ) as GeneratedThemeColors["accessibility"],
+    apca: Object.fromEntries(
+      Object.entries(raw.apca as Record<string, unknown>).map(([k, v]) => [k, { ...(v as object) }])
+    ) as GeneratedThemeColors["apca"],
   };
 }
 
@@ -447,7 +451,29 @@ export function parseThemeJSON(value: unknown): ParseThemeResult {
 
   const light  = normalizeMode(obj.light as Record<string, unknown>);
   const dark   = normalizeMode(obj.dark as Record<string, unknown>);
-  const tokens = obj.tokens as GeneratedThemeTokens;
+  const rawT = obj.tokens as GeneratedThemeTokens;
+  const tokens: GeneratedThemeTokens = {
+    spacing:        { ...rawT.spacing },
+    radius:         { ...rawT.radius },
+    fontSizes:      { ...rawT.fontSizes },
+    iconSizes:      { ...rawT.iconSizes },
+    icons:          { ...rawT.icons },
+    controlSizes:   { ...rawT.controlSizes },
+    touchTargets:   { ...rawT.touchTargets },
+    borderWidths:   { ...rawT.borderWidths },
+    avatarSizes:    { ...rawT.avatarSizes },
+    breakpoints:    { ...rawT.breakpoints },
+    baseFont:       rawT.baseFont,
+    fontScale:      rawT.fontScale,
+    fontFamilySans:    rawT.fontFamilySans,
+    fontFamilyDisplay: rawT.fontFamilyDisplay,
+    typography:     Object.fromEntries(
+      Object.entries(rawT.typography).map(([k, v]) => [k, { ...v }])
+    ) as GeneratedThemeTokens["typography"],
+    lineHeights:    { ...rawT.lineHeights },
+    fontWeights:    { ...rawT.fontWeights },
+    letterSpacings: { ...rawT.letterSpacings },
+  };
 
   if (light.mode !== "light") {
     throw new Error(`theme.light.mode: expected "light", got ${JSON.stringify(light.mode)}`);
