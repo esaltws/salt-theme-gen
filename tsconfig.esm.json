@@ -4,5 +4,6 @@
     "module": "es2020",
     "moduleResolution": "bundler",
     "outDir": "dist/esm"
-  }
+  },
+  "exclude": ["src/**/*.test.ts", "src/test-helpers.ts", "src/cli.ts"]
 }

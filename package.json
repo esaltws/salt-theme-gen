@@ -87,7 +87,14 @@
     "url": "https://github.com/esaltws/salt-theme-gen"
   },
   "type": "commonjs",
+  "bin": {
+    "salt-theme-gen": "./dist/cjs/cli.js"
+  },
+  "engines": {
+    "node": ">=18.3.0"
+  },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }
