@@ -1,4 +1,5 @@
 import { parseColor } from "./color-math.js";
+import { assertTokenErrors } from "./validate.js";
 import { deriveOnColor, buildAccessibilityReport, buildAPCAReport } from "./on-colors.js";
 import { deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
@@ -267,13 +268,15 @@ export function adjustTokens(
     typography = merged;
   }
 
-  return {
+  const result: GeneratedThemeTokens = {
     spacing, radius, fontSizes, iconSizes, icons,
     controlSizes, touchTargets,
     borderWidths, avatarSizes, breakpoints,
     baseFont, fontScale, fontFamilySans, fontFamilyDisplay,
     typography, lineHeights, fontWeights, letterSpacings,
   };
+  assertTokenErrors(result);
+  return result;
 }
 
 // ─── Public API ─────────────────────────────────────────────────────

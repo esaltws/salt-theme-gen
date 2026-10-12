@@ -1,5 +1,6 @@
 import { parseColor, oklchToHex, contrastRatio } from "./color-math.js";
 import { adjustTokens } from "./adjust-theme.js";
+import { assertTokenErrors } from "./validate.js";
 import { deriveColors, deriveSurfaceElevation } from "./butterfly.js";
 import { deriveAllIntentStates } from "./state-colors.js";
 import { buildAccessibilityReport, buildAPCAReport, deriveOnColor, autoCorrectContrast } from "./on-colors.js";
@@ -176,7 +177,7 @@ function buildTokens(
   fontScale: number,
   fontFamily?: FontFamilyOptions
 ): GeneratedThemeTokens {
-  return {
+  const result: GeneratedThemeTokens = {
     spacing,
     radius,
     fontSizes,
@@ -196,6 +197,8 @@ function buildTokens(
     fontWeights:   { ...DEFAULT_FONT_WEIGHTS },
     letterSpacings: { ...DEFAULT_LETTER_SPACINGS },
   };
+  assertTokenErrors(result);
+  return result;
 }
 
 function generateModeWithOverrides(

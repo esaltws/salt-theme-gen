@@ -289,10 +289,10 @@ function validateTokenValues(obj: Record<string, unknown>, path: string): TokenW
 
   // ── Errors ─────────────────────────────────────────────────────────
 
-  // Negative values across all numeric pixel scales
+  // Negative or non-finite values across all numeric pixel scales
   const noNegative = (scale: Record<string, unknown>, scalePath: string): void => {
     for (const [key, val] of Object.entries(scale)) {
-      if (typeof val === "number" && val < 0) {
+      if (typeof val === "number" && (val < 0 || !Number.isFinite(val))) {
         e(`${scalePath}.${key}`, "no-negative", val,
           `${scalePath}.${key} must not be negative (got ${val})`);
       }
@@ -313,11 +313,11 @@ function validateTokenValues(obj: Record<string, unknown>, path: string): TokenW
   const typo = obj.typography as Record<string, Record<string, number>>;
   for (const key of TYPOGRAPHY_SCALE_KEYS) {
     const { fontSize: fs, lineHeight: lh } = typo[key];
-    if (lh <= 0) {
+    if (lh <= 0 || !Number.isFinite(lh)) {
       e(`${path}.typography.${key}.lineHeight`, "positive-line-height", lh,
         `typography.${key}.lineHeight must be > 0 (got ${lh})`);
     }
-    if (fs < 0) {
+    if (fs < 0 || !Number.isFinite(fs)) {
       e(`${path}.typography.${key}.fontSize`, "no-negative", fs,
         `typography.${key}.fontSize must not be negative (got ${fs})`);
     }
@@ -388,6 +388,20 @@ function validateTokenValues(obj: Record<string, unknown>, path: string): TokenW
   checkAscending(obj.fontSizes as Record<string, number>, `${path}.fontSizes`, ["xs", "sm", "md", "lg", "xl", "xxl", "3xl"]);
 
   return result;
+}
+
+/**
+ * Throw a RangeError if any severity:"error" token conditions are present.
+ * Called by generateTheme() and adjustTokens() to enforce the invariant that
+ * no GeneratedTheme leaving the library contains token errors.
+ * Warnings (small touch targets, body text < 12px, etc.) are permitted.
+ */
+export function assertTokenErrors(tokens: GeneratedThemeTokens): void {
+  const errors = validateTokenValues(tokens as Record<string, unknown>, "tokens")
+    .filter(w => w.severity === "error");
+  if (errors.length > 0) {
+    throw new RangeError(errors.map(e => e.message).join("\n"));
+  }
 }
 
 // ─── Public API ─────────────────────────────────────────────────────

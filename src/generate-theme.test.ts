@@ -815,3 +815,68 @@ describe("generateTheme — preset freeze", () => {
     expect(Object.isFrozen(FONT_SIZE_PRESETS.default)).toBe(true);
   });
 });
+
+// ─── token error validation ─────────────────────────────────────────
+
+describe("generateTheme - token error validation", () => {
+  it("throws on negative spacing value in partial scale", () => {
+    expect(() => generateTheme({ spacing: { md: -100 } })).toThrow(RangeError);
+    expect(() => generateTheme({ spacing: { md: -100 } })).toThrow(/negative/);
+  });
+
+  it("throws on NaN spacing value", () => {
+    expect(() => generateTheme({ spacing: { xs: NaN } })).toThrow(RangeError);
+  });
+
+  it("throws on negative radius value in partial scale", () => {
+    expect(() => generateTheme({ radius: { sm: -4 } })).toThrow(RangeError);
+  });
+
+  it("throws on descending breakpoints via tokens override", () => {
+    // default md=768, setting lg=200 makes lg < md
+    expect(() => generateTheme({ tokens: { breakpoints: { lg: 200 } } })).toThrow(RangeError);
+    expect(() => generateTheme({ tokens: { breakpoints: { lg: 200 } } })).toThrow(/ascending/);
+  });
+
+  it("throws on negative iconSizes via tokens override", () => {
+    expect(() => generateTheme({ tokens: { iconSizes: { sm: -1 } } })).toThrow(RangeError);
+  });
+
+  it("throws on non-positive typography lineHeight via tokens override", () => {
+    expect(() => generateTheme({ tokens: { typography: { bodyMedium: { lineHeight: 0 } } } })).toThrow(RangeError);
+  });
+
+  it("does NOT throw for a 20px touch target (warning, not error)", () => {
+    expect(() => generateTheme({ tokens: { touchTargets: { minimum: 20, recommended: 40, comfortable: 48 } } })).not.toThrow();
+  });
+
+  it("does NOT throw for 10px body text (warning, not error)", () => {
+    expect(() => generateTheme({ tokens: { fontSizes: { xs: 8, sm: 10, md: 10, lg: 12, xl: 14, xxl: 18, "3xl": 24 } } })).not.toThrow();
+  });
+});
+
+describe("adjustTheme - token error validation", () => {
+  const base = generateTheme({ primary: "#1e90ff" });
+
+  it("throws on negative spacing override", () => {
+    expect(() => adjustTheme(base, { tokens: { spacing: { md: -1 } } })).toThrow(RangeError);
+    expect(() => adjustTheme(base, { tokens: { spacing: { md: -1 } } })).toThrow(/negative/);
+  });
+
+  it("throws on descending breakpoints override", () => {
+    expect(() => adjustTheme(base, { tokens: { breakpoints: { lg: 100 } } })).toThrow(RangeError);
+  });
+
+  it("throws on negative borderWidth override", () => {
+    expect(() => adjustTheme(base, { tokens: { borderWidths: { thin: -1 } } })).toThrow(RangeError);
+  });
+
+  it("throws on NaN avatarSize override", () => {
+    expect(() => adjustTheme(base, { tokens: { avatarSizes: { md: NaN } } })).toThrow(RangeError);
+  });
+
+  it("does NOT throw for a small touch target override (warning only)", () => {
+    expect(() => adjustTheme(base, { tokens: { touchTargets: { minimum: 20, recommended: 40, comfortable: 44 } } })).not.toThrow();
+  });
+});
+
