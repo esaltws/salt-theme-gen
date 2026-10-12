@@ -31,6 +31,17 @@ function copyPalettes(src: TonalPalettes): TonalPalettes {
   return out;
 }
 
+function normalizePartialColors<T extends Record<string, string>>(
+  partial: Partial<T>
+): Partial<T> {
+  const out: Partial<T> = {};
+  for (const k of Object.keys(partial) as (keyof T)[]) {
+    const v = partial[k];
+    if (v !== undefined) (out as Record<keyof T, string>)[k] = parseColor(v);
+  }
+  return out;
+}
+
 // ─── Constants ──────────────────────────────────────────────────────
 
 const BASE_TO_ON: [keyof SemanticColors, keyof SemanticColors][] = [
@@ -124,7 +135,7 @@ function adjustColors(
     states = {} as IntentStates;
     for (const intent of INTENT_KEYS) {
       states[intent] = intent in overrides.states
-        ? { ...base[intent], ...overrides.states[intent]! }
+        ? { ...base[intent], ...normalizePartialColors(overrides.states[intent]!) }
         : { ...base[intent] };
     }
   } else if (anyStateInputChanged) {
@@ -140,7 +151,7 @@ function adjustColors(
     const base = surfaceInputChanged
       ? deriveSurfaceElevation(mergedColors.surface, mergedColors.primary, mode.mode)
       : mode.surfaceElevation;
-    surfaceElevation = { ...base, ...overrides.surfaceElevation };
+    surfaceElevation = { ...base, ...normalizePartialColors(overrides.surfaceElevation) };
   } else if (surfaceInputChanged) {
     surfaceElevation = deriveSurfaceElevation(mergedColors.surface, mergedColors.primary, mode.mode);
   } else {

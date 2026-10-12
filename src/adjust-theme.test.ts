@@ -487,3 +487,45 @@ describe("adjustTheme — mutation isolation", () => {
     expect(adjusted.tokens.typography.bodyMedium).not.toBe(original.tokens.typography.bodyMedium);
   });
 });
+
+// ─── color normalization in overrides ──────────────────────────────
+
+describe("adjustTheme - override color normalization", () => {
+  const base = generateTheme({ primary: "#1e90ff" });
+
+  it("normalizes rgb() in states override to #rrggbb", () => {
+    const result = adjustTheme(base, {
+      light: { states: { primary: { hover: "rgb(255, 0, 0)" } } },
+    });
+    expect(result.light.states.primary.hover).toBe("#ff0000");
+  });
+
+  it("normalizes oklch() in states override to #rrggbb hex", () => {
+    const result = adjustTheme(base, {
+      light: { states: { danger: { hover: "oklch(0.5 0.2 30)" } } },
+    });
+    expect(result.light.states.danger.hover).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("normalizes rgb() in surfaceElevation override to #rrggbb", () => {
+    const result = adjustTheme(base, {
+      light: { surfaceElevation: { modal: "rgb(255, 255, 255)" } },
+    });
+    expect(result.light.surfaceElevation.modal).toBe("#ffffff");
+  });
+
+  it("normalizes oklch() in surfaceElevation override to #rrggbb hex", () => {
+    const result = adjustTheme(base, {
+      both: { surfaceElevation: { card: "oklch(0.97 0.01 220)" } },
+    });
+    expect(result.light.surfaceElevation.card).toMatch(/^#[0-9a-f]{6}$/);
+    expect(result.dark.surfaceElevation.card).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("normalizes named color in states override to hex", () => {
+    const result = adjustTheme(base, {
+      dark: { states: { info: { disabled: "red" } } },
+    });
+    expect(result.dark.states.info.disabled).toBe("#ff0000");
+  });
+});
