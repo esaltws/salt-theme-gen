@@ -64,6 +64,7 @@ vitest.config.ts       Test runner config
 | `color-blindness.ts` | `simulateColorBlindness()` / `simulateTheme()` |
 | `typography-utils.ts` | Typography scale computation |
 | `icon-utils.ts` | Size constants |
+| `cli.ts` | CLI entry point — `generate` / `export` / `validate` / `diff` / `simulate` / `adjust` |
 | `presets/` | Nature presets, spacing/radius/fontSize preset tables |
 
 ---
@@ -75,6 +76,67 @@ npm test              # Run all tests (vitest run) — must pass before any comm
 npm run test:watch    # Watch mode
 npm run typecheck     # tsc --noEmit — zero errors required
 npm run build         # Compile to dist/ (CJS + ESM)
+```
+
+---
+
+## CLI
+
+The package ships a `salt-theme-gen` binary (CJS, `dist/cjs/cli.js`). It requires no arguments besides a command and wraps the library API as a Unix-friendly tool: stdout = result, stderr = warnings/errors.
+
+### Exit codes
+
+| Code | Meaning |
+| ---- | ------- |
+| `0` | Success |
+| `1` | Domain error (validation failed, token errors, WCAG issues) |
+| `2` | Input error (bad flags, missing args, unreadable file, invalid JSON) |
+
+### Commands
+
+| Command | Purpose | Key flags |
+| ------- | ------- | --------- |
+| `generate` | Create a theme from a color or preset | `--primary`, `--preset`, `--format`, `--mode`, `--out` |
+| `export` | Convert a saved `GeneratedTheme` JSON to another format | `--format` (required), `--mode`, `--out` |
+| `validate` | Validate a theme JSON; exits 1 on `severity:"error"` token diagnostics | — |
+| `diff` | Compare two themes; exits 1 when differences exist, 0 when identical | `--json` |
+| `simulate` | Apply CVD simulation; accepts a file or generates from `--primary`/`--preset` | `--type`, `--format`, `--mode` |
+| `adjust` | Apply `ThemeOverrides` (file or stdin) to a theme | `--overrides`, `--format`, `--mode` |
+
+### Formats (`--format`)
+
+`json` (default) · `css` · `scss` · `tailwind` · `dtcg` · `shadcn` · `panda` · `figma` · `flutter` · `swiftui`
+
+### Modes (`--mode`, for `css`/`scss` only)
+
+`both` (default) · `light` · `dark` — `light`/`dark` emit raw declarations without a selector wrapper.
+
+### Key behaviors
+
+- `--quiet` / `--silent` suppress stderr warnings; must be placed **after** the command name, not before.
+- `loadTheme` rejects themes with `severity:"error"` token diagnostics before processing (exits 1).
+- `validate` distinguishes errors (exit 1) from warnings (exit 0, printed to stderr).
+- `export`, `simulate`, and `validate` accept `-` as the file argument to read from stdin.
+- `adjust` reads the theme from a file (or stdin with `-`) and the overrides from `--overrides <file>` or stdin when `--overrides` is omitted. Both cannot be stdin simultaneously.
+- Output always ends with a newline.
+
+### Examples
+
+```bash
+# Generate CSS and write to file
+salt-theme-gen generate --preset ocean --format css --out theme.css
+
+# Export a saved theme to Tailwind
+salt-theme-gen export theme.json --format tailwind
+
+# Pipe through adjust then validate
+cat theme.json | salt-theme-gen adjust - --overrides changes.json | salt-theme-gen validate -
+
+# Compare two themes
+salt-theme-gen diff old.json new.json --json
+
+# CVD simulation, dark CSS only
+salt-theme-gen simulate theme.json --type deuteranopia --format css --mode dark
 ```
 
 ---
@@ -146,7 +208,7 @@ type GeneratedThemeTokens = {
 - `generateCssVariables` `fluidTypography` defaults to `false` — opt in explicitly.
 - `parseThemeJSON` returns `{ theme, tokenWarnings }` — not a bare `GeneratedTheme`.
 - `schemaVersion: "2.0"` is stamped on every `GeneratedTheme` by `generateTheme`, preserved by `adjustTheme` and `simulateTheme`. `parseThemeJSON` validates it first — missing or wrong version throws before any other check. `SCHEMA_VERSION` constant, `SchemaVersion` type, `VERSION` constant (`"2.0.0-rc.3"`), and `Version` type are exported from `index.ts`.
-- All generated file outputs (CSS, SCSS, Dart, Swift, DTCG JSON) include a generation header with function name, primary seed, non-default options, and ISO timestamp.
+- All generated file outputs (CSS, SCSS, Dart, Swift, DTCG JSON) include a generation header with function name, primary seed, and non-default options. **No timestamp** — output is deterministic (same input → identical bytes).
 
 ---
 

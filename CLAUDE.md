@@ -29,7 +29,7 @@ npm run typecheck     # tsc --noEmit (no emit, strict)
 npm run build         # CJS + ESM dual output to dist/
 ```
 
-Run `npm test` after any change. All 2351+ tests must pass before committing.
+Run `npm test` after any change. All 2434+ tests must pass before committing.
 
 ---
 
@@ -62,6 +62,7 @@ src/
 ├── color-blindness.ts    # simulateColorBlindness/simulateTheme (7 CVD types, Machado 2009)
 ├── typography-utils.ts   # computeTypographyScale, computeModularFontSizes, lookupFontSizes
 ├── icon-utils.ts         # Size constants: DEFAULT_ICON_SIZES, DEFAULT_CONTROL_SIZES, etc.
+├── cli.ts                # CLI entry point — generate / export / validate / diff / simulate / adjust
 └── presets/
     ├── nature-presets.ts  # 20 hue+chroma pairs (peacock, ocean, forest …)
     ├── spacing-presets.ts # 4 spacing scales (compact → spacious)
@@ -178,6 +179,7 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 
 | File | What it covers |
 | --- | --- |
+| `cli.test.ts` | CLI integration tests (spawnSync): all 6 commands, exit codes, formats, stdin/file duality, error paths |
 | `generate-theme.test.ts` | Core generation, presets, harmony, overrides, token option, schemaVersion, token error throwing, mutation isolation |
 | `adjust-theme.test.ts` | adjustTheme() color + token overrides, schemaVersion preservation, mutation isolation, override color normalization, token error throwing, warnings staleness |
 | `diff-theme.test.ts` | diffTheme() structured comparison, schemaVersion diff |
@@ -224,4 +226,4 @@ Tests live alongside source files as `src/*.test.ts`. Vitest, no mocks, no globa
 4. `--salt-size-*` and `--salt-dimension-*` CSS variables removed.
 5. DTCG `size.*` and `dimension.*` groups removed.
 
-New in v2.0.0: `schemaVersion: "2.0"` + `SCHEMA_VERSION`, `VERSION`, `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight, `generateScssVariables`, `generateShadcnTheme`/`shadcnTheme`, `generatePandaConfig`, `generateFigmaVariables`, `generateFlutterTheme`, `generateSwiftUITheme`, new semantic tokens `input`/`ring`/`onMuted`, generation headers on all file outputs.
+New in v2.0.0: `schemaVersion: "2.0"` + `SCHEMA_VERSION`, `VERSION`, `resolveTextStyle`, `generateTheme({ tokens })`, `TokenWarning`/`ParseThemeResult`, `controlSize.*`/`touchTarget.*` DTCG groups, Tailwind typography tuples + height/minWidth/minHeight, `generateScssVariables`, `generateShadcnTheme`/`shadcnTheme`, `generatePandaConfig`, `generateFigmaVariables`, `generateFlutterTheme`, `generateSwiftUITheme`, new semantic tokens `input`/`ring`/`onMuted`, generation headers on all file outputs (no timestamp — deterministic output), CLI (`generate` / `export` / `validate` / `diff` / `simulate` / `adjust`).
