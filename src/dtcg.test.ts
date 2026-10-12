@@ -379,7 +379,7 @@ describe("generateDtcgTokens — light/dark/json", () => {
     expect(parsed.$description).toContain("salt-theme-gen");
     expect(parsed.$description).toContain("generateDtcgTokens");
     expect(parsed.$description).toContain("Primary: #");
-    expect(parsed.$description).toMatch(/20\d\d-\d\d-\d\dT/);
+    expect(parsed.$description).not.toMatch(/20\d\d-\d\d-\d\dT/);
   });
 
   it("all presets produce valid token trees", () => {
