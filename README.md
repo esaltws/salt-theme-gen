@@ -29,6 +29,40 @@ npm install salt-theme-gen
 
 ---
 
+## CLI
+
+```bash
+# One-off (no install)
+npx salt-theme-gen generate --preset ocean --format css
+
+# Per-project
+npm install salt-theme-gen
+npx salt-theme-gen generate --primary "#2563eb" --out theme.json
+
+# Global
+npm install -g salt-theme-gen
+salt-theme-gen generate --primary "#2563eb" --format css
+```
+
+| Command    | Purpose                                      |
+| ---------- | -------------------------------------------- |
+| `generate` | Create a theme from a color or preset        |
+| `export`   | Convert a saved theme JSON to another format |
+| `adjust`   | Apply color or token overrides to a theme    |
+| `validate` | Validate a theme JSON file                   |
+| `diff`     | Compare two theme JSON files                 |
+| `simulate` | Apply color blindness simulation             |
+
+All commands write to stdout by default; use `--out <file>` to write to a file.
+Pass `--help` after any command for full options.
+
+```bash
+salt-theme-gen generate --help
+salt-theme-gen export --help
+```
+
+---
+
 ## Quick Start
 
 ```ts
