@@ -2,34 +2,43 @@
 
 ## Unreleased
 
-### New output formats
+### Added
 
-- **`generateScssVariables(theme, options?)`** — SCSS variable file. Light colors use plain `$salt-color-primary: #hex` names; dark colors add a `-dark` suffix (`$salt-color-primary-dark`). Mode-agnostic tokens (spacing, radius, typography, sizes) emitted once. Options: `prefix`, `includePalettes`.
+- **CLI** — `salt-theme-gen` binary with six subcommands: `generate`, `export`, `validate`, `diff`, `simulate`, `adjust`. Reads from file or stdin; writes to stdout or `--out <file>`. `--format` selects output format (json, css, scss, tailwind, dtcg, shadcn, panda, figma, flutter, swiftui); `--mode light|dark|both` controls which theme mode to emit for CSS/SCSS.
 
-- **`generatePandaConfig(theme, options?)`** — Panda CSS `tokens` + `semanticTokens` objects. Semantic colors carry `{ value: { base: "#light", _dark: "#dark" } }` for automatic dark mode. Spread directly into `panda.config.ts`. Options: `includePalettes`.
+- **`generateScssVariables(theme, options?)`** — SCSS variable file. Light colors use plain `$salt-color-primary` names; dark colors add a `-dark` suffix. Mode-agnostic tokens emitted once. Options: `prefix`, `includePalettes`.
 
-- **`generateFigmaVariables(theme, options?)`** — Figma Variables REST API payload (`PATCH /v1/files/:id/variables`). Two collections: `Salt / Colors` (Light + Dark modes, COLOR type, RGBA 0–1) and `Salt / Tokens` (single mode, FLOAT/STRING). Options: `includePalettes`.
+- **`generatePandaConfig(theme, options?)`** — Panda CSS `tokens` + `semanticTokens` objects. Semantic colors carry `{ value: { base: "#light", _dark: "#dark" } }` for automatic dark mode. Options: `includePalettes`.
+
+- **`generateFigmaVariables(theme, options?)`** — Figma Variables REST API payload (`PATCH /v1/files/:id/variables`). Two collections: `Salt / Colors` (Light + Dark modes, COLOR type, RGBA 0–1) and `Salt / Tokens` (FLOAT/STRING). Options: `includePalettes`.
 
 - **`generateFlutterTheme(theme, options?)`** — Flutter/Dart constants class. Colors are `Color(0xFF...)`. Dark mode adds `Dark` suffix. Tokens are `static const double` / `static const int`. Options: `className`.
 
 - **`generateSwiftUITheme(theme, options?)`** — SwiftUI constants enum with `Colors` and `Tokens` nested enums. Colors are `Color(red:green:blue:)`. Dark mode adds `Dark` suffix. Tokens are `CGFloat` / `Font.Weight`. Options: `enumName`.
 
-- **`shadcnTheme(options?)`** / **`generateShadcnTheme(theme, options?)`** — Tailwind v4 + shadcn/ui compatible CSS. Self-contained importable file with `@custom-variant dark`, `@theme inline`, `:root`, `.dark`, and `@layer base`. Options: `baseColor` (`neutral` | `zinc` | `stone` | `mauve` | `olive` | `mist` | `taupe`), `includePalettes`.
+- **`generateShadcnTheme(theme, options?)`** / **`shadcnTheme(options?)`** — Tailwind v4 + shadcn/ui compatible CSS. Self-contained importable file with `@custom-variant dark`, `@theme inline`, `:root`, `.dark`, and `@layer base`. Options: `baseColor` (`neutral` | `zinc` | `stone` | `mauve` | `olive` | `mist` | `taupe`), `includePalettes`.
 
-### New tokens
+- **New semantic tokens** — `input` (form control border, slightly more prominent than `border`), `ring` (focus indicator, WCAG 2.4.11 non-text contrast ≥ 3:1 guaranteed), `onMuted` (WCAG AA foreground for muted surfaces).
 
-- **`input`** — form control border color (L=0.82 light / L=0.36 dark), slightly more prominent than `border`.
-- **`ring`** — focus indicator ring color (primary hue, WCAG 2.4.11 non-text contrast ≥ 3:1 guaranteed).
-- **`onMuted`** — readable foreground for muted surfaces; `WCAG AA` guaranteed against `muted`.
+- **`VERSION`** constant exported from the package alongside `SCHEMA_VERSION`.
 
-### Other additions
+- **`lightRoot` / `darkRoot`** in `CssVariablesResult` — standalone single-mode CSS. `lightRoot` emits the light selector with the full light theme; `darkRoot` emits the light selector with dark colors and all mode-independent tokens (spacing, radius, typography, etc.) — useful for dark-only deployments or the CLI `--mode dark`.
 
-- **`VERSION`** constant (`"2.0.0-rc.2"`) exported from the package alongside `SCHEMA_VERSION`.
-- All generated file outputs (`css`, `scss`, `dart`, `swift`, DTCG `json`) now include a generation header with function name, primary seed, non-default options, and ISO timestamp — useful for tracing and AI tooling.
+### Fixed
+
+- **Deterministic output** — file headers no longer include a timestamp. Same inputs produce identical bytes across builds and CI runs.
+
+- **Mutation isolation** — `simulateTheme`, `parseThemeJSON`, and `adjustTheme` now return fully independent objects. Mutating a returned theme no longer corrupts the original or future calls.
+
+- **`validate` exit code** — now exits 1 for `severity:"error"` token diagnostics (was silently exiting 0 and printing "valid").
+
+- **Exit code consistency** — schema and shape validation failures now exit 1 (validation error) across all commands. Only file-not-found, unreadable files, and malformed JSON syntax exit 2 (I/O / usage error).
 
 ---
 
-## 2.0.0 — 2026-08-07
+## 2.0.0
+
+> Release date to be filled on publication.
 
 ### Breaking changes
 
@@ -72,7 +81,7 @@ The fluid minimum is floored at `baseFont` so headings never shrink below body t
 
 ### New
 
-- **`schemaVersion: "2.0"`** — every `GeneratedTheme` is now stamped with a schema version. `parseThemeJSON` rejects missing or mismatched versions with a descriptive error. `SCHEMA_VERSION` and `SchemaVersion` are exported for consumers. `diffTheme` surfaces version mismatches in the diff result.
+- **`schemaVersion: "2.0"`** — every `GeneratedTheme` is stamped with a schema version. `parseThemeJSON` rejects missing or mismatched versions with a descriptive error. `SCHEMA_VERSION` and `SchemaVersion` are exported for consumers. `diffTheme` surfaces version mismatches in the diff result.
 
 - **`resolveTextStyle(style)`** — converts `TypographyStyle` to React Native `StyleSheet` values: absolute `lineHeight` (px), absolute `letterSpacing` (px), string `fontWeight`. Eliminates silent layout bugs from spreading raw typography tokens into `<Text>`.
 
