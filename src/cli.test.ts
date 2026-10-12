@@ -467,6 +467,20 @@ describe("simulate", () => {
     unlinkSync(bad);
   });
 
+  it("--mode dark emits dark variables only", () => {
+    const r = cli(["simulate", themeFile, "--type", "deuteranopia", "--format", "css", "--mode", "dark"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("--salt-color-primary:");
+    expect(r.stdout).not.toContain(":root");
+  });
+
+  it("--mode light emits light variables only", () => {
+    const r = cli(["simulate", themeFile, "--type", "deuteranopia", "--format", "css", "--mode", "light"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("--salt-color-primary:");
+    expect(r.stdout).not.toContain("dark");
+  });
+
   it("simulate --help exits 0", () => {
     expect(cli(["simulate", "--help"]).status).toBe(0);
   });
@@ -555,6 +569,24 @@ describe("adjust", () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toContain("error [token]");
     unlinkSync(bad);
+  });
+
+  it("--mode dark emits dark CSS only", () => {
+    const overrides = tmpFile("{}");
+    const r = cli(["adjust", themeFile, "--overrides", overrides, "--format", "css", "--mode", "dark"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("--salt-color-primary:");
+    expect(r.stdout).not.toContain(":root");
+    unlinkSync(overrides);
+  });
+
+  it("--mode light emits light CSS only", () => {
+    const overrides = tmpFile("{}");
+    const r = cli(["adjust", themeFile, "--overrides", overrides, "--format", "css", "--mode", "light"]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("--salt-color-primary:");
+    expect(r.stdout).not.toContain("dark");
+    unlinkSync(overrides);
   });
 
   it("adjust --help exits 0", () => {

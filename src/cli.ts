@@ -195,6 +195,7 @@ Options:
                           protanomaly, deuteranomaly, tritanomaly
                           achromatopsia
   --format <name>       Output format (default: json)
+  --mode <name>         For css/scss: light, dark, both (default: both)
   --out <file>          Write to file instead of stdout
 
   Generation flags (when no file is provided):
@@ -218,6 +219,7 @@ Options:
   --overrides <file>    Path to ThemeOverrides JSON, or - for stdin.
                         Omit when overrides are piped via stdin.
   --format <name>       Output format (default: json)
+  --mode <name>         For css/scss: light, dark, both (default: both)
   --out <file>          Write to file instead of stdout
 
   --quiet, --silent     Suppress warnings on stderr
@@ -639,15 +641,17 @@ function runSimulate(argv: string[]): void {
     "base-font":  { type: "string" },
     "font-scale": { type: "string" },
     format:       { type: "string" },
+    mode:         { type: "string" },
     out:          { type: "string" },
     quiet:        { type: "boolean" },
     silent:       { type: "boolean" },
   }, true);
 
-  const rawType  = v["type"]   as string | undefined;
+  const rawType   = v["type"]   as string | undefined;
   const rawFormat = (v["format"] as string | undefined) ?? "json";
-  const outFile  = v["out"]    as string | undefined;
-  const quiet    = v["quiet"] === true || v["silent"] === true;
+  const rawMode   = (v["mode"]   as string | undefined) ?? "both";
+  const outFile   = v["out"]    as string | undefined;
+  const quiet     = v["quiet"] === true || v["silent"] === true;
 
   if (!rawType) die("simulate requires --type <cvd>");
   if (!VALID_CVD_TYPES.includes(rawType as ColorBlindnessType)) {
@@ -658,7 +662,11 @@ function runSimulate(argv: string[]): void {
   if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
     die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
   }
+  if (!(VALID_MODES as readonly string[]).includes(rawMode)) {
+    die(`unknown mode '${rawMode}' — valid: both, light, dark`);
+  }
   const format = rawFormat as CliFormat;
+  const mode   = rawMode   as CliMode;
 
   let theme: GeneratedTheme;
   if (positionals.length > 0) {
@@ -694,7 +702,7 @@ function runSimulate(argv: string[]): void {
   }
 
   const simulated = simulateTheme(theme, cvdType);
-  writeOutput(applyFormat(simulated, format, "both"), outFile);
+  writeOutput(applyFormat(simulated, format, mode), outFile);
 }
 
 // ─── adjust ───────────────────────────────────────────────────────────
@@ -705,6 +713,7 @@ function runAdjust(argv: string[]): void {
   const { values: v, positionals } = cliParse(argv, {
     overrides: { type: "string" },
     format:    { type: "string" },
+    mode:      { type: "string" },
     out:       { type: "string" },
     quiet:     { type: "boolean" },
     silent:    { type: "boolean" },
@@ -716,13 +725,18 @@ function runAdjust(argv: string[]): void {
   const source        = positionals[0];
   const overridesFile = v["overrides"] as string | undefined;
   const rawFormat     = (v["format"]   as string | undefined) ?? "json";
+  const rawMode       = (v["mode"]     as string | undefined) ?? "both";
   const outFile       = v["out"]       as string | undefined;
   const quiet         = v["quiet"] === true || v["silent"] === true;
 
   if (!(VALID_FORMATS as readonly string[]).includes(rawFormat)) {
     die(`unknown format '${rawFormat}' — valid: ${VALID_FORMATS.join(", ")}`);
   }
+  if (!(VALID_MODES as readonly string[]).includes(rawMode)) {
+    die(`unknown mode '${rawMode}' — valid: both, light, dark`);
+  }
   const format = rawFormat as CliFormat;
+  const mode   = rawMode   as CliMode;
 
   // Overrides: explicit file, or stdin. When theme source is already stdin,
   // overrides cannot also come from stdin.
@@ -750,7 +764,7 @@ function runAdjust(argv: string[]): void {
   }
 
   if (adjusted.warnings) warnTheme(adjusted.warnings, quiet);
-  writeOutput(applyFormat(adjusted, format, "both"), outFile);
+  writeOutput(applyFormat(adjusted, format, mode), outFile);
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────
