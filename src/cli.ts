@@ -538,12 +538,21 @@ function runValidate(argv: string[]): void {
     process.exit(1);
   }
 
+  const errors   = tokenWarnings.filter(w => w.severity === "error");
+  const warnings = tokenWarnings.filter(w => w.severity === "warning");
+
   if (!quiet) {
-    for (const w of tokenWarnings) {
-      err(`warning [${w.severity}] ${w.path}: ${w.message}\n`);
-    }
+    for (const w of errors)   err(`error [token] ${w.path}: ${w.message}\n`);
+    for (const w of warnings) err(`warning [token] ${w.path}: ${w.message}\n`);
   }
-  const wCount = tokenWarnings.length;
+
+  if (errors.length > 0) {
+    const e = errors.length;
+    out(`invalid: ${e} error${e === 1 ? "" : "s"}${warnings.length > 0 ? `, ${warnings.length} warning${warnings.length === 1 ? "" : "s"}` : ""}\n`);
+    process.exit(1);
+  }
+
+  const wCount = warnings.length;
   out(`valid${wCount > 0 ? ` (${wCount} warning${wCount === 1 ? "" : "s"})` : ""}\n`);
 }
 

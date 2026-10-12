@@ -308,6 +308,28 @@ describe("validate", () => {
     expect(r.status).toBe(2);
   });
 
+  it("theme with severity:error token warnings exits 1", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["validate", bad]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain("invalid");
+    expect(r.stderr).toContain("error [token]");
+    unlinkSync(bad);
+  });
+
+  it("severity:error exits 1 even with --quiet (stdout still reports invalid)", () => {
+    const theme = generateTheme({ primary: "#2563eb" });
+    (theme.tokens.spacing as Record<string, number>).md = -20;
+    const bad = tmpFile(JSON.stringify(theme));
+    const r = cli(["validate", bad, "--quiet"]);
+    expect(r.status).toBe(1);
+    expect(r.stdout).toContain("invalid");
+    expect(r.stderr).toBe("");
+    unlinkSync(bad);
+  });
+
   it("--quiet suppresses token warnings on stderr", () => {
     const r = cli(["validate", themeFile, "--quiet"]);
     expect(r.status).toBe(0);
